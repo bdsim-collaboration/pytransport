@@ -39,19 +39,21 @@ class elements(functions):
                 except ValueError:
                     dipoledata.append(ele)
         length = dipoledata[0]          # First two non-blanks must be the entries in a specific order.
-        bfield = dipoledata[1]    
-
-        field_in_Gauss = bfield * self.scale[self.units['magnetic_fields'][0]]     # Scale to Gauss
-        field_in_Tesla = field_in_Gauss * 1e-4                                      # Convert to Tesla
-
+        if self.benddef:
+            bfield = dipoledata[1]
+            field_in_Gauss = bfield * self.scale[self.units['magnetic_fields'][0]]     # Scale to Gauss
+            field_in_Tesla = field_in_Gauss * 1e-4                                      # Convert to Tesla
+            rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
+            angle = (_np.float(length) / rho) * self.elementprops.bending       # for direction of bend
+        elif not self.benddef:
+            angle_in_deg = dipoledata[1]
+            angle = angle_in_deg * (_np.pi/180.)
+        
         if self.units['element_length'] != 'm':
             length_in_metres = length * self.scale[self.units['element_length'][0]]
         else:
             length_in_metres = length
         
-        rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius. 
-        angle = (_np.float(length) / rho) * self.elementprops.bending       # for direction of bend
-
         elementid = 'BM'+_np.str(self.elementprops.dipoles)
         self.elementprops.dipoles += 1
         
@@ -252,4 +254,75 @@ class elements(functions):
 
 
 
+    def sextupole(self,line):
+        label = self._get_label(line)
+        sextudata = []
+        for index,ele in enumerate(line[1:]):
+            if ele != '':
+                try:
+                    sextudata.append(_np.float(ele))
+                except ValueError:
+                    sextudata.append(ele)
+        length = sextudata[0]        # First three non-blanks must be the entries in a specific order.
+        field_at_tip = sextudata[1]  # Field in TRANSPORT units
+        pipe_rad = sextudata[2]      # Pipe Radius In TRANSPORT units
+        
+        field_in_Gauss = field_at_tip * self.scale[self.units['magnetic_fields'][0]] #Convert to Gauss
+        field_in_Tesla = field_in_Gauss * 1e-4  #Convert to Tesla
+        
+        if self.units['bend_vert_gap'] != 'm':
+            pipe_in_metres = pipe_rad * self.scale[self.units['bend_vert_gap'][0]]  #Scale to meters
+        else:
+            pipe_in_metres = pipe_rad
+        
+        if self.units['element_length'] != 'm':
+            length_in_metres = length * self.scale[self.units['element_length'][0]] #Scale to meters
+        else:
+            length_in_metres = length
+        
+        field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.beamprops.brho    #K2 in correct units
+        
+        elementid = 'SEXT'+_np.str(self.elementprops.sextus)
+        
+        self.elementprops.sextus += 1
+        
+        self.machine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
+
+
+
+    def solenoid(self,line):
+        label = self._get_label(line)
+        soledata = []
+        for index,ele in enumerate(line[1:]):
+            if ele != '':
+                try:
+                    soledata.append(_np.float(ele))
+                except ValueError:
+                    soledata.append(ele)
+        length = soledata[0]        # First three non-blanks must be the entries in a specific order.
+        field = soledata[1]         # Field in TRANSPORT units
+        
+        field_in_Gauss = field * self.scale[self.units['magnetic_fields'][0]] #Convert to Gauss
+        field_in_Tesla = field_in_Gauss * 1e-4  #Convert to Tesla
+        
+        if self.units['element_length'] != 'm':
+            length_in_metres = length * self.scale[self.units['element_length'][0]] #Scale to meters
+        else:
+            length_in_metres = length
+                
+        elementid = 'SOLE'+_np.str(self.elementprops.solenoids)
+
+        self.elementprops.solenoids += 1
+        
+        self.machine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
+
+
+
+    def printline(self,line):
+        label = self._get_label(line)
+        for ele in line[1:]:
+            if ele == '48.':
+                self.benddef = False
+            if ele == '47.':
+                self.benddef = True
 

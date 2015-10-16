@@ -19,13 +19,15 @@ class _beamprops():      #Beam properties
 
 class _elementprops():       #Number of elements and angular properties
     def __init__(self):
+        self.benddef = True   #True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
         self.bending = 1   #+VE = bends to the right for positive particles
         self.angle = 0      #dipole rotation angle
         self.drifts = 1
         self.dipoles = 1
         self.quads = 1
-        self.sext = 1
+        self.sextus = 1
         self.transforms = 1
+        self.solenoids = 1
 
 
 class pytransport(elements):
@@ -164,6 +166,8 @@ class pytransport(elements):
             #self.collimator(line)
         if _np.float(line[0]) == 11.0:    
             self.acceleration(line)
+        if _np.float(line[0]) == 13.0:
+            self.printline(line)
                 
         ### OTHER TYPES WHICH CAN BE IGNORED:
         # 2.  : Dipole fringe fields.
@@ -173,7 +177,6 @@ class pytransport(elements):
         # 9.  : 'Repetition' - for nesting elements
         # 10. : Fitting constraint
         # 12. : Something to do with the outputting the beam for use in another TRANSPORT system
-        # 13. : Print output to terminal
         # 14. : Arbitrary transformation of TRANSPORT matrix
         
  
