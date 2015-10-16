@@ -168,7 +168,11 @@ class pytransport(elements):
             self.acceleration(line)
         if _np.float(line[0]) == 13.0:
             self.printline(line)
-                
+        if _np.float(line[0]) == 18.0:
+            self.sextupole(line)
+        if _np.float(line[0]) == 19.0:
+            self.solenoid(line)
+
         ### OTHER TYPES WHICH CAN BE IGNORED:
         # 2.  : Dipole fringe fields.
         # 6.0.X : Update RX matrix used in TRANSPORT
