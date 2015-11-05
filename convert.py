@@ -41,7 +41,7 @@ class pytransport(elements):
         Will output:
         
         '''
-    def __init__(self,particle='proton'):
+    def __init__(self,particle='proton',debug=False):
         if particle == 'proton':
             p_mass = (_con.proton_mass) * (_con.c**2 / _con.e) / 1e9        ## Particle masses in same unit as TRANSPORT (GeV)
         elif particle == 'e-' or particle == 'e+':                          
@@ -74,7 +74,10 @@ class pytransport(elements):
         'M':1e+6,
         'G':1e+9,
         'T':1e+12}
-        
+        if debug:
+            self._debug = True
+        else:
+            self._debug = False
         self.beamprops = _beamprops(p_mass)
         self.elementprops = _elementprops()
         self.machine = _Builder.Machine()
@@ -113,6 +116,9 @@ class pytransport(elements):
         '''Function to convert TRANSPORT file on a line by line basis.
             '''
         for linenum,line in enumerate(self.data):
+            if self._debug:
+                print('Processing line '+_np.str(linenum)+' :')
+                print('\t' + line)
             if len(line) > 1:   #i.e line isn't equal to escape sequence line.
                                 #This is a bit slapdash at the moment, needs better implementation.
                 a = _np.array(line.split(' '))
@@ -128,16 +134,19 @@ class pytransport(elements):
                 try: 
                     if _np.float(a[0]) > 0:
                         self._get_type(a)
+                    if self._debug:
+                        print('\n')
                 except ValueError:
-                    if line[0] == '(' or line[0] == '/':
-                        errorline = 'Cannot process line '+_np.str(linenum)+', line is a comment.'
-                    elif line[0] == 'S':
-                        errorline = 'Cannot process line '+_np.str(linenum)+', line is for TRANSPORT fitting routine'
-                    else:
-                        errorline = 'Cannot process line '+_np.str(linenum)+': \n'
-                        errorline += '\t'+line[:-2]
+                    if self._debug:
+                        if line[0] == '(' or line[0] == '/':
+                            errorline = '\tCannot process line '+_np.str(linenum)+', line is a comment.\n'
+                        elif line[0] == 'S':
+                            errorline = '\tCannot process line '+_np.str(linenum)+', line is for TRANSPORT fitting routine\n'
+                        else:
+                            errorline = '\tCannot process line '+_np.str(linenum)+': \n'
+                            errorline += '\t'+line[:-2]
 
-                    print(errorline)
+                        print(errorline)
 
         self.create_options()
         self.machine.AddSampler('all')
@@ -213,7 +222,21 @@ class pytransport(elements):
         self.beam.SetSigmaE(sigmae=_np.float(line[6]))
         
         bunchl = self._bunch_length_convert(_np.float(line[5])) ## Get bunch length in seconds.
-        self.beam.SetSigmaT(sigmat=bunchl)     
+        self.beam.SetSigmaT(sigmat=bunchl)
+        
+        if self._debug:
+            print('\t Beam definition :')
+            print('\t distrType = gauss')
+            print('\t energy = ' + _np.str(_np.round(self.beamprops.tot_energy,3))+ ' ' +self.units['p_egain'])
+            print('\t SigmaX = ' +line[1]+ ' ' +self.units['x'])
+            print('\t SigmaXP = '+line[2]+ ' ' +self.units['xp'])
+            print('\t SigmaY = ' +line[3]+ ' ' +self.units['y'])
+            print('\t SigmaYP = '+line[4]+ ' ' +self.units['yp'])
+            print('\t SigmaE = ' +line[6])
+            print('\t SigmaT = ' +_np.str(bunchl))
+            
+            print('\t (brho = '+self.beamprops.brho+' Tm)')
+        
         self._beamfilemade = True
         self.machine.AddBeam(self.beam)
 

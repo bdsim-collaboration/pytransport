@@ -26,7 +26,11 @@ class elements(functions):
         self.elementprops.drifts += 1
 
         self.machine.AddDrift(name=elementid,length=length_in_metres)
-
+        
+        if self._debug:
+            print('\tConverted to:')
+            debugstring = 'Drift '+elementid+', length '+_np.str(length_in_metres)+' m'
+            print('\t'+debugstring)
 
         
     def dipole(self,line):        
@@ -39,15 +43,19 @@ class elements(functions):
                 except ValueError:
                     dipoledata.append(ele)
         length = dipoledata[0]          # First two non-blanks must be the entries in a specific order.
-        if self.benddef:
+        if self.elementprops.benddef:
             bfield = dipoledata[1]
             field_in_Gauss = bfield * self.scale[self.units['magnetic_fields'][0]]     # Scale to Gauss
             field_in_Tesla = field_in_Gauss * 1e-4                                      # Convert to Tesla
             rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
             angle = (_np.float(length) / rho) * self.elementprops.bending       # for direction of bend
-        elif not self.benddef:
+            
+            if self._debug:
+                print('\tbfield = '+_np.str(field_in_Tesla)+' T')
+                print('\tCorresponds to angle of '+_np.str(_np.round(angle,4)) + ' rad.')
+        elif not self.elementprops.benddef:
             angle_in_deg = dipoledata[1]
-            angle = angle_in_deg * (_np.pi/180.)
+            angle = angle_in_deg * (_np.pi/180.) * self.elementprops.bending
         
         if self.units['element_length'] != 'm':
             length_in_metres = length * self.scale[self.units['element_length'][0]]
@@ -59,6 +67,10 @@ class elements(functions):
         
         self.machine.AddDipole(name=elementid,length=length_in_metres,angle=_np.round(angle,4))
         
+        if self._debug:
+            print('\tConverted to:')
+            debugstring = 'Dipole '+elementid+', length '+_np.str(length_in_metres)+' m, angle '+_np.str(_np.round(angle,4))+' rad'
+            print('\t'+debugstring)
 
 
 
@@ -67,6 +79,7 @@ class elements(functions):
             '''
         ## NOT FULLY TESTED.
         angle = 0
+        rotation = False
         for index,ele in enumerate(line[1:]): #For loops are iterating over blank space (delimiter)
             if ele != ' ':
                 endofline = self._endofline(ele)
@@ -84,15 +97,26 @@ class elements(functions):
 
         if self.elementprops.angle == 180 or self.elementprops.angle == -180: #If 180 degrees, switch bending angle
             self.elementprops.bending *= -1
+
+        
         elif self.elementprops.angle != 0:                        #If not 180 degrees, use transform3d.      
             self.elementprops.angle *= -1                         #For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.  
             anginrad = self.elementprops.angle * (_np.pi / 180)
             elementid = 't'+_np.str(self.elementprops.transforms)
             self.elementprops.transforms += 1
             self.machine.AddTransform3D(name=elementid,psi=anginrad)
-        self.angle=0    
-
-
+            rotation = True
+        
+        if self._debug:
+            if rotation:
+                print('\tConverted to:')
+                debugstring = 'Transform3D '+elementid+', angle '+_np.str(_np.round(angle,4))+' rad'
+                print('\t'+debugstring)
+            elif self.elementprops.angle == 1:
+                print('Bending direction set to Right')
+            elif self.elementprops.angle == -1:
+                print('Bending direction set to Left')
+        
 
 
     def quadrupole(self,line):
@@ -134,6 +158,12 @@ class elements(functions):
         self.elementprops.quads += 1
 
         self.machine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
+        
+        if self._debug:
+            print('\tConverted to:')
+            debugstring = 'Quadrupole '+elementid+', length= '+_np.str(length_in_metres)+' m, k1= '+_np.str(_np.round(field_gradient,4))+' T/m'
+            print('\t'+debugstring)
+
 
 
 
@@ -322,7 +352,10 @@ class elements(functions):
         label = self._get_label(line)
         for ele in line[1:]:
             if ele == '48.':
-                self.benddef = False
+                self.elementprops.benddef = False
+                print('Switched Dipoles to Angle definition.')
             if ele == '47.':
-                self.benddef = True
+                self.elementprops.benddef = True
+                print('Switched Dipoles to field definition.')
+
 
