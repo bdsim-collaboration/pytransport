@@ -33,7 +33,18 @@ class functions():
             if element[:8] == 'SENTINEL':
                 return True
         return False
-    
+
+
+    def _facerotation(self,line,linenum):
+        faceline = self.data[linenum]
+        splitline = faceline.split(' ')
+        if _np.float(splitline[0]) == 2.0:
+            angle = _np.round(_np.float(splitline[1]),4)
+        else:
+            angle = 0
+        return angle
+
+
     def _endofline(self,line):   #Find the end of the line of code
         endpos = -1
         breakloop=False

@@ -133,9 +133,9 @@ class pytransport(elements):
                 ### Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
                 try: 
                     if _np.float(a[0]) > 0:
-                        self._get_type(a)
-                    if self._debug:
-                        print('\n')
+                        self._get_type(a,linenum)
+                    #if self._debug:
+                    #    print('\n')
                 except ValueError:
                     if self._debug:
                         if line[0] == '(' or line[0] == '/':
@@ -143,8 +143,7 @@ class pytransport(elements):
                         elif line[0] == 'S':
                             errorline = '\tCannot process line '+_np.str(linenum)+', line is for TRANSPORT fitting routine\n'
                         else:
-                            errorline = '\tCannot process line '+_np.str(linenum)+': \n'
-                            errorline += '\t'+line[:-2]
+                            errorline = '\tCannot process line '+_np.str(linenum)+' \n'
 
                         print(errorline)
 
@@ -154,20 +153,19 @@ class pytransport(elements):
                 
 
 
-    def _get_type(self,line):
+    def _get_type(self,line,linenum):
         '''Function to read element type.
             '''
         if _np.float(line[0]) == 15.0:      
             self.unit_change(line)
         if _np.float(line[0]) == 20.0:    
             self.change_bend(line)
-        if _np.float(line[0]) == 1.0 and not self._is_addition(line):  
-            if not self._beamfilemade:      ### To ignore beam r.m.s additions
-                self.create_beam(line)
+        if _np.float(line[0]) == 1.0:
+            self.create_beam(line)
         if _np.float(line[0]) == 3.0:     
             self.drift(line)
         if _np.float(line[0]) == 4.0:     
-            self.dipole(line)
+            self.dipole(line,linenum)
         if _np.float(line[0]) == 5.0:     
             self.quadrupole(line)
         if _np.float(line[0]) == 6.0:     
@@ -197,6 +195,15 @@ class pytransport(elements):
     def create_beam(self,line):
         '''Defines the beam. Will ALWAYS be a Gaussian. Must input the TRANSPORT line that defines the beam.
             '''
+        if self._is_addition(line):
+            if self._debug:
+                print('\tIgnoring beam rms addition.')
+            return
+        elif self._beamfilemade:
+            if self._debug:
+                print('\tIgnoring redefinition of beam.')
+            return
+    
         line = self._remove_label(line)
         if len(line) < 8:
             raise IndexError("Incorrect number of beam parameters.")
@@ -234,8 +241,7 @@ class pytransport(elements):
             print('\t SigmaYP = '+line[4]+ ' ' +self.units['yp'])
             print('\t SigmaE = ' +line[6])
             print('\t SigmaT = ' +_np.str(bunchl))
-            
-            print('\t (brho = '+self.beamprops.brho+' Tm)')
+            print('\t (brho = '+_np.str(_np.round(self.beamprops.brho,2))+' Tm)')
         
         self._beamfilemade = True
         self.machine.AddBeam(self.beam)

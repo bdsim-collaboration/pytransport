@@ -33,7 +33,7 @@ class elements(functions):
             print('\t'+debugstring)
 
         
-    def dipole(self,line):        
+    def dipole(self,line,linenum):
         label = self._get_label(line)
         dipoledata = []
         for index,ele in enumerate(line[1:]):
@@ -43,6 +43,17 @@ class elements(functions):
                 except ValueError:
                     dipoledata.append(ele)
         length = dipoledata[0]          # First two non-blanks must be the entries in a specific order.
+        
+        ## Get poleface rotationa
+        e1 = self._facerotation(line,linenum-1) * (_np.pi / 180.0)   ## Entrance pole face rotation.
+        e2 = self._facerotation(line,linenum+1) * (_np.pi / 180.0)   ## Exit pole face rotation.
+        if self._debug:
+            if e1 != 0:
+                print('\tPreceding element ('+_np.str(linenum-1)+') provides an entrance poleface rotation of '+_np.str(_np.round(e1,4))+' rad.')
+            if e2 != 0:
+                print('\tFollowing element ('+_np.str(linenum+1)+') provides an exit poleface rotation of '+_np.str(_np.round(e2,4))+' rad.')
+        
+        ##Calculate bending angle
         if self.elementprops.benddef:
             bfield = dipoledata[1]
             field_in_Gauss = bfield * self.scale[self.units['magnetic_fields'][0]]     # Scale to Gauss
@@ -57,6 +68,7 @@ class elements(functions):
             angle_in_deg = dipoledata[1]
             angle = angle_in_deg * (_np.pi/180.) * self.elementprops.bending
         
+        ##Convert element length
         if self.units['element_length'] != 'm':
             length_in_metres = length * self.scale[self.units['element_length'][0]]
         else:
@@ -65,13 +77,30 @@ class elements(functions):
         elementid = 'BM'+_np.str(self.elementprops.dipoles)
         self.elementprops.dipoles += 1
         
-        self.machine.AddDipole(name=elementid,length=length_in_metres,angle=_np.round(angle,4))
-        
-        if self._debug:
-            print('\tConverted to:')
-            debugstring = 'Dipole '+elementid+', length '+_np.str(length_in_metres)+' m, angle '+_np.str(_np.round(angle,4))+' rad'
-            print('\t'+debugstring)
+        ##Check for non zero pole face rotation
+        if (e1 != 0) and (e2 != 0):
+            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=e1,e2=e2)
+        elif (e1 != 0) and (e2 == 0):
+            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=e1)
+        elif (e1 == 0) and (e2 != 0):
+            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=e2)
+        else:
+            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4))
 
+        ## Debug output
+        if self._debug:
+            if (e1 != 0) and (e2 != 0):
+                polefacestr = ', e1= '+_np.str(_np.round(e1,4))+' rad, e2= '+_np.str(_np.round(e2,4))+' rad'
+            elif (e1 != 0) and (e2 == 0):
+                polefacestr = ', e1= '+_np.str(_np.round(e1,4))+' rad'
+            elif (e1 == 0) and (e2 != 0):
+                polefacestr = ', e2= '+_np.str(_np.round(e2,4))+' rad'
+            else:
+                polefacestr = ''
+
+            print('\tConverted to:')
+            debugstring = 'Dipole '+elementid+', length= '+_np.str(length_in_metres)+' m, angle= '+_np.str(_np.round(angle,4))+' rad'+polefacestr
+            print('\t'+debugstring)
 
 
     def change_bend(self,line):
@@ -317,6 +346,11 @@ class elements(functions):
         self.elementprops.sextus += 1
         
         self.machine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
+    
+        if self._debug:
+            print('\tConverted to:')
+            debugstring = 'Sextupole '+elementid+', length '+_np.str(length_in_metres)+' m, k2 '+_np.str(_np.round(field_gradient,4))+' T/m^2'
+            print('\t'+debugstring)
 
 
 
@@ -345,6 +379,11 @@ class elements(functions):
         self.elementprops.solenoids += 1
         
         self.machine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
+    
+        if self._debug:
+            print('\tConverted to:')
+            debugstring = 'Solenoid '+elementid+', length '+_np.str(length_in_metres)+' m, ks '+_np.str(_np.round(field_in_Tesla,4))+' T'
+            print('\t'+debugstring)
 
 
 
