@@ -38,11 +38,29 @@ class functions():
     def _facerotation(self,line,linenum):
         faceline = self.data[linenum]
         splitline = faceline.split(' ')
-        if _np.float(splitline[0]) == 2.0:
-            angle = _np.round(_np.float(splitline[1]),4)
-        else:
+        splitline = self._remove_label(splitline)
+        splitline = self._remove_spaces(splitline)
+        try:
+            if _np.float(splitline[0]) == 2.0:
+                endof = self._endofline(splitline[1])
+                if endof != -1:
+                    angle = _np.round(_np.float(splitline[1][:endof]),4)
+                else:
+                    angle = _np.round(_np.float(splitline[1]),4)
+            else:
+                angle = 0
+        except ValueError:
             angle = 0
+
         return angle
+    
+    def _remove_spaces(self,line):
+        elementlist=[]
+        for i in line:
+            if (i != '') and (i != ' '):
+                elementlist.append(i)
+        line = _np.array(elementlist)
+        return line
 
 
     def _endofline(self,line):   #Find the end of the line of code

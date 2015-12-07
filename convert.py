@@ -256,7 +256,7 @@ class pytransport(elements):
         self.options.SetOuterDiameter(outerdiameter=0.5,unitsstring='m')
         self.options.SetTunnelRadius(tunnelradius=1,unitsstring='m')
         self.options.SetBeamPipeThickness(bpt=5,unitsstring='mm')
-        self.options.SetSamplerDiameter(radius=2,unitsstring='m')
+        self.options.SetSamplerDiameter(radius=1,unitsstring='m')
         self.machine.AddOptions(self.options)
 
     
