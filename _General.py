@@ -192,6 +192,8 @@ class functions():
         if line[1] == '1.0':    #Horizontal and vertical beam size
             self.units['x'] = label
             self.units['y'] = label
+            self.units['bend_vert_gap'] = label
+            self.units['pipe_rad'] = label
         if line[1] == '2.0':    #Horizontal and vertical divergence
             self.units['xp'] = label
             self.units['yp'] = label
