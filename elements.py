@@ -79,11 +79,11 @@ class elements(functions):
         
         ##Check for non zero pole face rotation
         if (e1 != 0) and (e2 != 0):
-            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=e1,e2=e2)
+            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),e2=_np.round(e2,4))
         elif (e1 != 0) and (e2 == 0):
-            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=e1)
+            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4))
         elif (e1 == 0) and (e2 != 0):
-            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=e2)
+            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=_np.round(e2,4))
         else:
             self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4))
 
