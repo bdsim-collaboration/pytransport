@@ -4,6 +4,65 @@ import string as _string
 from _General import functions
     
 class elements(functions):
+    def define_beam(self,line):
+        if self._is_addition(line):
+            if self._debug:
+                print('\tIgnoring beam rms addition.')
+            return
+        elif self._beamdefined:
+            if self._debug:
+                print('\tIgnoring redefinition of beam.')
+            return
+    
+        line = self._remove_label(line)
+        if len(line) < 8:
+            raise IndexError("Incorrect number of beam parameters.")
+
+        endofline = self._endofline(line[7])
+        
+        #Find momentum
+        if endofline != -1:
+            momentum = line[7][:endofline]
+        else:
+            momentum = line[7]
+
+        self._beamdefined = True
+       
+        #Convert momentum to energy and set distribution params.
+        self._calculate_energy(momentum)
+        self.beamprops.SigmaX  = _np.float(line[1])
+        self.beamprops.SigmaY  = _np.float(line[3])
+        self.beamprops.SigmaXP = _np.float(line[2])
+        self.beamprops.SigmaYP = _np.float(line[4])
+        self.beamprops.SigmaE  = _np.float(line[6])
+        self.beamprops.SigmaT  = self._bunch_length_convert(_np.float(line[5])) ## Get bunch length in seconds.
+
+        
+        #Calculate Initial Twiss params
+        self.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
+        self.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
+        self.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP
+        self.emitx = self.beamprops.SigmaY * self.beamprops.SigmaYP
+
+        if self._debug:
+            print('\t Beam definition :')
+            print('\t distrType = ' + self.beamprops.distrType)
+            print('\t energy = ' + _np.str(_np.round(self.beamprops.tot_energy,3))+ ' ' +self.units['p_egain'])
+            print('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
+            print('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
+            print('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
+            print('\t SigmaYP = '+ _np.str(self.beamprops.SigmaYP) + ' ' +self.units['yp'])
+            print('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
+            print('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
+            print('\t (brho = '  + _np.str(_np.round(self.beamprops.brho,2))+' Tm)')
+            print('\t Twiss Params:')
+            print('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+            print('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+            print('\t AlphaX = '+_np.str(self.beamprops.alfx))
+            print('\t AlphaY = '+_np.str(self.beamprops.alfy))
+            print('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+            print('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+        
     
     def drift(self,line):
         label = self._get_label(line)
@@ -56,12 +115,15 @@ class elements(functions):
         ##Calculate bending angle
         if self.elementprops.benddef:
             bfield = dipoledata[1]
-            field_in_Gauss = bfield * self.scale[self.units['magnetic_fields'][0]]     # Scale to Gauss
-            field_in_Tesla = field_in_Gauss * 1e-4                                      # Convert to Tesla
-            rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
-            angle = (_np.float(length) / rho) * self.elementprops.bending       # for direction of bend
-            
+            field_in_Gauss = bfield * self.scale[self.units['magnetic_fields'][0]]  # Scale to Gauss
+            field_in_Tesla = field_in_Gauss * 1e-4                                  # Convert to Tesla
+            if field_in_Tesla == 0:
+                angle = 0                                                           # zero field = zero angle
+            else:
+                rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
+                angle = (_np.float(length) / rho) * self.elementprops.bending       # for direction of bend
             if self._debug:
+                print('\tbfield = '+_np.str(field_in_Gauss)+' kG')
                 print('\tbfield = '+_np.str(field_in_Tesla)+' T')
                 print('\tCorresponds to angle of '+_np.str(_np.round(angle,4)) + ' rad.')
         elif not self.elementprops.benddef:
@@ -390,11 +452,83 @@ class elements(functions):
     def printline(self,line):
         label = self._get_label(line)
         for ele in line[1:]:
-            if ele == '48.':
-                self.elementprops.benddef = False
-                print('Switched Dipoles to Angle definition.')
-            if ele == '47.':
-                self.elementprops.benddef = True
-                print('Switched Dipoles to field definition.')
+            try:
+                number = _np.float(ele)
+                if number == 48:
+                    self.elementprops.benddef = False
+                    print('Switched Dipoles to Angle definition.')
+                if number == 47:
+                    self.elementprops.benddef = True
+                    print('Switched Dipoles to field definition.')
+            except ValueError:
+                dummy=0
+
+
+
+    def correction(self,line,linenum):
+        if self._correctedbeamdef == True:
+            print('\t Not Correction to original beam definition')
+            return
+        #Check if the previous line was the original beam definition and not an rms update
+        prevline = self.data[linenum-1].split(' ')
+        if _np.float(prevline[0]) == 1.0 and not self._is_addition(line) and self._beamdefined:
+            self._correctedbeamdef = True
+        
+        label = self._get_label(line)
+        correctiondata = []
+        for index,ele in enumerate(line[1:]):
+            if ele != '':
+                try:
+                    correctiondata.append(_np.float(ele))
+                except ValueError:
+                    correctiondata.append(ele)
+
+        if len(correctiondata) > 15: #15 sigma elements
+            sigma21 = correctiondata[0]
+            sigma43 = correctiondata[5]
+        else:
+            print('\tLength of correction line is incorrect')
+            return
+
+        emittoverbeta = self.beamprops.SigmaXP**2 * (1 - sigma21**2)
+        emittbeta = self.beamprops.SigmaX**2
+        betx = _np.sqrt(emittbeta / emittoverbeta)
+        emitx = emittbeta / betx
+        slope = sigma21 * self.beamprops.SigmaXP / self.beamprops.SigmaX
+        alfx = -1.0 * slope * betx
+        
+        self.beamprops.betx = betx
+        self.beamprops.emitx = emitx
+        self.beamprops.alfx = alfx
+        
+        emittoverbeta = self.beamprops.SigmaYP**2 * (1 - sigma43**2)
+        emittbeta = self.beamprops.SigmaY**2
+        bety = _np.sqrt(emittbeta / emittoverbeta)
+        emity = emittbeta / bety
+        slope = sigma43 * self.beamprops.SigmaYP / self.beamprops.SigmaY
+        alfy = -1.0 * slope * bety
+
+        self.beamprops.bety = bety
+        self.beamprops.emity = emity
+        self.beamprops.alfy = alfy
+
+        self.beamprops.distrType = 'gausstwiss'
+
+        if self._debug:
+            print('\tConverted to:')
+            print('\t Beam Correction. Sigma21 = ' + _np.str(sigma21) + ', Sigma43 = '  + _np.str(sigma43) + '.')
+            print('\t Beam distribution type now switched to "gausstwiss":')
+            print('\t Twiss Params:')
+            print('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+            print('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+            print('\t AlphaX = '+_np.str(self.beamprops.alfx))
+            print('\t AlphaY = '+_np.str(self.beamprops.alfy))
+            print('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+            print('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+
+
+
+
+
 
 

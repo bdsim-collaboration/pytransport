@@ -14,7 +14,20 @@ class _beamprops():      #Beam properties
         self.tot_energy = p_mass
         self.gamma = 1
         self.beta = 0
+        self.SigmaX = 0
+        self.SigmaY = 0
+        self.SigmaXP = 0
+        self.SigmaYP = 0
+        self.SigmaE = 0
+        self.SigmaT = 0
         self.brho = 0
+        self.betx = 0
+        self.alfx = 0
+        self.bety = 0
+        self.alfy = 0
+        self.emitx = 0
+        self.emity = 0
+        self.distrType = 'gauss'
 
 
 class _elementprops():       #Number of elements and angular properties
@@ -47,7 +60,9 @@ class pytransport(elements):
         elif particle == 'e-' or particle == 'e+':                          
             p_mass = (_con.electron_mass) * (_con.c**2 / _con.e) / 1e9
         self._particle = particle
-        self._beamfilemade = False
+        self._beamdefined = False
+        self._correctedbeamdef = False
+        self._fileloaded = False
         self._collindex=[]  # An index of collimator labels
         self._accstart=[]   # An index of the start of acceleration elements.
         self.units={    ### Default TRANSPORT units
@@ -61,7 +76,9 @@ class pytransport(elements):
         'magnetic_fields'       :'kG',
         'p_egain'               :'GeV', # Momentum / energy gain during acceleration.
         'bend_vert_gap'         :'cm',  # Vertical Gap in dipoles
-        'pipe_rad'              :'cm'
+        'pipe_rad'              :'cm',
+        'beta_func'             :'m',
+        'emittance'             :'mm mrad'
             }
         self.scale={
         'p':1e-12,
@@ -92,6 +109,7 @@ class pytransport(elements):
         try:
             for line in open(infile):
                 self.data.append(line)
+            self._fileloaded = True
         except IOError:
             print 'Cannot open file.'
                 
@@ -115,6 +133,9 @@ class pytransport(elements):
     def convert(self):
         '''Function to convert TRANSPORT file on a line by line basis.
             '''
+        if not self._fileloaded:
+            print('No file loaded.')
+            return
         for linenum,line in enumerate(self.data):
             if self._debug:
                 print('Processing line '+_np.str(linenum)+' :')
@@ -123,7 +144,8 @@ class pytransport(elements):
                                 #This is a bit slapdash at the moment, needs better implementation.
                 a = _np.array(line.split(' '))
                 if self._is_sentinel(a):
-                    print('Sentinel Found.')
+                    if self._debug:
+                        print('Sentinel Found.')
                     break
                 linelist=[]
                 for element in a:
@@ -146,7 +168,7 @@ class pytransport(elements):
                             errorline = '\tCannot process line '+_np.str(linenum)+' \n'
 
                         print(errorline)
-
+        self.create_beam()
         self.create_options()
         self.machine.AddSampler('all')
         self.machine.Write(self._filename)
@@ -161,7 +183,7 @@ class pytransport(elements):
         if _np.float(line[0]) == 20.0:    
             self.change_bend(line)
         if _np.float(line[0]) == 1.0:
-            self.create_beam(line)
+            self.define_beam(line)
         if _np.float(line[0]) == 3.0:     
             self.drift(line)
         if _np.float(line[0]) == 4.0:     
@@ -171,6 +193,8 @@ class pytransport(elements):
         if _np.float(line[0]) == 6.0:     
             pass
             #self.collimator(line)
+        if _np.float(line[0]) == 12.0:
+            self.correction(line,linenum)
         if _np.float(line[0]) == 11.0:    
             self.acceleration(line)
         if _np.float(line[0]) == 13.0:
@@ -192,58 +216,52 @@ class pytransport(elements):
         
  
 
-    def create_beam(self,line):
+    def create_beam(self):
         '''Defines the beam. Will ALWAYS be a Gaussian. Must input the TRANSPORT line that defines the beam.
             '''
-        if self._is_addition(line):
-            if self._debug:
-                print('\tIgnoring beam rms addition.')
-            return
-        elif self._beamfilemade:
-            if self._debug:
-                print('\tIgnoring redefinition of beam.')
-            return
-    
-        line = self._remove_label(line)
-        if len(line) < 8:
-            raise IndexError("Incorrect number of beam parameters.")
         self.beam = _Beam.Beam()
         self.beam.SetParticleType(self._particle)
-        endofline = self._endofline(line[7])
-        
-        #Find momentum
-        if endofline != -1:
-            momentum = line[7][:endofline]
-        else:
-            momentum = line[7]
-        
-        #Convert momentum to energy and set beam type/distribution.
-        self._calculate_energy(momentum)  
         self.beam.SetEnergy(energy=_np.round(self.beamprops.tot_energy,3),unitsstring=self.units['p_egain'])
-        self.beam.SetDistributionType('gauss')
-            
-        self.beam.SetSigmaX(sigmax=_np.float(line[1]),unitsstring=self.units['x'])
-        self.beam.SetSigmaY(sigmay=_np.float(line[3]),unitsstring=self.units['y'])
-        self.beam.SetSigmaXP(sigmaxp=_np.float(line[2]),unitsstring=self.units['xp'])
-        self.beam.SetSigmaYP(sigmayp=_np.float(line[4]),unitsstring=self.units['yp'])
-        self.beam.SetSigmaE(sigmae=_np.float(line[6]))
+
+        if self.beamprops.distrType == 'gausstwiss':
+            self.beam.SetDistributionType(self.beamprops.distrType)
+            self.beam.SetBetaX(self.beamprops.betx)
+            self.beam.SetBetaY(self.beamprops.bety)
+            self.beam.SetAlphaX(self.beamprops.alfx)
+            self.beam.SetAlphaY(self.beamprops.alfy)
+            self.beam.SetEmittanceX(self.beamprops.emitx)
+            self.beam.SetEmittanceY(self.beamprops.emity)
+            self.beam.SetSigmaE(self.beamprops.SigmaE)
+            self.beam.SetSigmaT(self.beamprops.SigmaT)
         
-        bunchl = self._bunch_length_convert(_np.float(line[5])) ## Get bunch length in seconds.
-        self.beam.SetSigmaT(sigmat=bunchl)
+        else:
+            self.beam.SetDistributionType(self.beamprops.distrType)
+            self.beam.SetSigmaX(self.beamprops.SigmaX,unitsstring=self.units['x'])
+            self.beam.SetSigmaY(self.beamprops.SigmaY,unitsstring=self.units['y'])
+            self.beam.SetSigmaXP(self.beamprops.SigmaXP,unitsstring=self.units['xp'])
+            self.beam.SetSigmaYP(self.beamprops.SigmaYP,unitsstring=self.units['yp'])
+            self.beam.SetSigmaE(self.beamprops.SigmaE)
+            self.beam.SetSigmaT(self.beamprops.SigmaT)
         
         if self._debug:
             print('\t Beam definition :')
-            print('\t distrType = gauss')
+            print('\t distrType = ' + self.beamprops.distrType)
             print('\t energy = ' + _np.str(_np.round(self.beamprops.tot_energy,3))+ ' ' +self.units['p_egain'])
-            print('\t SigmaX = ' +line[1]+ ' ' +self.units['x'])
-            print('\t SigmaXP = '+line[2]+ ' ' +self.units['xp'])
-            print('\t SigmaY = ' +line[3]+ ' ' +self.units['y'])
-            print('\t SigmaYP = '+line[4]+ ' ' +self.units['yp'])
-            print('\t SigmaE = ' +line[6])
-            print('\t SigmaT = ' +_np.str(bunchl))
+            print('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
+            print('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
+            print('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
+            print('\t SigmaYP = '+ _np.str(self.beamprops.SigmaYP) + ' ' +self.units['yp'])
+            print('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
+            print('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
             print('\t (brho = '+_np.str(_np.round(self.beamprops.brho,2))+' Tm)')
-        
-        self._beamfilemade = True
+            print('\t Twiss Params:')
+            print('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+            print('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+            print('\t AlphaX = '+_np.str(self.beamprops.alfx))
+            print('\t AlphaY = '+_np.str(self.beamprops.alfy))
+            print('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+            print('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+
         self.machine.AddBeam(self.beam)
 
 
@@ -251,7 +269,7 @@ class pytransport(elements):
     def create_options(self):
         '''Function to create the Options gmad file.'''
         self.options = _Options.Options()
-        self.options.SetPhysicsList(physicslist='em_standard')
+        self.options.SetPhysicsList(physicslist='em')
         self.options.SetBeamPipeRadius(beampiperadius=10,unitsstring='cm')
         self.options.SetOuterDiameter(outerdiameter=0.5,unitsstring='m')
         self.options.SetTunnelRadius(tunnelradius=1,unitsstring='m')
