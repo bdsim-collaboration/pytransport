@@ -193,7 +193,7 @@ class functions():
             self.units['x'] = label
             self.units['y'] = label
             self.units['bend_vert_gap'] = label
-            self.units['pipe_rad'] = label
+            #self.units['pipe_rad'] = label
         if line[1] == '2.0':    #Horizontal and vertical divergence
             self.units['xp'] = label
             self.units['yp'] = label
@@ -246,5 +246,5 @@ class functions():
         self.beamprops.gamma = energy / p_mass
         self.beamprops.beta = _np.sqrt((1.0 - (1.0 / self.beamprops.gamma**2)))
         self.beamprops.brho = mom_in_ev / _con.c
-    
+
   

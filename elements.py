@@ -1,5 +1,6 @@
 import numpy as _np
 from scipy import constants as _con
+from pybdsim import Builder as _Builder
 import string as _string
 from _General import functions
     
@@ -9,11 +10,17 @@ class elements(functions):
             if self._debug:
                 print('\tIgnoring beam rms addition.')
             return
-        elif self._beamdefined:
-            if self._debug:
-                print('\tIgnoring redefinition of beam.')
-            return
-    
+        if self._beamdefined:
+            self._numberparts += 1
+            self.write()
+            print('Writing.')
+            del self.machine
+            self.machine = _Builder.Machine()
+            self._correctedbeamdef = False
+            
+            print('\tBeam redefinition found. Writing previous section to file.')
+            print('\tSplitting into multiple machines.')
+        
         line = self._remove_label(line)
         if len(line) < 8:
             raise IndexError("Incorrect number of beam parameters.")
@@ -40,8 +47,8 @@ class elements(functions):
         
         #Calculate Initial Twiss params
         self.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
-        self.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
-        self.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP
+        self.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP / 1000.0
+        self.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
         self.emitx = self.beamprops.SigmaY * self.beamprops.SigmaYP
 
         if self._debug:
@@ -81,8 +88,8 @@ class elements(functions):
         else:
             length_in_metres = _np.float(driftlen)
 
-        elementid = 'DR'+_np.str(self.elementprops.drifts)
-        self.elementprops.drifts += 1
+        elementid = 'DR'+_np.str(self.machineprops.drifts)
+        self.machineprops.drifts += 1
 
         self.machine.AddDrift(name=elementid,length=length_in_metres)
         
@@ -113,7 +120,7 @@ class elements(functions):
                 print('\tFollowing element ('+_np.str(linenum+1)+') provides an exit poleface rotation of '+_np.str(_np.round(e2,4))+' rad.')
         
         ##Calculate bending angle
-        if self.elementprops.benddef:
+        if self.machineprops.benddef:
             bfield = dipoledata[1]
             field_in_Gauss = bfield * self.scale[self.units['magnetic_fields'][0]]  # Scale to Gauss
             field_in_Tesla = field_in_Gauss * 1e-4                                  # Convert to Tesla
@@ -121,14 +128,14 @@ class elements(functions):
                 angle = 0                                                           # zero field = zero angle
             else:
                 rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
-                angle = (_np.float(length) / rho) * self.elementprops.bending       # for direction of bend
+                angle = (_np.float(length) / rho) * self.machineprops.bending       # for direction of bend
             if self._debug:
                 print('\tbfield = '+_np.str(field_in_Gauss)+' kG')
                 print('\tbfield = '+_np.str(field_in_Tesla)+' T')
                 print('\tCorresponds to angle of '+_np.str(_np.round(angle,4)) + ' rad.')
-        elif not self.elementprops.benddef:
+        elif not self.machineprops.benddef:
             angle_in_deg = dipoledata[1]
-            angle = angle_in_deg * (_np.pi/180.) * self.elementprops.bending
+            angle = angle_in_deg * (_np.pi/180.) * self.machineprops.bending
         
         ##Convert element length
         if self.units['element_length'] != 'm':
@@ -136,8 +143,8 @@ class elements(functions):
         else:
             length_in_metres = length
         
-        elementid = 'BM'+_np.str(self.elementprops.dipoles)
-        self.elementprops.dipoles += 1
+        elementid = 'BM'+_np.str(self.machineprops.dipoles)
+        self.machineprops.dipoles += 1
         
         ##Check for non zero pole face rotation
         if (e1 != 0) and (e2 != 0):
@@ -180,21 +187,21 @@ class elements(functions):
                 elif len(ele) > 0 and endofline != -1: #endofline is in this element
                     angle = _np.str(ele[:endofline])
                     break
-        self.elementprops.angle = _np.float(angle)
-        if self.elementprops.angle >= 360:
-            self.elementprops.angle = _np.mod(self.elementprops.angle,360)
-        if self.elementprops.angle <= -360:
-            self.elementprops.angle = _np.mod(self.elementprops.angle,-360)
+        self.machineprops.angle = _np.float(angle)
+        if self.machineprops.angle >= 360:
+            self.machineprops.angle = _np.mod(self.machineprops.angle,360)
+        if self.machineprops.angle <= -360:
+            self.machineprops.angle = _np.mod(self.machineprops.angle,-360)
 
-        if self.elementprops.angle == 180 or self.elementprops.angle == -180: #If 180 degrees, switch bending angle
-            self.elementprops.bending *= -1
+        if self.machineprops.angle == 180 or self.machineprops.angle == -180: #If 180 degrees, switch bending angle
+            self.machineprops.bending *= -1
 
         
-        elif self.elementprops.angle != 0:                        #If not 180 degrees, use transform3d.      
-            self.elementprops.angle *= -1                         #For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.  
-            anginrad = self.elementprops.angle * (_np.pi / 180)
-            elementid = 't'+_np.str(self.elementprops.transforms)
-            self.elementprops.transforms += 1
+        elif self.machineprops.angle != 0:                        #If not 180 degrees, use transform3d.      
+            self.machineprops.angle *= -1                         #For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.  
+            anginrad = self.machineprops.angle * (_np.pi / 180)
+            elementid = 't'+_np.str(self.machineprops.transforms)
+            self.machineprops.transforms += 1
             self.machine.AddTransform3D(name=elementid,psi=anginrad)
             rotation = True
         
@@ -203,9 +210,9 @@ class elements(functions):
                 print('\tConverted to:')
                 debugstring = 'Transform3D '+elementid+', angle '+_np.str(_np.round(angle,4))+' rad'
                 print('\t'+debugstring)
-            elif self.elementprops.angle == 1:
+            elif self.machineprops.angle == 1:
                 print('Bending direction set to Right')
-            elif self.elementprops.angle == -1:
+            elif self.machineprops.angle == -1:
                 print('Bending direction set to Left')
         
 
@@ -240,13 +247,13 @@ class elements(functions):
         
         if label is not None: #Write to file
             if field_gradient > 0:
-                elementid = 'QF'+_np.str(self.elementprops.quads)
+                elementid = 'QF'+_np.str(self.machineprops.quads)
             elif field_gradient < 0:
-                elementid = 'QD'+_np.str(self.elementprops.quads)
+                elementid = 'QD'+_np.str(self.machineprops.quads)
             else:
-                elementid = 'NULLQUAD'+_np.str(self.elementprops.quads)  #For K1 = 0. 
+                elementid = 'NULLQUAD'+_np.str(self.machineprops.quads)  #For K1 = 0. 
         
-        self.elementprops.quads += 1
+        self.machineprops.quads += 1
 
         self.machine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
         
@@ -403,9 +410,9 @@ class elements(functions):
         
         field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.beamprops.brho    #K2 in correct units
         
-        elementid = 'SEXT'+_np.str(self.elementprops.sextus)
+        elementid = 'SEXT'+_np.str(self.machineprops.sextus)
         
-        self.elementprops.sextus += 1
+        self.machineprops.sextus += 1
         
         self.machine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
     
@@ -436,9 +443,9 @@ class elements(functions):
         else:
             length_in_metres = length
                 
-        elementid = 'SOLE'+_np.str(self.elementprops.solenoids)
+        elementid = 'SOLE'+_np.str(self.machineprops.solenoids)
 
-        self.elementprops.solenoids += 1
+        self.machineprops.solenoids += 1
         
         self.machine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
     
@@ -455,10 +462,10 @@ class elements(functions):
             try:
                 number = _np.float(ele)
                 if number == 48:
-                    self.elementprops.benddef = False
+                    self.machineprops.benddef = False
                     print('Switched Dipoles to Angle definition.')
                 if number == 47:
-                    self.elementprops.benddef = True
+                    self.machineprops.benddef = True
                     print('Switched Dipoles to field definition.')
             except ValueError:
                 dummy=0
@@ -498,7 +505,7 @@ class elements(functions):
         alfx = -1.0 * slope * betx
         
         self.beamprops.betx = betx
-        self.beamprops.emitx = emitx
+        self.beamprops.emitx = emitx / 1000.0
         self.beamprops.alfx = alfx
         
         emittoverbeta = self.beamprops.SigmaYP**2 * (1 - sigma43**2)
@@ -509,7 +516,7 @@ class elements(functions):
         alfy = -1.0 * slope * bety
 
         self.beamprops.bety = bety
-        self.beamprops.emity = emity
+        self.beamprops.emity = emity / 1000.0
         self.beamprops.alfy = alfy
 
         self.beamprops.distrType = 'gausstwiss'
@@ -528,7 +535,26 @@ class elements(functions):
 
 
 
+    def special_input(self,line):
+        label = self._get_label(line)
+        specialdata = []
+        for index,ele in enumerate(line[1:]):
+            if ele != '':
+                try:
+                    specialdata.append(_np.float(ele))
+                except ValueError:
+                    specialdata.append(ele)
+        print specialdata
+        if specialdata[0] == 16.0:  #X0 offset
+            self.beamprops.X0 = specialdata[1]
+        if specialdata[0] == 17.0:  #Y0 offset
+            self.beamprops.Y0 = specialdata[1]
+        if specialdata[0] == 18.0:  #Z0 offset
+            self.beamprops.Z0 = specialdata[1]
+        #if specialdata[0] == 5.0:   #beampiperadius (technically only vertical, but will apply a circle for now)
+        #    self.machineprops.beampiperadius = specialdata[1]
 
-
-
+        #if self._debug:
+        #    print('\tConverted to:')
+        #    print('\t'+_np.str(specialdata[2]))
 

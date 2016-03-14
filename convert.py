@@ -20,6 +20,12 @@ class _beamprops():      #Beam properties
         self.SigmaYP = 0
         self.SigmaE = 0
         self.SigmaT = 0
+        self.X0 = 0
+        self.Y0 = 0
+        self.Z0 = 0
+        self.T0 = 0
+        self.Xp0 = 0
+        self.Yp0 = 0
         self.brho = 0
         self.betx = 0
         self.alfx = 0
@@ -30,7 +36,7 @@ class _beamprops():      #Beam properties
         self.distrType = 'gauss'
 
 
-class _elementprops():       #Number of elements and angular properties
+class _machineprops():       #Number of elements and angular properties
     def __init__(self):
         self.benddef = True   #True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
         self.bending = 1   #+VE = bends to the right for positive particles
@@ -41,6 +47,7 @@ class _elementprops():       #Number of elements and angular properties
         self.sextus = 1
         self.transforms = 1
         self.solenoids = 1
+        self.beampiperadius = 10
 
 
 class pytransport(elements):
@@ -63,6 +70,7 @@ class pytransport(elements):
         self._beamdefined = False
         self._correctedbeamdef = False
         self._fileloaded = False
+        self._numberparts = -1
         self._collindex=[]  # An index of collimator labels
         self._accstart=[]   # An index of the start of acceleration elements.
         self.units={    ### Default TRANSPORT units
@@ -96,16 +104,14 @@ class pytransport(elements):
         else:
             self._debug = False
         self.beamprops = _beamprops(p_mass)
-        self.elementprops = _elementprops()
+        self.machineprops = _machineprops()
         self.machine = _Builder.Machine()
 
-        
     def load_file(self,infile):
         '''Load file to be converted into gmad format.
             '''
         self.data=[]
         self._file = infile[:-4]
-        self._filename = self._file+'.gmad'
         try:
             for line in open(infile):
                 self.data.append(line)
@@ -127,8 +133,17 @@ class pytransport(elements):
                 gmadpreamble.append(gmadline)
         return gmadpreamble
 
-
-
+    def write(self):
+        if self._numberparts < 0:
+            self._filename = self._file + '.gmad'
+        else:
+            self._numberparts += 1
+            self._filename = self._file+'_part'+_np.str((self._numberparts))+'.gmad'
+        self.create_beam()
+        self.create_options()
+        self.machine.AddSampler('all')
+        self.machine.Write(self._filename)
+                
 
     def convert(self):
         '''Function to convert TRANSPORT file on a line by line basis.
@@ -142,20 +157,20 @@ class pytransport(elements):
                 print('\t' + line)
             if len(line) > 1:   #i.e line isn't equal to escape sequence line.
                                 #This is a bit slapdash at the moment, needs better implementation.
-                a = _np.array(line.split(' '))
-                if self._is_sentinel(a):
+                self._line = _np.array(line.split(' '))
+                if self._is_sentinel(self._line):
                     if self._debug:
                         print('Sentinel Found.')
                     break
                 linelist=[]
-                for element in a:
+                for element in self._line:
                     if element != '':
                         linelist.append(element)
-                a = _np.array(linelist)
+                self._line = _np.array(linelist)
                 ### Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
                 try: 
-                    if _np.float(a[0]) > 0:
-                        self._get_type(a,linenum)
+                    if _np.float(self._line[0]) > 0:
+                        self._get_type(self._line,linenum)
                     #if self._debug:
                     #    print('\n')
                 except ValueError:
@@ -168,11 +183,7 @@ class pytransport(elements):
                             errorline = '\tCannot process line '+_np.str(linenum)+' \n'
 
                         print(errorline)
-        self.create_beam()
-        self.create_options()
-        self.machine.AddSampler('all')
-        self.machine.Write(self._filename)
-                
+        self.write()
 
 
     def _get_type(self,line,linenum):
@@ -199,6 +210,8 @@ class pytransport(elements):
             self.acceleration(line)
         if _np.float(line[0]) == 13.0:
             self.printline(line)
+        if _np.float(line[0]) == 16.0:
+            self.special_input(line)
         if _np.float(line[0]) == 18.0:
             self.sextupole(line)
         if _np.float(line[0]) == 19.0:
@@ -211,7 +224,6 @@ class pytransport(elements):
         # 8.  : Magnet alignment tolerances
         # 9.  : 'Repetition' - for nesting elements
         # 10. : Fitting constraint
-        # 12. : Something to do with the outputting the beam for use in another TRANSPORT system
         # 14. : Arbitrary transformation of TRANSPORT matrix
         
  
@@ -229,8 +241,8 @@ class pytransport(elements):
             self.beam.SetBetaY(self.beamprops.bety)
             self.beam.SetAlphaX(self.beamprops.alfx)
             self.beam.SetAlphaY(self.beamprops.alfy)
-            self.beam.SetEmittanceX(self.beamprops.emitx)
-            self.beam.SetEmittanceY(self.beamprops.emity)
+            self.beam.SetEmittanceX(self.beamprops.emitx,unitsstring='mm')
+            self.beam.SetEmittanceY(self.beamprops.emity,unitsstring='mm')
             self.beam.SetSigmaE(self.beamprops.SigmaE)
             self.beam.SetSigmaT(self.beamprops.SigmaT)
         
@@ -242,6 +254,10 @@ class pytransport(elements):
             self.beam.SetSigmaYP(self.beamprops.SigmaYP,unitsstring=self.units['yp'])
             self.beam.SetSigmaE(self.beamprops.SigmaE)
             self.beam.SetSigmaT(self.beamprops.SigmaT)
+        
+        self.beam.SetX0(self.beamprops.X0,unitsstring=self.units['x'])
+        self.beam.SetY0(self.beamprops.Y0,unitsstring=self.units['y'])
+        self.beam.SetZ0(self.beamprops.Z0,unitsstring=self.units['x'])
         
         if self._debug:
             print('\t Beam definition :')
@@ -270,7 +286,7 @@ class pytransport(elements):
         '''Function to create the Options gmad file.'''
         self.options = _Options.Options()
         self.options.SetPhysicsList(physicslist='em')
-        self.options.SetBeamPipeRadius(beampiperadius=10,unitsstring='cm')
+        self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,unitsstring=self.units['pipe_rad'])
         self.options.SetOuterDiameter(outerdiameter=0.5,unitsstring='m')
         self.options.SetTunnelRadius(tunnelradius=1,unitsstring='m')
         self.options.SetBeamPipeThickness(bpt=5,unitsstring='mm')
