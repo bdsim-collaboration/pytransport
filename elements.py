@@ -544,7 +544,6 @@ class elements(functions):
                     specialdata.append(_np.float(ele))
                 except ValueError:
                     specialdata.append(ele)
-        print specialdata
         if specialdata[0] == 16.0:  #X0 offset
             self.beamprops.X0 = specialdata[1]
         if specialdata[0] == 17.0:  #Y0 offset
