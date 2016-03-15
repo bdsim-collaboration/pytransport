@@ -41,7 +41,7 @@ class elements(functions):
         self.beamprops.SigmaY  = _np.float(line[3])
         self.beamprops.SigmaXP = _np.float(line[2])
         self.beamprops.SigmaYP = _np.float(line[4])
-        self.beamprops.SigmaE  = _np.float(line[6])
+        self.beamprops.SigmaE  = _np.float(line[6]) * 0.01  ## Convert from percentage to absolute
         self.beamprops.SigmaT  = self._bunch_length_convert(_np.float(line[5])) ## Get bunch length in seconds.
 
         
