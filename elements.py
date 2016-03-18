@@ -41,15 +41,15 @@ class elements(functions):
         self.beamprops.SigmaY  = _np.float(line[3])
         self.beamprops.SigmaXP = _np.float(line[2])
         self.beamprops.SigmaYP = _np.float(line[4])
-        self.beamprops.SigmaE  = _np.float(line[6]) * 0.01  ## Convert from percentage to absolute
+        self.beamprops.SigmaE  = _np.float(line[6]) * 0.01 * (self.beamprops.beta**2) ## Convert from percentage mom spread to absolute espread
         self.beamprops.SigmaT  = self._bunch_length_convert(_np.float(line[5])) ## Get bunch length in seconds.
 
         
         #Calculate Initial Twiss params
-        self.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
-        self.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP / 1000.0
-        self.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
-        self.emitx = self.beamprops.SigmaY * self.beamprops.SigmaYP
+        self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
+        self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP / 1000.0
+        self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
+        self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP
 
         if self._debug:
             print('\t Beam definition :')
