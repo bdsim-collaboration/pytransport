@@ -47,9 +47,9 @@ class elements(functions):
         
         #Calculate Initial Twiss params
         self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
-        self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP / 1000.0
+        self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
         self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
-        self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP
+        self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
 
         if self._debug:
             print('\t Beam definition :')
