@@ -20,7 +20,7 @@ class functions():
 #        else:
 #            return False
         if len(line) > 8:
-            if line[8] == '0.':
+            if (line[8] == '0.') or (line[8] == '0'):
                 return True
             else:
                 return False
@@ -82,6 +82,42 @@ class functions():
                     break
         return endpos
                     
+    def _load_file(self,filepath):
+        '''Load file to be converted into gmad format.
+            '''
+        self.data=[]
+        infile = filepath.split('/')[-1] #Remove filepath, leave just filename
+        self._file = infile[:-4]         #Remove extension
+        try:
+            for line in open(filepath):
+                self.data.append(line)
+            self._fileloaded = True
+        except IOError:
+            print 'Cannot open file.'
+
+    def _remove_blanks(self,line):
+        ''' Function to remove '' from lines.
+            '''
+        linelist=[]
+        for element in line:
+            if element != '':
+                linelist.append(element)
+        line = _np.array(linelist)
+        return line
+    
+
+    def _get_preamble(self):        #Redundant until pybdsim can handle comments.
+        '''Function to read any preamble at the start of the TRANSPORT file.
+            '''
+        indc,linenum = self._get_indic()
+        gmadpreamble=[]
+        for line in self.data[:linenum-1]:
+            if line == '\r\n':
+                pass
+            else:
+                gmadline = '!' + line
+                gmadpreamble.append(gmadline)
+        return gmadpreamble
 
 
     def _get_label(self,line):

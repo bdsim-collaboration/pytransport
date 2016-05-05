@@ -85,7 +85,11 @@ class elements(functions):
                 elif endofline != -1:
                     driftlen = ele[:endofline]
                     break
-        
+        if _np.float(driftlen) <= 0:
+            if self._debug:
+                print('\tZero or negative length element, ignoring.')
+            return
+    
         if self.units['element_length'] != 'm':
             length_in_metres = _np.float(driftlen) * self.scale[self.units['element_length'][0]]  #Convert to metres.
         else:
@@ -115,8 +119,8 @@ class elements(functions):
         length = dipoledata[0]          # First two non-blanks must be the entries in a specific order.
         
         ## Get poleface rotationa
-        e1 = self._facerotation(line,linenum-1) * (_np.pi / 180.0)   ## Entrance pole face rotation.
-        e2 = self._facerotation(line,linenum+1) * (_np.pi / 180.0)   ## Exit pole face rotation.
+        e1 = self._facerotation(line,linenum-1) * (_np.pi / 180.0) * self.machineprops.bending  ## Entrance pole face rotation.
+        e2 = self._facerotation(line,linenum+1) * (_np.pi / 180.0) * self.machineprops.bending  ## Exit pole face rotation.
         if self._debug:
             if e1 != 0:
                 print('\tPreceding element ('+_np.str(linenum-1)+') provides an entrance poleface rotation of '+_np.str(_np.round(e1,4))+' rad.')

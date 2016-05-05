@@ -181,15 +181,11 @@ class pytransport(elements):
             if len(line) > 1:   #i.e line isn't equal to escape sequence line.
                                 #This is a bit slapdash at the moment, needs better implementation.
                 self._line = _np.array(line.split(' '))
-                if self._is_sentinel(self._line):
-                    if self._debug:
-                        print('Sentinel Found.')
+                if self._is_sentinel(self._line):   # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT
+                    if self._debug:                 # fitting routine and is only written after the lattice definition,
+                        print('Sentinel Found.')    # so there's no point reading lines beyond it.
                     break
-                linelist=[]
-                for element in self._line:
-                    if element != '':
-                        linelist.append(element)
-                self._line = _np.array(linelist)
+                self._line = self._remove_blanks(self._line)
                 ### Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
                 try: 
                     if _np.float(self._line[0]) > 0:
@@ -241,7 +237,7 @@ class pytransport(elements):
             self.solenoid(line)
 
         ### OTHER TYPES WHICH CAN BE IGNORED:
-        # 2.  : Dipole fringe fields.
+        # 2.  : Dipole poleface rotation (handled in dipole line).
         # 6.0.X : Update RX matrix used in TRANSPORT
         # 7.  : 'Shift beam centroid'
         # 8.  : Magnet alignment tolerances
