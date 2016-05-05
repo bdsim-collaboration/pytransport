@@ -1,6 +1,7 @@
 import numpy as _np
 from scipy import constants as _con
-from pybdsim import Builder as _Builder
+from pymadx import Builder as _mdBuilder
+from pybdsim import Builder as _pyBuilder
 import string as _string
 from _General import functions
     
@@ -14,8 +15,10 @@ class elements(functions):
             self._numberparts += 1
             self.write()
             print('Writing.')
-            del self.machine
-            self.machine = _Builder.Machine()
+            del self.gmadmachine
+            del self.madxmachine
+            self.gmadmachine = _pyBuilder.Machine()
+            self.madxmachine = _mdBuilder.Machine()
             self._correctedbeamdef = False
             
             print('\tBeam redefinition found. Writing previous section to file.')
@@ -91,7 +94,8 @@ class elements(functions):
         elementid = 'DR'+_np.str(self.machineprops.drifts)
         self.machineprops.drifts += 1
 
-        self.machine.AddDrift(name=elementid,length=length_in_metres)
+        self.gmadmachine.AddDrift(name=elementid,length=length_in_metres)
+        self.madxmachine.AddDrift(name=elementid,length=length_in_metres)
         
         if self._debug:
             print('\tConverted to:')
@@ -148,13 +152,17 @@ class elements(functions):
         
         ##Check for non zero pole face rotation
         if (e1 != 0) and (e2 != 0):
-            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),e2=_np.round(e2,4))
+            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),e2=_np.round(e2,4))
+            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),e2=_np.round(e2,4))
         elif (e1 != 0) and (e2 == 0):
-            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4))
+            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4))
+            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4))
         elif (e1 == 0) and (e2 != 0):
-            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=_np.round(e2,4))
+            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=_np.round(e2,4))
+            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=_np.round(e2,4))
         else:
-            self.machine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4))
+            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4))
+            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4))
 
         ## Debug output
         if self._debug:
@@ -202,7 +210,8 @@ class elements(functions):
             anginrad = self.machineprops.angle * (_np.pi / 180)
             elementid = 't'+_np.str(self.machineprops.transforms)
             self.machineprops.transforms += 1
-            self.machine.AddTransform3D(name=elementid,psi=anginrad)
+            self.gmadmachine.AddTransform3D(name=elementid,psi=anginrad)
+            self.madxmachine.AddTransform3D(name=elementid,psi=anginrad)
             rotation = True
         
         if self._debug:
@@ -255,9 +264,16 @@ class elements(functions):
         
         self.machineprops.quads += 1
 
-        self.machine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
+        self.gmadmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
+        self.madxmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
         
         if self._debug:
+            string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' KG, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
+            string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
+            string3 = '\tBrho = ' + _np.str(_np.round(self.beamprops.brho,4)) + ' Tm. K1 = ' +_np.str(_np.round(field_gradient,4)) + ' m^-2'
+            print(string1)
+            print(string2)
+            print(string3)
             print('\tConverted to:')
             debugstring = 'Quadrupole '+elementid+', length= '+_np.str(length_in_metres)+' m, k1= '+_np.str(_np.round(field_gradient,4))+' T/m'
             print('\t'+debugstring)
@@ -414,8 +430,10 @@ class elements(functions):
         
         self.machineprops.sextus += 1
         
-        self.machine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
-    
+        self.gmadmachine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
+        self.madxmachine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
+
+
         if self._debug:
             print('\tConverted to:')
             debugstring = 'Sextupole '+elementid+', length '+_np.str(length_in_metres)+' m, k2 '+_np.str(_np.round(field_gradient,4))+' T/m^2'
@@ -447,8 +465,9 @@ class elements(functions):
 
         self.machineprops.solenoids += 1
         
-        self.machine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
-    
+        self.gmadmachine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
+        self.madxmachine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
+
         if self._debug:
             print('\tConverted to:')
             debugstring = 'Solenoid '+elementid+', length '+_np.str(length_in_metres)+' m, ks '+_np.str(_np.round(field_in_Tesla,4))+' T'
