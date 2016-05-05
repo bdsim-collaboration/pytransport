@@ -252,40 +252,73 @@ class pytransport(elements):
  
 
     def create_beam(self):
-        '''Defines the beam. Will ALWAYS be a Gaussian. Must input the TRANSPORT line that defines the beam.
+        '''Function to prepare the beam for writing.
             '''
-        self.beam = _Beam.Beam()
-        self.beam.SetParticleType(self._particle)
-        self.beam.SetEnergy(energy=_np.round(self.beamprops.tot_energy,3),unitsstring=self.units['p_egain'])
+        #different beam objects depending on output type
+        self.madxbeam = self.madxmachine.beam
+        self.gmadbeam = self.gmadmachine.beam
+        
+        #convert energy to GeV (madx only handles GeV)
+        energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
+        self.beamprops.tot_energy = energy_in_gev
+        
+        self.madxbeam.SetParticleType(self._particle)
+        self.madxbeam.SetEnergy(energy=_np.round(self.beamprops.tot_energy,3),unitsstring = 'GeV')
 
+        self.gmadbeam.SetParticleType(self._particle)
+        self.gmadbeam.SetEnergy(energy=_np.round(self.beamprops.tot_energy,3),unitsstring = 'GeV')
+
+        #set gmad parameters depending on distribution
         if self.beamprops.distrType == 'gausstwiss':
-            self.beam.SetDistributionType(self.beamprops.distrType)
-            self.beam.SetBetaX(self.beamprops.betx)
-            self.beam.SetBetaY(self.beamprops.bety)
-            self.beam.SetAlphaX(self.beamprops.alfx)
-            self.beam.SetAlphaY(self.beamprops.alfy)
-            self.beam.SetEmittanceX(self.beamprops.emitx,unitsstring='mm')
-            self.beam.SetEmittanceY(self.beamprops.emity,unitsstring='mm')
-            self.beam.SetSigmaE(self.beamprops.SigmaE)
-            self.beam.SetSigmaT(self.beamprops.SigmaT)
-        
+            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
+            self.gmadbeam.SetBetaX(self.beamprops.betx)
+            self.gmadbeam.SetBetaY(self.beamprops.bety)
+            self.gmadbeam.SetAlphaX(self.beamprops.alfx)
+            self.gmadbeam.SetAlphaY(self.beamprops.alfy)
+            self.gmadbeam.SetEmittanceX(self.beamprops.emitx,unitsstring='mm')
+            self.gmadbeam.SetEmittanceY(self.beamprops.emity,unitsstring='mm')
+            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
+            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
+
         else:
-            self.beam.SetDistributionType(self.beamprops.distrType)
-            self.beam.SetSigmaX(self.beamprops.SigmaX,unitsstring=self.units['x'])
-            self.beam.SetSigmaY(self.beamprops.SigmaY,unitsstring=self.units['y'])
-            self.beam.SetSigmaXP(self.beamprops.SigmaXP,unitsstring=self.units['xp'])
-            self.beam.SetSigmaYP(self.beamprops.SigmaYP,unitsstring=self.units['yp'])
-            self.beam.SetSigmaE(self.beamprops.SigmaE)
-            self.beam.SetSigmaT(self.beamprops.SigmaT)
+            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
+            self.gmadbeam.SetSigmaX(self.beamprops.SigmaX,unitsstring=self.units['x'])
+            self.gmadbeam.SetSigmaY(self.beamprops.SigmaY,unitsstring=self.units['y'])
+            self.gmadbeam.SetSigmaXP(self.beamprops.SigmaXP,unitsstring=self.units['xp'])
+            self.gmadbeam.SetSigmaYP(self.beamprops.SigmaYP,unitsstring=self.units['yp'])
+            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
+            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
+            
+            # calculate betas and emittances regardless for madx beam
+            self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
+            self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
+            self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
+            self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
         
-        self.beam.SetX0(self.beamprops.X0,unitsstring=self.units['x'])
-        self.beam.SetY0(self.beamprops.Y0,unitsstring=self.units['y'])
-        self.beam.SetZ0(self.beamprops.Z0,unitsstring=self.units['x'])
+        #set madx beam
+        self.madxbeam.SetDistributionType('madx')
+        self.madxbeam.SetBetaX(self.beamprops.betx)
+        self.madxbeam.SetBetaY(self.beamprops.bety)
+        self.madxbeam.SetAlphaX(self.beamprops.alfx)
+        self.madxbeam.SetAlphaY(self.beamprops.alfy)
+        self.madxbeam.SetEmittanceX(self.beamprops.emitx/1000)
+        self.madxbeam.SetEmittanceY(self.beamprops.emity/1000)
+        self.madxbeam.SetSigmaE(self.beamprops.SigmaE)
+        self.madxbeam.SetSigmaT(self.beamprops.SigmaT)
+        
+        #set beam offsets in gmad if non zero
+        if self.beamprops.X0 != 0:
+            self.gmadbeam.SetX0(self.beamprops.X0,unitsstring=self.units['x'])
+        if self.beamprops.Y0 != 0:
+            self.gmadbeam.SetY0(self.beamprops.Y0,unitsstring=self.units['y'])
+        if self.beamprops.Z0 != 0:
+            self.gmadbeam.SetZ0(self.beamprops.Z0,unitsstring=self.units['x'])
+
         
         if self._debug:
             print('\t Beam definition :')
             print('\t distrType = ' + self.beamprops.distrType)
-            print('\t energy = ' + _np.str(_np.round(self.beamprops.tot_energy,3))+ ' ' +self.units['p_egain'])
+            print('\t energy = ' + _np.str(_np.round(self.beamprops.tot_energy,3))+ ' GeV')
             print('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
             print('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
             print('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
@@ -301,12 +334,12 @@ class pytransport(elements):
             print('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
             print('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
 
-        self.machine.AddBeam(self.beam)
-
+        self.gmadmachine.AddBeam(self.gmadbeam)
+        self.madxmachine.AddBeam(self.madxbeam)
 
 
     def create_options(self):
-        '''Function to create the Options gmad file.'''
+        '''Function to set the Options for the BDSIM machine.'''
         self.options = _Options.Options()
         self.options.SetPhysicsList(physicslist='em')
         self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,unitsstring=self.units['pipe_rad'])
@@ -314,7 +347,10 @@ class pytransport(elements):
         self.options.SetTunnelRadius(tunnelradius=1,unitsstring='m')
         self.options.SetBeamPipeThickness(bpt=5,unitsstring='mm')
         self.options.SetSamplerDiameter(radius=1,unitsstring='m')
-        self.machine.AddOptions(self.options)
+        self.options.SetStopTracks(stop=True)
+        
+        self.gmadmachine.AddOptions(self.options)
+        self.madxmachine.AddOptions(self.options)   #redundant
 
     
 
