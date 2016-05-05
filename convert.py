@@ -2,11 +2,13 @@ import numpy as _np
 from scipy import constants as _con
 import string as _string
 from pybdsim import Options as _Options
-from pybdsim import Beam as _Beam
-from pybdsim import Builder as _Builder
+from pybdsim import Builder as _pyBuilder
+from pymadx import Builder as _mdBuilder
 from elements import elements
 
-class _beamprops():      #Beam properties
+class _beamprops():
+    '''A class containing the properties of the inital beam distribution.
+        '''
     def __init__(self,p_mass=938.272):
         self.momentum = 0
         self.mass = p_mass
@@ -36,7 +38,9 @@ class _beamprops():      #Beam properties
         self.distrType = 'gauss'
 
 
-class _machineprops():       #Number of elements and angular properties
+class _machineprops():
+    '''A class containing the number of elements and angular properties (i.e bending direction)
+        '''
     def __init__(self):
         self.benddef = True   #True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
         self.bending = 1   #+VE = bends to the right for positive particles
@@ -47,21 +51,49 @@ class _machineprops():       #Number of elements and angular properties
         self.sextus = 1
         self.transforms = 1
         self.solenoids = 1
-        self.beampiperadius = 10
+        self.beampiperadius = 20
 
 
 class pytransport(elements):
     '''A module for converting a TRANSPORT file into gmad for use in BDSIM.
         
         To use:
-            self = pytransport.convert.pytransport()
-            self.load_file(TRANSPORTfile)
-            self.convert()
+            self = pytransport.convert.pytransport(inputfile)
             
-        Will output:
+        Will output the lattice in the appropriate format.
+
+        Parameters
+        -------------------------------
         
+        particle: string
+            The particle type, default = 'proton'.
+        
+        debug: boolean
+            Output debug strings, default = False.
+            
+        distrType: string
+            The distribution type of the beam, default = 'gauss'.
+            Can only handle 'gauss' and 'gausstwiss'. If madx output is specified,
+            the madx beam distribution is 'madx'.
+            
+        gmad: boolean
+            Write the converted output into gmad format, default = True.
+            
+        madx: boolean
+            write the converted outout into madx format, dafault = False.
+            
+        auto: boolean
+            Automatically convert and output the file, default = True.
+
         '''
-    def __init__(self,particle='proton',debug=False):
+    def __init__(self,inputfile,
+                 particle   = 'proton',
+                 debug      = False,
+                 distrType  = 'gauss',
+                 gmad       = True,
+                 madx       = False,
+                 auto       = True):
+
         if particle == 'proton':
             p_mass = (_con.proton_mass) * (_con.c**2 / _con.e) / 1e9        ## Particle masses in same unit as TRANSPORT (GeV)
         elif particle == 'e-' or particle == 'e+':                          
@@ -70,6 +102,8 @@ class pytransport(elements):
         self._beamdefined = False
         self._correctedbeamdef = False
         self._fileloaded = False
+        self._gmadoutput = gmad
+        self._madxoutput = madx
         self._numberparts = -1
         self._collindex=[]  # An index of collimator labels
         self._accstart=[]   # An index of the start of acceleration elements.
@@ -98,54 +132,43 @@ class pytransport(elements):
         'K':1e+3, # Included both cases of k just in case.  
         'M':1e+6,
         'G':1e+9,
-        'T':1e+12}
+        'T':1e+12
+            }
+        self._debug = False
         if debug:
             self._debug = True
-        else:
-            self._debug = False
+
+        #pytransport conversion classes
         self.beamprops = _beamprops(p_mass)
+        self.beamprops.distrType = distrType
         self.machineprops = _machineprops()
-        self.machine = _Builder.Machine()
 
-    def load_file(self,infile):
-        '''Load file to be converted into gmad format.
-            '''
-        self.data=[]
-        self._file = infile[:-4]
-        try:
-            for line in open(infile):
-                self.data.append(line)
-            self._fileloaded = True
-        except IOError:
-            print 'Cannot open file.'
-                
+        #a machine for both gmad and madx. Both created by default, input booleans only decide writing.
+        self.gmadmachine = _pyBuilder.Machine()
+        self.madxmachine = _mdBuilder.Machine()
 
-    def _get_preamble(self):        #Redundant until pybdsim can handle comments.
-        '''Function to read any preamble at the start of the TRANSPORT file.
-            '''
-        indc,linenum = self._get_indic()
-        gmadpreamble=[]
-        for line in self.data[:linenum-1]:
-            if line == '\r\n':
-                pass
-            else:
-                gmadline = '!' + line
-                gmadpreamble.append(gmadline)
-        return gmadpreamble
+        #load file automatically
+        self._load_file(inputfile)
+        if auto:
+            self.transport2gmad()
+
 
     def write(self):
         if self._numberparts < 0:
             self._filename = self._file + '.gmad'
         else:
             self._numberparts += 1
-            self._filename = self._file+'_part'+_np.str((self._numberparts))+'.gmad'
+            self._filename = self._file+'_part'+_np.str((self._numberparts))
         self.create_beam()
         self.create_options()
-        self.machine.AddSampler('all')
-        self.machine.Write(self._filename)
-                
+        self.gmadmachine.AddSampler('all')
+        self.madxmachine.AddSampler('all')
+        if self._gmadoutput:
+            self.gmadmachine.Write(self._file)
+        if self._madxoutput:
+            self.madxmachine.Write(self._file)
 
-    def convert(self):
+    def transport2gmad(self):
         '''Function to convert TRANSPORT file on a line by line basis.
             '''
         if not self._fileloaded:
