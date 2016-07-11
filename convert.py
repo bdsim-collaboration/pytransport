@@ -286,8 +286,14 @@ class pytransport(elements):
             self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
             
             # calculate betas and emittances regardless for madx beam
-            self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
-            self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
+            try:
+                self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
+            except ZeroDivisionError:
+                self.beamprops.betx= 0
+            try:
+                self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
+            except ZeroDivisionError:
+                self.beamprops.bety= 0
             self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
             self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
         
