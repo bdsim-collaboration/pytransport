@@ -5,6 +5,7 @@ from pybdsim import Options as _Options
 from pybdsim import Builder as _pyBuilder
 from pymadx import Builder as _mdBuilder
 from elements import elements
+import os as _os
 
 class _beamprops():
     '''A class containing the properties of the inital beam distribution.
@@ -164,9 +165,15 @@ class pytransport(elements):
         self.gmadmachine.AddSampler('all')
         self.madxmachine.AddSampler('all')
         if self._gmadoutput:
+            _os.mkdir('gmad')
+            _os.chdir('gmad')
             self.gmadmachine.Write(self._file)
+            _os.chdir('../')
         if self._madxoutput:
+            _os.mkdir('madx')
+            _os.chdir('madx')
             self.madxmachine.Write(self._file)
+            _os.chdir('../')
 
     def transport2gmad(self):
         '''Function to convert TRANSPORT file on a line by line basis.
