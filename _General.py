@@ -36,23 +36,53 @@ class functions():
 
 
     def _facerotation(self,line,linenum):
-        faceline = self.data[linenum]
-        splitline = faceline.split(' ')
-        splitline = self._remove_label(splitline)
-        splitline = self._remove_spaces(splitline)
-        try:
-            if _np.float(splitline[0]) == 2.0:
-                endof = self._endofline(splitline[1])
-                if endof != -1:
-                    angle = _np.round(_np.float(splitline[1][:endof]),4)
-                else:
-                    angle = _np.round(_np.float(splitline[1]),4)
-            else:
-                angle = 0
-        except ValueError:
-            angle = 0
+        anglein=0
+        angleout=0
+        
+        linelist=[]
+        for i in self.data[(linenum-5):linenum]:
+            linelist.append(i)
+        linelist.reverse()   #Search for poleface in reverse line order
 
-        return angle
+        for line in linelist:
+            faceline = line
+            splitline = faceline.split(' ')
+            splitline = self._remove_label(splitline)
+            splitline = self._remove_spaces(splitline)
+            try:
+                if _np.float(splitline[0]) == 4.0:
+                    break
+                elif _np.float(splitline[0]) == 2.0:
+                    endof = self._endofline(splitline[1])
+                    if endof != -1:
+                        anglein = _np.round(_np.float(splitline[1][:endof]),4)
+                    else:
+                        anglein = _np.round(_np.float(splitline[1]),4)
+                    break
+                else:
+                    pass
+            except ValueError:
+                pass
+        for line in self.data[linenum+1:(linenum+6)]:
+            faceline = line
+            splitline = faceline.split(' ')
+            splitline = self._remove_label(splitline)
+            splitline = self._remove_spaces(splitline)
+            try:
+                if _np.float(splitline[0]) == 4.0:
+                    break
+                elif _np.float(splitline[0]) == 2.0:
+                    endof = self._endofline(splitline[1])
+                    if endof != -1:
+                        angleout = _np.round(_np.float(splitline[1][:endof]),4)
+                    else:
+                        angleout = _np.round(_np.float(splitline[1]),4)
+                    break
+                else:
+                    pass
+            except ValueError:
+                pass
+        return anglein,angleout
     
     def _remove_spaces(self,line):
         elementlist=[]

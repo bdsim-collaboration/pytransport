@@ -125,8 +125,12 @@ class elements(functions):
         length = dipoledata[0]          # First two non-blanks must be the entries in a specific order.
         
         ## Get poleface rotationa
-        e1 = self._facerotation(line,linenum-1) * (_np.pi / 180.0) * self.machineprops.bending  ## Entrance pole face rotation.
-        e2 = self._facerotation(line,linenum+1) * (_np.pi / 180.0) * self.machineprops.bending  ## Exit pole face rotation.
+        #e1 = self._facerotation(line,linenum-1) * (_np.pi / 180.0) * self.machineprops.bending  ## Entrance pole face rotation.
+        #e2 = self._facerotation(line,linenum+1) * (_np.pi / 180.0) * self.machineprops.bending  ## Exit pole face rotation.
+        e1,e2 = self._facerotation(line,linenum)
+        e1 *= ((_np.pi / 180.0)*self.machineprops.bending)
+        e2 *= ((_np.pi / 180.0)*self.machineprops.bending)
+        
         if self._debug:
             if e1 != 0:
                 print('\tPreceding element ('+_np.str(linenum-1)+') provides an entrance poleface rotation of '+_np.str(_np.round(e1,4))+' rad.')
