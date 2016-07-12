@@ -96,16 +96,11 @@ class reader():
             large so it should not require a large amount of memory.
             '''
         self.file = file
-        num_lines = _np.sum(1 for line in open(file))
         flist=[]
         infile = open(file)
-        ##Loop over lines and remove any carriage returns
-        for i in range(num_lines):
-            line = infile.next()
-            if line[-1] == '\n':
-                line = line[:-1]
-            if line[-1] == '\r':
-                line = line[:-1]
+        ##Loop over lines and remove any carriage returns (both Mac and Unix)
+        for line in infile:
+            line.rstrip('\r\n')
             flist.append(line)
         infile.close()
         return flist
