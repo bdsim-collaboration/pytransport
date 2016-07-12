@@ -100,8 +100,8 @@ class reader():
         infile = open(file)
         ##Loop over lines and remove any carriage returns (both Mac and Unix)
         for line in infile:
-            line.rstrip('\r\n')
-            flist.append(line)
+            cleanline = line.rstrip('\r\n')
+            flist.append(cleanline)
         infile.close()
         return flist
 
