@@ -225,7 +225,11 @@ class elements(functions):
             elementid = 't'+_np.str(self.machineprops.transforms)
             self.machineprops.transforms += 1
             self.gmadmachine.AddTransform3D(name=elementid,psi=anginrad)
-            self.madxmachine.AddTransform3D(name=elementid,psi=anginrad)
+            ## MadX Builder does not have transform 3d 
+            # Comment out and print warning
+            #self.madxmachine.AddTransform3D(name=elementid,psi=anginrad)
+            print 'Warning, MadX Builder does not have Transform 3D!'
+            
             rotation = True
         
         if self._debug:
