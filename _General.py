@@ -283,7 +283,6 @@ class functions():
             self.units['p_egain'] = label
 
 
-
     def _calculate_energy(self,momentum):
         '''Function to calculate:
                 Total Energy
@@ -306,11 +305,47 @@ class functions():
             scaling = 1e9                               ## Scaling relative to 1 eV
             mom_in_ev = momentum
         p_mass *= scaling                               ## Scale particle rest mass
-        energy = _np.sqrt((p_mass**2 * _con.c**2) + (momentum**2 * _con.c**2)) / _con.c
+        energy = _np.sqrt((p_mass**2) + (momentum**2))
         self.beamprops.tot_energy = energy
+        self.beamprops.tot_energy_current = energy
         self.beamprops.k_energy = energy - p_mass
         self.beamprops.gamma = energy / p_mass
         self.beamprops.beta = _np.sqrt((1.0 - (1.0 / self.beamprops.gamma**2)))
         self.beamprops.brho = mom_in_ev / _con.c
 
-  
+    def _calculate_momentum(self,k_energy):
+        '''Function to calculate:
+                Total Energy
+                Kinetic Energy
+                Momentum
+                Lorentz factor (gamma)
+                Velocity (beta)
+                Magnetic rigidity (brho)
+            '''
+        
+        k_energy = _np.float(k_energy)
+
+        self.beamprops.k_energy = k_energy
+        p_mass = self.beamprops.mass ## Particle rest mass (in GeV)
+        
+        e_unit = self.units['p_egain']
+        if e_unit != 'eV':
+            scaling = 1e9 / self.scale[e_unit[0]]     ## Scaling relative to mom. unit
+        elif e_unit == 'eV':
+            scaling = 1e9                               ## Scaling relative to 1 eV
+        p_mass *= scaling                               ## Scale particle rest mass
+        
+        #energy = _np.sqrt((p_mass**2 * _con.c**2) + (momentum**2 * _con.c**2)) / _con.c
+
+        self.beamprops.tot_energy_current = k_energy + p_mass
+        self.beamprops.momentum = _np.sqrt((self.beamprops.tot_energy_current**2) - (p_mass**2))
+
+        self.beamprops.gamma = self.beamprops.tot_energy_current / p_mass
+        self.beamprops.beta = _np.sqrt((1.0 - (1.0 / self.beamprops.gamma**2)))
+
+        if e_unit != 'eV':
+            mom_in_ev = self.beamprops.momentum * self.scale[e_unit[0]]
+        elif e_unit == 'eV':
+            mom_in_ev = self.beamprops.momentum
+
+        self.beamprops.brho = mom_in_ev / _con.c
