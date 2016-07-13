@@ -246,6 +246,9 @@ class reader():
             'Name'      :'',
             'Type'      :''
             }
+        #okElements=['BEAM','CORR','DRIFT','QUAD','SLIT','ADD TO BEAM','BEND','ROTAT','Z RO']
+        notokElements=['AXIS SHIFT']
+        
         num_elements = 0
         # initialise momentum/energy since not given for every element
         momentum = 0.0
@@ -255,56 +258,71 @@ class reader():
             if len(element) > 1:  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
                 type    = element[0].split('*')[1]
-                # rest of first line split with spaces
-                splitline = self._remove_blanks(element[0].split('*')[2].split(' '))
-                name    = splitline[1].strip('"')
-                if type=="BEAM" or type=="ACC":
-                    momentum = _np.float(splitline[-2])
-                    energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
-                s       = _np.float(self._remove_blanks(element[1].split(' '))[0])
-                sigx    = _np.float(self._remove_blanks(element[1].split(' '))[3])
-                sigxp   = _np.float(self._remove_blanks(element[2].split(' '))[1])
-                sigy    = _np.float(self._remove_blanks(element[3].split(' '))[1])
-                sigyp   = _np.float(self._remove_blanks(element[4].split(' '))[1])
-                sigt    = _np.float(self._remove_blanks(element[5].split(' '))[1])
-                sigp    = _np.float(self._remove_blanks(element[6].split(' '))[1])
+                if not notokElements.__contains__(type):
+                    # rest of first line split with spaces
+                    splitline = self._remove_blanks(element[0].split('*')[2].split(' '))
+                    name    = splitline[1].strip('"')
+                    if type=="BEAM" or type=="ACC":
+                        momentum = _np.float(splitline[-2])
+                        energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
+                    s       = _np.float(self._remove_blanks(element[1].split(' '))[0])
+                    sigx    = _np.float(self._remove_blanks(element[1].split(' '))[3])
+                    sigxp   = _np.float(self._remove_blanks(element[2].split(' '))[1])
+                    sigy    = _np.float(self._remove_blanks(element[3].split(' '))[1])
+                    sigyp   = _np.float(self._remove_blanks(element[4].split(' '))[1])
+                    sigt    = _np.float(self._remove_blanks(element[5].split(' '))[1])
+                    sigp    = _np.float(self._remove_blanks(element[6].split(' '))[1])
 
-                r21     = _np.float(self._remove_blanks(element[2].split(' '))[3])
-                r43     = _np.float(self._remove_blanks(element[4].split(' '))[5])
-                dx      = _np.float(self._split_negatives(self._remove_blanks(element[8].split(' ')))[5])
-                dy      = _np.float(self._split_negatives(self._remove_blanks(element[10].split(' ')))[5])
+                    r21     = _np.float(self._remove_blanks(element[2].split(' '))[3])
+                    r43     = _np.float(self._remove_blanks(element[4].split(' '))[5])
+                    
+                    ## Add/Subtract small amount if sin of phase space ellipse rotation is +/-one.
+                    ## This comes from the output annoyingly rounding the code to one ,
+                    ## which produces a div by zero later in the beta and gamma calculations.
+                    if r21 == 1.0:
+                        r21 -= 1e-4
+                    if r21 == -1.0:
+                        r21 += 1e-4
+                    
+                    if r43 == 1.0:
+                        r43 -= 1e-4
+                    if r43 == -1.0:
+                        r43 += 1e-4
+                    
+                    dx      = _np.float(self._split_negatives(self._remove_blanks(element[8].split(' ')))[5])
+                    dy      = _np.float(self._split_negatives(self._remove_blanks(element[10].split(' ')))[5])
 
-                xpint   = _np.sqrt(sigxp**2 * (1 - r21**2))
-                ypint   = _np.sqrt(sigyp**2 * (1 - r43**2))
-                
-                ex      = sigx*xpint
-                ey      = sigy*ypint
-                betx    = sigx**2 / ex
-                bety    = sigy**2 / ey
-                gammax  = sigxp**2 / ex
-                gammay  = sigyp**2 / ey
-                alfx    = _np.sqrt((gammax * betx)-1)
-                alfy    = _np.sqrt((gammax * betx)-1)
+                    xpint   = _np.sqrt(sigxp**2 * (1 - r21**2))
+                    ypint   = _np.sqrt(sigyp**2 * (1 - r43**2))
+                    
+                    ex      = sigx*xpint
+                    ey      = sigy*ypint
+                    betx    = sigx**2 / ex
+                    bety    = sigy**2 / ey
+                    gammax  = sigxp**2 / ex
+                    gammay  = sigyp**2 / ey
+                    alfx    = _np.sqrt((gammax * betx)-1)
+                    alfy    = _np.sqrt((gammax * betx)-1)
 
-                transdata['Sigma_x'].append(sigx/1000)
-                transdata['Sigma_xp'].append(sigxp)
-                transdata['Sigma_y'].append(sigy/1000)
-                transdata['Sigma_yp'].append(sigyp)
-                transdata['S'].append(s)
-                transdata['Alph_x'].append(alfx)
-                transdata['Alph_y'].append(alfy)
-                transdata['Beta_x'].append(betx)
-                transdata['Beta_y'].append(bety)
-                transdata['Emitt_x'].append(ex)
-                transdata['Emitt_y'].append(ey)
-                transdata['Disp_x'].append(dx)
-                transdata['Disp_y'].append(dy)
-                transdata['Sigma_p'].append(sigp)
-                transdata['Momentum'].append(momentum)
-                transdata['E'].append(energy)
-                transdata['Name'].append(name)
-                transdata['Type'].append(type)
-                num_elements += 1 
+                    transdata['Sigma_x'].append(sigx/1000)
+                    transdata['Sigma_xp'].append(sigxp)
+                    transdata['Sigma_y'].append(sigy/1000)
+                    transdata['Sigma_yp'].append(sigyp)
+                    transdata['S'].append(s)
+                    transdata['Alph_x'].append(alfx)
+                    transdata['Alph_y'].append(alfy)
+                    transdata['Beta_x'].append(betx)
+                    transdata['Beta_y'].append(bety)
+                    transdata['Emitt_x'].append(ex)
+                    transdata['Emitt_y'].append(ey)
+                    transdata['Disp_x'].append(dx)
+                    transdata['Disp_y'].append(dy)
+                    transdata['Sigma_p'].append(sigp)
+                    transdata['Momentum'].append(momentum)
+                    transdata['E'].append(energy)
+                    transdata['Name'].append(name)
+                    transdata['Type'].append(type)
+                    num_elements += 1 
 
         def get_elementdata(index):             # Function to get the data for each element, rather than each key.
             elementlist2=[]                      # There's probably a better container type for this, but I'm familiar with
