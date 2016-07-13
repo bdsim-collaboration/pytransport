@@ -19,7 +19,7 @@ class reader():
             line = line.rstrip('\r\n')
             flist.append(line)
             splitline = self._remove_blanks(line.split(' '))
-            if splitline[0] == '*BEAM*':     ## Is beam output
+            if splitline and splitline[0] == '*BEAM*':     ## Is beam output
                 #print "'*BEAM*' found in line " + _np.str(i+1)
                 f.close()
                 transdata = self.get_beam_output(file)
@@ -143,10 +143,11 @@ class reader():
         foundoutputend = False
 
         for linenum,line in enumerate(flist):
-            if (self._remove_blanks(line.split(' '))[0] == '*BEAM*') and not foundoutputstart:
+            splitline = self._remove_blanks(line.split(' '))
+            if splitline and splitline[0] == '*BEAM*' and not foundoutputstart:
                 outputstart=linenum
                 foundoutputstart = True
-            if self._remove_blanks(line.split(' '))[0] == '0*LENGTH*':
+            if splitline and splitline[0] == '0*LENGTH*':
                 outputend = linenum
                 foundoutputend = True
                 break
@@ -220,16 +221,22 @@ class reader():
             'Disp_x'    :[],
             'Disp_y'    :[],
             'Sigma_p'   :[],
+            'E'         :[],
             'Name'      :[],
             'Type'      :[],
             }
         num_elements = 0
+        # initialise energy since not given for every element
+        energy = 0.0
         for element in elementlist:
             if len(element) > 1:  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
                 type    = element[0].split('*')[1]
                 # rest of first line split with spaces
-                name    = self._remove_blanks(element[0].split('*')[2].split(' '))[1].strip('"')
+                splitline = self._remove_blanks(element[0].split('*')[2].split(' '))
+                name    = splitline[1].strip('"')
+                if type=="BEAM" or type=="ACC":
+                    energy = splitline[-2]
                 s       = _np.float(self._remove_blanks(element[1].split(' '))[0])
                 sigx    = _np.float(self._remove_blanks(element[1].split(' '))[3])
                 sigxp   = _np.float(self._remove_blanks(element[2].split(' '))[1])
@@ -269,6 +276,7 @@ class reader():
                 transdata['Disp_x'].append(dx)
                 transdata['Disp_y'].append(dy)
                 transdata['Sigma_p'].append(sigp)
+                transdata['E'].append(energy)
                 transdata['Name'].append(name)
                 transdata['Type'].append(type)
                 num_elements += 1 
@@ -399,7 +407,8 @@ class reader():
                 newline += element
                 newline += ' '
         stripline = newline.split(' ')
-        return stripline
+        # remove last element as it will be blank (due to added space)
+        return stripline[:-1]
 
     def _split_negatives(self,line):
         newline=[]
