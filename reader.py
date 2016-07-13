@@ -2,7 +2,7 @@ import numpy as _np
 import pybdsim
 
 class reader():
-    def get_data(self,file,type=None,num_lines=15):
+    def get_data(self,file,type=None):
         if isinstance(type,_np.str):
             if type == 'beam':
                 transdata = self.get_beam_output(file)
@@ -14,12 +14,9 @@ class reader():
         f = open(file)
         flist=[]
         transdata = None
-        for i in range(num_lines):
-            line = f.next()
-            if line[-1] == '\n':
-                line = line[:-1]
-            if line[-1] == '\r':
-                line = line[:-1]
+        for line in f:
+            #remove any carriage returns (both Mac and Unix)
+            line = line.rstrip('\r\n')
             flist.append(line)
             splitline = self._remove_blanks(line.split(' '))
             if splitline[0] == '*BEAM*':     ## Is beam output
@@ -35,13 +32,12 @@ class reader():
             else:
                 pass
         if transdata == None:
-            errorstring =  "Could not find an indicator in the first "+_np.str(num_lines)+" lines of the input file for either\n"
+            errorstring =  "Could not find an indicator in the input file for either\n"
             errorstring += "a beam output file (indicator = '*BEAM*), or a standard output file (indicator = '0    0').\n"
             errorstring += "Please check the input file or specify the input type with the type argument in the get_output function.\n"
             errorstring += "Note that the only accepted values for type are 'standard' or 'beam'."
             raise IOError(errorstring)
         return transdata
-
 
     def get_beam_output(self,file):
         ''' Returns a BDSAsciiData instance of parameters from the input file.
