@@ -221,13 +221,16 @@ class reader():
             'Disp_x'    :[],
             'Disp_y'    :[],
             'Sigma_p'   :[],
-            'E'         :[],
+            'Momentum'  :[],
+            'E'         :[], # kinetic energy
             'Name'      :[],
             'Type'      :[],
             }
         num_elements = 0
-        # initialise energy since not given for every element
-        energy = 0.0
+        # initialise momentum/energy since not given for every element
+        momentum = 0.0
+        energy   = 0.0
+        proton_mass = 938.272
         for element in elementlist:
             if len(element) > 1:  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
@@ -236,7 +239,8 @@ class reader():
                 splitline = self._remove_blanks(element[0].split('*')[2].split(' '))
                 name    = splitline[1].strip('"')
                 if type=="BEAM" or type=="ACC":
-                    energy = splitline[-2]
+                    momentum = _np.float(splitline[-2])
+                    energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
                 s       = _np.float(self._remove_blanks(element[1].split(' '))[0])
                 sigx    = _np.float(self._remove_blanks(element[1].split(' '))[3])
                 sigxp   = _np.float(self._remove_blanks(element[2].split(' '))[1])
@@ -276,6 +280,7 @@ class reader():
                 transdata['Disp_x'].append(dx)
                 transdata['Disp_y'].append(dy)
                 transdata['Sigma_p'].append(sigp)
+                transdata['Momentum'].append(momentum)
                 transdata['E'].append(energy)
                 transdata['Name'].append(name)
                 transdata['Type'].append(type)
