@@ -222,6 +222,7 @@ class reader():
             'Sigma_p'   :[],
             'Name'      :[],
             }
+        num_elements = 0
         for element in elementlist:
             if len(element) > 1:  # I.e not a fit or matrix-modifying element
                 type    = self._remove_blanks(element[0].split(' '))[0].strip('*')
@@ -264,8 +265,7 @@ class reader():
                 transdata['Disp_x'].append(dx)
                 transdata['Disp_y'].append(dy)
                 transdata['Sigma_p'].append(sigp)
-
-        num_elements = len(elementlist)
+                num_elements += 1 
 
         def get_elementdata(index):             # Function to get the data for each element, rather than each key.
             elementlist2=[]                      # There's probably a better container type for this, but I'm familiar with
