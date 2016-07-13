@@ -143,15 +143,13 @@ class reader():
         foundoutputend = False
 
         for linenum,line in enumerate(flist):
-            if (line == '') and (linenum < (len(flist)-1)):
-                nextline = flist[linenum+1]
-                if (self._remove_blanks(nextline.split(' '))[0] == '*BEAM*') and not foundoutputstart:
-                    outputstart=linenum+1
-                    foundoutputstart = True
+            if (self._remove_blanks(line.split(' '))[0] == '*BEAM*') and not foundoutputstart:
+                outputstart=linenum
+                foundoutputstart = True
             if self._remove_blanks(line.split(' '))[0] == '0*LENGTH*':
-                if not foundoutputend:
-                    outputend = linenum
-                    foundoutputend = True
+                outputend = linenum
+                foundoutputend = True
+                break
         if not foundoutputstart:
             if not foundoutputend:
                 raise IOError('No output found in '+self.file+'.')
