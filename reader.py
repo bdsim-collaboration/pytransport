@@ -221,11 +221,15 @@ class reader():
             'Disp_y'    :[],
             'Sigma_p'   :[],
             'Name'      :[],
+            'Type'      :[],
             }
         num_elements = 0
         for element in elementlist:
             if len(element) > 1:  # I.e not a fit or matrix-modifying element
-                type    = self._remove_blanks(element[0].split(' '))[0].strip('*')
+                # type is in between * can have a space (for space charge *SP CH*)
+                type    = element[0].split('*')[1]
+                # rest of first line split with spaces
+                name    = self._remove_blanks(element[0].split('*')[2].split(' '))[1].strip('"')
                 s       = _np.float(self._remove_blanks(element[1].split(' '))[0])
                 sigx    = _np.float(self._remove_blanks(element[1].split(' '))[3])
                 sigxp   = _np.float(self._remove_blanks(element[2].split(' '))[1])
@@ -265,15 +269,14 @@ class reader():
                 transdata['Disp_x'].append(dx)
                 transdata['Disp_y'].append(dy)
                 transdata['Sigma_p'].append(sigp)
+                transdata['Name'].append(name)
+                transdata['Type'].append(type)
                 num_elements += 1 
 
         def get_elementdata(index):             # Function to get the data for each element, rather than each key.
             elementlist2=[]                      # There's probably a better container type for this, but I'm familiar with
             for name in transdata.keys():   # dictionaries, and it works (for now).
-                if name == 'Name':
-                    elementlist2.append(' ')
-                else:
-                    elementlist2.append(transdata[name][index])
+                elementlist2.append(transdata[name][index])
         
             return elementlist2
 
