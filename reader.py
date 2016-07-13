@@ -224,7 +224,27 @@ class reader():
             'Momentum'  :[],
             'E'         :[], # kinetic energy
             'Name'      :[],
-            'Type'      :[],
+            'Type'      :[]
+            }
+        transunits = { # TODO: some unit for now, needs to be extracted from output / convert.py !)
+            'Sigma_x'   :'mm',
+            'Sigma_xp'  :'mrad',
+            'Sigma_y'   :'mm',
+            'Sigma_yp'  :'mrad',
+            'S'         :'m',
+            'Alph_x'    :'',
+            'Alph_y'    :'',
+            'Beta_x'    :'mm / mrad',
+            'Beta_y'    :'mm / mrad',
+            'Emitt_x'   :'mm mrad',
+            'Emitt_y'   :'mm mrad',
+            'Disp_x'    :'',
+            'Disp_y'    :'',
+            'Sigma_p'   :'MeV/c',
+            'Momentum'  :'MeV/c',
+            'E'         :'MeV', # kinetic energy
+            'Name'      :'',
+            'Type'      :''
             }
         num_elements = 0
         # initialise momentum/energy since not given for every element
@@ -294,8 +314,8 @@ class reader():
             return elementlist2
 
         data = pybdsim.Data.BDSAsciiData()      # Now convert the dict into BDSAsciiData instance for final output.
-        for name in transdata.keys():
-            data._AddProperty(name)
+        for name, unit in transunits.iteritems():
+            data._AddProperty(name,unit)
         for i in range(num_elements):
             data.append(get_elementdata(i))
 
