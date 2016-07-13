@@ -235,7 +235,7 @@ class elements(functions):
         if self._debug:
             if rotation:
                 print('\tConverted to:')
-                debugstring = 'Transform3D '+elementid+', angle '+_np.str(_np.round(angle,4))+' rad'
+                debugstring = 'Transform3D '+elementid+', angle '+_np.str(_np.round(self.machineprops.angle,4))+' rad'
                 print('\t'+debugstring)
             elif self.machineprops.angle == 1:
                 print('Bending direction set to Right')
