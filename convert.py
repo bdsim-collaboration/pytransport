@@ -11,12 +11,16 @@ class _beamprops():
     '''A class containing the properties of the inital beam distribution.
         '''
     def __init__(self,p_mass=938.272):
+        # beam properties that are updated along the lattice
         self.momentum = 0
-        self.mass = p_mass
         self.k_energy = 0
-        self.tot_energy = p_mass
+        self.tot_energy_current = p_mass
         self.gamma = 1
         self.beta = 0
+        self.brho = 0
+        # beam properties that are from the initial beam and fixed
+        self.mass = p_mass
+        self.tot_energy = p_mass # initial energy
         self.SigmaX = 0
         self.SigmaY = 0
         self.SigmaXP = 0
@@ -29,7 +33,6 @@ class _beamprops():
         self.T0 = 0
         self.Xp0 = 0
         self.Yp0 = 0
-        self.brho = 0
         self.betx = 0
         self.alfx = 0
         self.bety = 0
@@ -273,10 +276,10 @@ class pytransport(elements):
         self.beamprops.tot_energy = energy_in_gev
         
         self.madxbeam.SetParticleType(self._particle)
-        self.madxbeam.SetEnergy(energy=_np.round(self.beamprops.tot_energy,3),unitsstring = 'GeV')
+        self.madxbeam.SetEnergy(energy=self.beamprops.tot_energy,unitsstring = 'GeV')
 
         self.gmadbeam.SetParticleType(self._particle)
-        self.gmadbeam.SetEnergy(energy=_np.round(self.beamprops.tot_energy,3),unitsstring = 'GeV')
+        self.gmadbeam.SetEnergy(energy=self.beamprops.tot_energy,unitsstring = 'GeV')
 
         #set gmad parameters depending on distribution
         if self.beamprops.distrType == 'gausstwiss':
@@ -334,14 +337,14 @@ class pytransport(elements):
         if self._debug:
             print('\t Beam definition :')
             print('\t distrType = ' + self.beamprops.distrType)
-            print('\t energy = ' + _np.str(_np.round(self.beamprops.tot_energy,3))+ ' GeV')
+            print('\t energy = ' + _np.str(self.beamprops.tot_energy)+ ' GeV')
             print('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
             print('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
             print('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
             print('\t SigmaYP = '+ _np.str(self.beamprops.SigmaYP) + ' ' +self.units['yp'])
             print('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
             print('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
-            print('\t (brho = '+_np.str(_np.round(self.beamprops.brho,2))+' Tm)')
+            print('\t (Final brho = '+_np.str(_np.round(self.beamprops.brho,2))+' Tm)')
             print('\t Twiss Params:')
             print('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
             print('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])

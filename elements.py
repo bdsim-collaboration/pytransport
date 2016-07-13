@@ -63,14 +63,14 @@ class elements(functions):
         if self._debug:
             print('\t Beam definition :')
             print('\t distrType = ' + self.beamprops.distrType)
-            print('\t energy = ' + _np.str(_np.round(self.beamprops.tot_energy,3))+ ' ' +self.units['p_egain'])
+            print('\t energy = ' + _np.str(self.beamprops.tot_energy)+ ' ' +self.units['p_egain'])
             print('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
             print('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
             print('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
             print('\t SigmaYP = '+ _np.str(self.beamprops.SigmaYP) + ' ' +self.units['yp'])
             print('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
             print('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
-            print('\t (brho = '  + _np.str(_np.round(self.beamprops.brho,2))+' Tm)')
+            print('\t (Final brho = '  + _np.str(_np.round(self.beamprops.brho,2))+' Tm)')
             print('\t Twiss Params:')
             print('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
             print('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
@@ -124,7 +124,7 @@ class elements(functions):
                     dipoledata.append(ele)
         length = dipoledata[0]          # First two non-blanks must be the entries in a specific order.
         
-        ## Get poleface rotationa
+        ## Get poleface rotation
         #e1 = self._facerotation(line,linenum-1) * (_np.pi / 180.0) * self.machineprops.bending  ## Entrance pole face rotation.
         #e2 = self._facerotation(line,linenum+1) * (_np.pi / 180.0) * self.machineprops.bending  ## Exit pole face rotation.
         e1,e2 = self._facerotation(line,linenum)
@@ -369,6 +369,9 @@ class elements(functions):
         elname = "ACC" + _np.str(self.machineprops.rf)
 
         self.gmadmachine.AddRFCavity(name=elname,length=acclen,gradient=gradient)
+
+        # Update beam parameters
+        self._calculate_momentum(self.beamprops.k_energy + e_gain)
 
         ## Commented out untested code
         #if len(accdata) == 2:       # Newer case with multiple elements
