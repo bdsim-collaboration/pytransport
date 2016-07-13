@@ -48,6 +48,7 @@ class _machineprops():
         self.angle = 0      #dipole rotation angle
         self.drifts = 1
         self.dipoles = 1
+        self.rf = 1
         self.quads = 1
         self.sextus = 1
         self.transforms = 1
@@ -243,17 +244,19 @@ class pytransport(elements):
         if _np.float(line[0]) == 19.0:
             self.solenoid(line)
 
+        # 9.  : 'Repetition' - for nesting elements
+        if _np.float(line[0]) == 9.0:
+            errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
+            print(errorline)
+
         ### OTHER TYPES WHICH CAN BE IGNORED:
         # 2.  : Dipole poleface rotation (handled in dipole line).
         # 6.0.X : Update RX matrix used in TRANSPORT
         # 7.  : 'Shift beam centroid'
         # 8.  : Magnet alignment tolerances
-        # 9.  : 'Repetition' - for nesting elements
         # 10. : Fitting constraint
         # 14. : Arbitrary transformation of TRANSPORT matrix
-        
- 
-
+       
     def create_beam(self):
         '''Function to prepare the beam for writing.
             '''

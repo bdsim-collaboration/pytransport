@@ -337,11 +337,9 @@ class elements(functions):
         collline2 = '! with slit size half widths of x = '+horwidth+' '+self.units['x']+' and y = '+verwidth+' '+self.units['x']+'.'
 
 
-
-
-    def accelerator(self,line):
+    def acceleration(self,line):
         ''' A Function that writes the properties of an acceleration element
-            as a gmad comment. Assumed only 1 acceleration element in the machine.
+            Only RF added for gmad, not for madx!
             '''
         # Redundant function until comments and /or acceleration components can be handled
         
@@ -353,11 +351,26 @@ class elements(functions):
                     accdata.append(_np.float(ele))
                 except ValueError:
                     dummy = 1
-        if len(accdata) == 2:       # Newer case with multiple elements
-            self._acc_sequence(line)
-        elif len(accdata) == 4:     # Older case for single element
-            acclen = accdata[0]
-            e_gain = accdata[1]
+
+        acclen = accdata[0]
+        e_gain = accdata[1]
+
+        # TODO add phase_lag and wavelength
+
+        # protect against zero length
+        if acclen == 0.0:
+            acclen = 1e-6
+        gradient = e_gain * (self.scale[self.units['p_egain'][0]] / 1e6) / (acclen * self.scale[self.units['element_length'][0]]) # gradient in MV/m
+
+        elname = "ACC" + _np.str(self.machineprops.rf)
+        self.machineprops.rf += 1
+
+        self.gmadmachine.AddRFCavity(name=elname,length=acclen,gradient=gradient)
+
+        ## Commented out untested code
+        #if len(accdata) == 2:       # Newer case with multiple elements
+            #self._acc_sequence(line)
+        if len(accdata) == 4:     # Older case for single element
             phase_lag = accdata[2]
             wavel = accdata[3]
             
@@ -368,7 +381,7 @@ class elements(functions):
 
 
     def _acc_sequence(self,inputline):
-        '''Function to calulate the total length of a sequence of accelerator components.
+        '''Function to calculate the total length of a sequence of accelerator components.
             '''
         ## UNTESTED ##
         
