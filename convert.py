@@ -43,16 +43,16 @@ class _machineprops():
     '''A class containing the number of elements and angular properties (i.e bending direction)
         '''
     def __init__(self):
-        self.benddef = True   #True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
-        self.bending = 1   #+VE = bends to the right for positive particles
-        self.angle = 0      #dipole rotation angle
-        self.drifts = 1
-        self.dipoles = 1
-        self.rf = 1
-        self.quads = 1
-        self.sextus = 1
-        self.transforms = 1
-        self.solenoids = 1
+        self.benddef = True # True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
+        self.bending = 1    # +VE = bends to the right for positive particles
+        self.angle = 0      # dipole rotation angle
+        self.drifts     = 0 # nr of drifts
+        self.dipoles    = 0
+        self.rf         = 0
+        self.quads      = 0
+        self.sextus     = 0
+        self.transforms = 0
+        self.solenoids  = 0
         self.beampiperadius = 20
 
 
@@ -93,7 +93,9 @@ class pytransport(elements):
                  debug      = False,
                  distrType  = 'gauss',
                  gmad       = True,
+                 gmadDir    = 'gmad',
                  madx       = False,
+                 madxDir    = 'madx',
                  auto       = True):
 
         if particle == 'proton':
@@ -105,7 +107,9 @@ class pytransport(elements):
         self._correctedbeamdef = False
         self._fileloaded = False
         self._gmadoutput = gmad
+        self._gmadDir    = gmadDir
         self._madxoutput = madx
+        self._madxDir    = madxDir
         self._numberparts = -1
         self._collindex=[]  # An index of collimator labels
         self._accstart=[]   # An index of the start of acceleration elements.
@@ -166,13 +170,13 @@ class pytransport(elements):
         self.gmadmachine.AddSampler('all')
         self.madxmachine.AddSampler('all')
         if self._gmadoutput:
-            _os.mkdir('gmad')
-            _os.chdir('gmad')
+            _os.mkdir(self._gmadDir)
+            _os.chdir(self._gmadDir)
             self.gmadmachine.Write(self._file)
             _os.chdir('../')
         if self._madxoutput:
-            _os.mkdir('madx')
-            _os.chdir('madx')
+            _os.mkdir(self._madxDir)
+            _os.chdir(self._madxDir)
             self.madxmachine.Write(self._file)
             _os.chdir('../')
 

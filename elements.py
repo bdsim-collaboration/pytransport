@@ -101,8 +101,8 @@ class elements(functions):
         else:
             length_in_metres = _np.float(driftlen)
 
-        elementid = 'DR'+_np.str(self.machineprops.drifts)
         self.machineprops.drifts += 1
+        elementid = 'DR'+_np.str(self.machineprops.drifts)
 
         self.gmadmachine.AddDrift(name=elementid,length=length_in_metres)
         self.madxmachine.AddDrift(name=elementid,length=length_in_metres)
@@ -161,8 +161,8 @@ class elements(functions):
         else:
             length_in_metres = length
         
-        elementid = 'BM'+_np.str(self.machineprops.dipoles)
         self.machineprops.dipoles += 1
+        elementid = 'BM'+_np.str(self.machineprops.dipoles)
         
         ##Check for non zero pole face rotation
         if (e1 != 0) and (e2 != 0):
@@ -222,8 +222,8 @@ class elements(functions):
         elif self.machineprops.angle != 0:                        #If not 180 degrees, use transform3d.      
             self.machineprops.angle *= -1                         #For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.  
             anginrad = self.machineprops.angle * (_np.pi / 180)
-            elementid = 't'+_np.str(self.machineprops.transforms)
             self.machineprops.transforms += 1
+            elementid = 't'+_np.str(self.machineprops.transforms)
             self.gmadmachine.AddTransform3D(name=elementid,psi=anginrad)
             ## MadX Builder does not have transform 3d 
             # Comment out and print warning
@@ -272,6 +272,7 @@ class elements(functions):
         
         field_gradient = (field_in_Tesla / pipe_in_metres) / self.beamprops.brho    #K1 in correct units
         
+        self.machineprops.quads += 1
         if label is not None: #Write to file
             if field_gradient > 0:
                 elementid = 'QF'+_np.str(self.machineprops.quads)
@@ -279,8 +280,6 @@ class elements(functions):
                 elementid = 'QD'+_np.str(self.machineprops.quads)
             else:
                 elementid = 'NULLQUAD'+_np.str(self.machineprops.quads)  #For K1 = 0. 
-        
-        self.machineprops.quads += 1
 
         self.gmadmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
         self.madxmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
@@ -366,8 +365,8 @@ class elements(functions):
             acclen = 1e-6
         gradient = e_gain * (self.scale[self.units['p_egain'][0]] / 1e6) / (acclen * self.scale[self.units['element_length'][0]]) # gradient in MV/m
 
-        elname = "ACC" + _np.str(self.machineprops.rf)
         self.machineprops.rf += 1
+        elname = "ACC" + _np.str(self.machineprops.rf)
 
         self.gmadmachine.AddRFCavity(name=elname,length=acclen,gradient=gradient)
 
@@ -457,9 +456,8 @@ class elements(functions):
         
         field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.beamprops.brho    #K2 in correct units
         
-        elementid = 'SEXT'+_np.str(self.machineprops.sextus)
-        
         self.machineprops.sextus += 1
+        elementid = 'SEXT'+_np.str(self.machineprops.sextus)
         
         self.gmadmachine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
         self.madxmachine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
@@ -492,9 +490,8 @@ class elements(functions):
         else:
             length_in_metres = length
                 
-        elementid = 'SOLE'+_np.str(self.machineprops.solenoids)
-
         self.machineprops.solenoids += 1
+        elementid = 'SOLE'+_np.str(self.machineprops.solenoids)
         
         self.gmadmachine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
         self.madxmachine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
