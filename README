@@ -1,0 +1,25 @@
+General Information
+===================
+
+Python converter module for the accelerator code TRANSPORT.
+It can convert TRANSPORT input into MAD and GMAD (BDSIM) lattices.
+It can read TRANSPORT output into Python lists, which can be used standalone or with the module pybdsim.
+
+Written by Will Shields
+
+Currently maintained and developed by:
+
+Will Shields          <william.shields.2010@live.rhul.ac.uk>
+Jochem Snuverink      <jochem.snuverink@psi.ch>
+
+Basic Commands
+==============
+
+# Convert TRANSPORT input
+from pytransport import convert
+convert.pytransport('FOR001.DAT')
+
+# Read TRANSPORT output
+from pytransport import reader
+a = reader.reader()
+data = a.get_data('FOR002.DAT')
