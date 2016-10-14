@@ -164,7 +164,7 @@ class pytransport(elements):
 
     def write(self):
         if self._numberparts < 0:
-            self._filename = self._file + '.gmad'
+            self._filename = self._file
         else:
             self._numberparts += 1
             self._filename = self._file+'_part'+_np.str((self._numberparts))
