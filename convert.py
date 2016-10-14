@@ -173,15 +173,20 @@ class pytransport(elements):
         self.gmadmachine.AddSampler('all')
         self.madxmachine.AddSampler('all')
         if self._gmadoutput:
-            _os.mkdir(self._gmadDir)
+            if not self._dir_exists(self._gmadDir):
+                _os.mkdir(self._gmadDir)
             _os.chdir(self._gmadDir)
-            self.gmadmachine.Write(self._file)
+            filename = self._filename + '.gmad'
+            self.gmadmachine.Write(filename)
             _os.chdir('../')
         if self._madxoutput:
-            _os.mkdir(self._madxDir)
+            if not self._dir_exists(self._madxDir):
+                _os.mkdir(self._madxDir)
             _os.chdir(self._madxDir)
-            self.madxmachine.Write(self._file)
+            filename = self._filename + '.madx'
+            self.madxmachine.Write(filename)
             _os.chdir('../')
+
 
     def transport2gmad(self):
         '''Function to convert TRANSPORT file on a line by line basis.
