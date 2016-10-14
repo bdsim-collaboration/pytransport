@@ -41,38 +41,30 @@ class functions():
         linelist.reverse()   #Search for poleface in reverse line order
 
         for line in linelist:
-            faceline = line
-            splitline = faceline.split(' ')
-            splitline = self._remove_label(splitline)
-            splitline = self._remove_spaces(splitline)
             try:
-                if _np.float(splitline[0]) == 4.0:
+                if _np.float(line[0]) == 4.0:
                     break
-                elif _np.float(splitline[0]) == 2.0:
-                    endof = self._endofline(splitline[1])
+                elif _np.float(line[0]) == 2.0:
+                    endof = self._endofline(line[1])
                     if endof != -1:
-                        anglein = _np.round(_np.float(splitline[1][:endof]),4)
+                        anglein = _np.round(_np.float(line[1][:endof]),4)
                     else:
-                        anglein = _np.round(_np.float(splitline[1]),4)
+                        anglein = _np.round(_np.float(line[1]),4)
                     break
                 else:
                     pass
             except ValueError:
                 pass
         for line in self.data[linenum+1:(linenum+6)]:
-            faceline = line
-            splitline = faceline.split(' ')
-            splitline = self._remove_label(splitline)
-            splitline = self._remove_spaces(splitline)
             try:
-                if _np.float(splitline[0]) == 4.0:
+                if _np.float(line[0]) == 4.0:
                     break
-                elif _np.float(splitline[0]) == 2.0:
-                    endof = self._endofline(splitline[1])
+                elif _np.float(line[0]) == 2.0:
+                    endof = self._endofline(line[1])
                     if endof != -1:
-                        angleout = _np.round(_np.float(splitline[1][:endof]),4)
+                        angleout = _np.round(_np.float(line[1][:endof]),4)
                     else:
-                        angleout = _np.round(_np.float(splitline[1]),4)
+                        angleout = _np.round(_np.float(line[1]),4)
                     break
                 else:
                     pass
