@@ -112,25 +112,76 @@ class functions():
                     break
         return endpos
                     
-    def _load_file(self,filepath):
-        '''Load file to be converted into gmad format.
+    def _load_file(self,input):
+        '''Load file to be converted into gmad format. 
+           Some processing here too (removal of blank spaces etc)
             '''
-        self.data=[]
-        infile = filepath.split('/')[-1] #Remove filepath, leave just filename
+        data=[]
+        filedata=[]
+        temp = _reader.reader()
+
+        if not isinstance(input, _np.str):
+            raise TypeError("Input must be a string")
+        
+        infile = input.split('/')[-1] #Remove filepath, leave just filename
         self._file = infile[:-4]         #Remove extension
+        f = open(input)
         try:
-            for line in open(filepath):
-                self.data.append(line)
+            numlines=0
+            for inputline in f:
+                # If a line in the file is equal to one of these, then it's
+                # likely to be an output file, so instead, use the reader
+                if (inputline == '0    0\n') or (inputline == '0    0\r\n'):
+                    #reset lists
+                    data = []
+                    filedata = []
+                    flist = temp._file_to_list(input)
+                    lattice,output=temp._get_latticeandoutput(flist)
+                    for latticeline in lattice:
+                        latticeline = latticeline.replace(';','')
+                        line = _np.array(latticeline.split(' '),dtype=_np.str)
+                        line = self._remove_blanks(line)
+                        # Method of dealing with split lines in the output
+                        # Split lines 'SHOULD' start with 000, but be careful.
+                        if line[0] == '000':
+                            prevline = data[-1]
+                            prevfileline = filedata[-1]
+                            data.pop()
+                            filedata.pop()
+                            templine = latticeline
+                            latticeline = prevfileline[:-1] + templine
+                            prevline = list(prevline)
+                            prevline.extend(list(line[1:]))
+                            line = _np.array(prevline)
+                        data.append(line)
+                        filedata.append(latticeline)
+#                        numlines += 1
+#                        if numlines >6:
+#                            break
+                    break
+                else:
+                    endoflinepos = self._endofline(inputline)
+                    templine = inputline
+                    if endoflinepos > 0:
+                        templine = inputline[:endoflinepos]
+                    line = _np.array(templine.split(' '),dtype=_np.str)
+                    line = self._remove_blanks(line)
+                    data.append(line)
+                    filedata.append(inputline)
             self._fileloaded = True
         except IOError:
             print 'Cannot open file.'
+        f.close()
+        self.data=data
+        self.filedata=filedata
+
 
     def _remove_blanks(self,line):
         ''' Function to remove '' from lines.
             '''
         linelist=[]
         for element in line:
-            if element != '':
+            if element != '' and element != '"':
                 linelist.append(element)
         line = _np.array(linelist)
         return line
