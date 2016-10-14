@@ -1,32 +1,28 @@
 import numpy as _np
 from scipy import constants as _con
 import string as _string
-
+import glob as _glob
+import os as _os
+import reader as _reader
 
 class functions():
-    def _is_addition(self,line):
+    def _is_addition(self,line,type='input'):
         '''Function to check if a BEAM line of TRANSPORT code is a beam definition or r.m.s addition.
             '''
-#        concat=''
-#        for ele in line:                       #Concat string back together
-#            concat += ele
-#            if ele != line[-1]:
-#                concat += ' '
-#        ele=0
-#
-#        endindex = self._endofline(line)
-#        if concat[endindex-1] == '0' or concat[endindex-2] == '0':
-#            return True
-#        else:
-#            return False
-        if len(line) > 8:
-            if (line[8] == '0.') or (line[8] == '0'):
+        ## Output file is a standard format, any RMS addition line should always be 10 long.
+        if type == 'output':
+            if len(line) == 10:
                 return True
-            else:
-                return False
+    
+        else if type == 'input':
+            if len(line) > 8:
+                if (line[8] == '0.') or (line[8] == '0'):
+                    return True
+                else:
+                    return False
         else:
-            print('Incorrect number of entries for a beam definition')
-            return None
+            raise ValueError("File type can only be input or output")
+
     
     def _is_sentinel(self,line):
         for element in line:
