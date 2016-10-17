@@ -209,11 +209,40 @@ class functions():
                 end = 1 + startequal + _string.find(ele[(startslash+1):],"=")
                 label = ele[startslash+1:end]
                 break
+            elif startdbquote != -1:
+                end = 1 + startdbquote + _string.find(ele[(startdbquote+1):],'"')
+                label = ele[startdbquote+1:end]
+                break
             else:
                 label = None
-        return label,elenum
-            
-            
+        return label
+    
+#        elif isinstance(line,_np.ndarray):
+#            label=''
+#            for element in line:
+#                if element[0] == '"':
+#                    label = element[1:-1]
+#                    break
+#                if element[0] == "/":
+#                    label = element[1:-1]
+#                    break
+#                if element[0] == "=":
+#                    label = element[1:-1]
+#                    break
+#                if element[0] == "'":
+#                    label = element[1:-1]
+#                    break
+#            return label
+
+
+    def _dir_exists(self,dir):
+        dirs = _glob.glob('*/')
+        if dir[-1] != '/':
+            dir += '/'
+        if dirs.__contains__(dir):
+            return True
+        return False
+
     def _remove_label(self,line):
         '''Function to remove the label from a line.
             '''
