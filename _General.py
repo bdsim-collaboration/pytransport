@@ -371,7 +371,7 @@ class functions():
         if _np.float(line['number']) == 9:    #Magnetic Field
             self.units['magnetic_fields'] = label
         if _np.float(line['number']) == 10:   #Mass
-            print('Cannot change mass scale.')
+            self._printout('Cannot change mass scale.')
         if _np.float(line['number']) == 11:   #Momentum / energy gain during acc.
             self.units['p_egain'] = label
 

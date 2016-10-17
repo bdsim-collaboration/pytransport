@@ -193,12 +193,12 @@ class pytransport(elements):
         '''Function to convert TRANSPORT file on a line by line basis.
             '''
         if not self._fileloaded:
-            print('No file loaded.')
+            self._printout('No file loaded.')
             return
         for linenum,line in enumerate(self.data):
             if self._debug:
-                print('Processing line '+_np.str(linenum)+' :')
-                print('\t' + self.filedata[linenum])
+                self._printout('Processing line '+_np.str(linenum)+' :')
+                self._printout('\t' + self.filedata[linenum])
 
             #if len(line) > 1:   #i.e line isn't equal to escape sequence line.
                                 #This is a bit slapdash at the moment, needs better implementation.
@@ -207,7 +207,7 @@ class pytransport(elements):
             self._linenum = linenum
             if self._is_sentinel(self._line):   # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT
                 if self._debug:                 # fitting routine and is only written after the lattice definition,
-                    print('Sentinel Found.')    # so there's no point reading lines beyond it.
+                    self._printout('Sentinel Found.')    # so there's no point reading lines beyond it.
                 break
             ### Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
             try: 
@@ -233,7 +233,7 @@ class pytransport(elements):
                     else:
                         errorline = '\tCannot process line '+_np.str(linenum)+', reason unknown.'
 
-                    print(errorline)
+                    self._printout(errorline)
         self.write()
         
 
@@ -402,7 +402,7 @@ class pytransport(elements):
         # 9.  : 'Repetition' - for nesting elements
         if linedict['elementnum'] == 9.0:
             errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
-            print(errorline)
+            self._printout(errorline)
 
         ### OTHER TYPES WHICH CAN BE IGNORED:
         # 2.  : Dipole poleface rotation (handled in dipole line).
@@ -483,23 +483,23 @@ class pytransport(elements):
 
         
         if self._debug:
-            print('\t Beam definition :')
-            print('\t distrType = ' + self.beamprops.distrType)
-            print('\t energy = ' + _np.str(self.beamprops.tot_energy)+ ' GeV')
-            print('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
-            print('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
-            print('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
-            print('\t SigmaYP = '+ _np.str(self.beamprops.SigmaYP) + ' ' +self.units['yp'])
-            print('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
-            print('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
-            print('\t (Final brho = '+_np.str(_np.round(self.beamprops.brho,2))+' Tm)')
-            print('\t Twiss Params:')
-            print('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-            print('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-            print('\t AlphaX = '+_np.str(self.beamprops.alfx))
-            print('\t AlphaY = '+_np.str(self.beamprops.alfy))
-            print('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-            print('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+            self._printout('\t Beam definition :')
+            self._printout('\t distrType = ' + self.beamprops.distrType)
+            self._printout('\t energy = ' + _np.str(self.beamprops.tot_energy)+ ' GeV')
+            self._printout('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
+            self._printout('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
+            self._printout('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
+            self._printout('\t SigmaYP = '+ _np.str(self.beamprops.SigmaYP) + ' ' +self.units['yp'])
+            self._printout('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
+            self._printout('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
+            self._printout('\t (Final brho = '+_np.str(_np.round(self.beamprops.brho,2))+' Tm)')
+            self._printout('\t Twiss Params:')
+            self._printout('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+            self._printout('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+            self._printout('\t AlphaX = '+_np.str(self.beamprops.alfx))
+            self._printout('\t AlphaY = '+_np.str(self.beamprops.alfy))
+            self._printout('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+            self._printout('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
 
         self.gmadmachine.AddBeam(self.gmadbeam)
         self.madxmachine.AddBeam(self.madxbeam)

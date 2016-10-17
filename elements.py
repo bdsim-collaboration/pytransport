@@ -9,20 +9,20 @@ class elements(functions):
     def define_beam(self,linedict):
         if linedict['isAddition']:
             if self._debug:
-                print('\tIgnoring beam rms addition.')
+                self._printout('\tIgnoring beam rms addition.')
             return
         if self._beamdefined:
             self._numberparts += 1
             self.write()
-            print('Writing...')
+            self._printout('Writing...')
             del self.gmadmachine
             del self.madxmachine
             self.gmadmachine = _pyBuilder.Machine()
             self.madxmachine = _mdBuilder.Machine()
             self._correctedbeamdef = False
             
-            print('\tBeam redefinition found. Writing previous section to file.')
-            print('\tSplitting into multiple machines.')
+            self._printout('\tBeam redefinition found. Writing previous section to file.')
+            self._printout('\tSplitting into multiple machines.')
         
         momentum = linedict['momentum']
 
@@ -51,30 +51,30 @@ class elements(functions):
         self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
 
         if self._debug:
-            print('\t Beam definition :')
-            print('\t distrType = ' + self.beamprops.distrType)
-            print('\t energy = ' + _np.str(self.beamprops.tot_energy)+ ' ' +self.units['p_egain'])
-            print('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
-            print('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
-            print('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
-            print('\t SigmaYP = '+ _np.str(self.beamprops.SigmaYP) + ' ' +self.units['yp'])
-            print('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
-            print('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
-            print('\t (Final brho = '  + _np.str(_np.round(self.beamprops.brho,2))+' Tm)')
-            print('\t Twiss Params:')
-            print('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-            print('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-            print('\t AlphaX = '+_np.str(self.beamprops.alfx))
-            print('\t AlphaY = '+_np.str(self.beamprops.alfy))
-            print('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-            print('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+            self._printout('\t Beam definition :')
+            self._printout('\t distrType = ' + self.beamprops.distrType)
+            self._printout('\t energy = ' + _np.str(self.beamprops.tot_energy)+ ' ' +self.units['p_egain'])
+            self._printout('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
+            self._printout('\t SigmaXP = '+ _np.str(self.beamprops.SigmaXP) + ' ' +self.units['xp'])
+            self._printout('\t SigmaY = ' + _np.str(self.beamprops.SigmaY)  + ' ' +self.units['y'])
+            self._printout('\t SigmaYP = '+ _np.str(self.beamprops.SigmaYP) + ' ' +self.units['yp'])
+            self._printout('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
+            self._printout('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
+            self._printout('\t (Final brho = '  + _np.str(_np.round(self.beamprops.brho,2))+' Tm)')
+            self._printout('\t Twiss Params:')
+            self._printout('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+            self._printout('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+            self._printout('\t AlphaX = '+_np.str(self.beamprops.alfx))
+            self._printout('\t AlphaY = '+_np.str(self.beamprops.alfy))
+            self._printout('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+            self._printout('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
         
     
     def drift(self,linedict):
         driftlen = linedict['driftlen']
         if _np.float(driftlen) <= 0:
             if self._debug:
-                print('\tZero or negative length element, ignoring.')
+                self._printout('\tZero or negative length element, ignoring.')
             return
     
         if self.units['element_length'] != 'm':
@@ -89,9 +89,9 @@ class elements(functions):
         self.madxmachine.AddDrift(name=elementid,length=length_in_metres)
         
         if self._debug:
-            print('\tConverted to:')
+            self._printout('\tConverted to:')
             debugstring = 'Drift '+elementid+', length '+_np.str(length_in_metres)+' m'
-            print('\t'+debugstring)
+            self._printout('\t'+debugstring)
 
         
     def dipole(self,linedict):
@@ -107,9 +107,9 @@ class elements(functions):
         
         if self._debug:
             if e1 != 0:
-                print('\tPreceding element ('+_np.str(linenum-1)+') provides an entrance poleface rotation of '+_np.str(_np.round(e1,4))+' rad.')
+                self._printout('\tPreceding element ('+_np.str(linenum-1)+') provides an entrance poleface rotation of '+_np.str(_np.round(e1,4))+' rad.')
             if e2 != 0:
-                print('\tFollowing element ('+_np.str(linenum+1)+') provides an exit poleface rotation of '+_np.str(_np.round(e2,4))+' rad.')
+                self._printout('\tFollowing element ('+_np.str(linenum+1)+') provides an exit poleface rotation of '+_np.str(_np.round(e2,4))+' rad.')
         
         ##Calculate bending angle
         if self.machineprops.benddef:
@@ -122,9 +122,9 @@ class elements(functions):
                 rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
                 angle = (_np.float(length) / rho) * self.machineprops.bending       # for direction of bend
             if self._debug:
-                print('\tbfield = '+_np.str(field_in_Gauss)+' kG')
-                print('\tbfield = '+_np.str(field_in_Tesla)+' T')
-                print('\tCorresponds to angle of '+_np.str(_np.round(angle,4)) + ' rad.')
+                self._printout('\tbfield = '+_np.str(field_in_Gauss)+' kG')
+                self._printout('\tbfield = '+_np.str(field_in_Tesla)+' T')
+                self._printout('\tCorresponds to angle of '+_np.str(_np.round(angle,4)) + ' rad.')
         elif not self.machineprops.benddef:
             angle_in_deg = dipoledata[1]
             angle = angle_in_deg * (_np.pi/180.) * self.machineprops.bending
@@ -163,9 +163,9 @@ class elements(functions):
             else:
                 polefacestr = ''
 
-            print('\tConverted to:')
+            self._printout('\tConverted to:')
             debugstring = 'Dipole '+elementid+', length= '+_np.str(length_in_metres)+' m, angle= '+_np.str(_np.round(angle,4))+' rad'+polefacestr
-            print('\t'+debugstring)
+            self._printout('\t'+debugstring)
 
 
     def change_bend(self,linedict):
@@ -199,13 +199,13 @@ class elements(functions):
         
         if self._debug:
             if rotation:
-                print('\tConverted to:')
+                self._printout('\tConverted to:')
                 debugstring = 'Transform3D '+elementid+', angle '+_np.str(_np.round(self.machineprops.angle,4))+' rad'
-                print('\t'+debugstring)
+                self._printout('\t'+debugstring)
             elif self.machineprops.angle == 1:
-                print('Bending direction set to Right')
+                self._printout('Bending direction set to Right')
             elif self.machineprops.angle == -1:
-                print('Bending direction set to Left')
+                self._printout('Bending direction set to Left')
         
 
 
@@ -246,12 +246,12 @@ class elements(functions):
             string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' KG, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
             string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
             string3 = '\tBrho = ' + _np.str(_np.round(self.beamprops.brho,4)) + ' Tm. K1 = ' +_np.str(_np.round(field_gradient,4)) + ' m^-2'
-            print(string1)
-            print(string2)
-            print(string3)
-            print('\tConverted to:')
+            self._printout(string1)
+            self._printout(string2)
+            self._printout(string3)
+            self._printout('\tConverted to:')
             debugstring = 'Quadrupole '+elementid+', length= '+_np.str(length_in_metres)+' m, k1= '+_np.str(_np.round(field_gradient,4))+' T/m'
-            print('\t'+debugstring)
+            self._printout('\t'+debugstring)
 
 
 
@@ -411,9 +411,9 @@ class elements(functions):
 
 
         if self._debug:
-            print('\tConverted to:')
+            self._printout('\tConverted to:')
             debugstring = 'Sextupole '+elementid+', length '+_np.str(length_in_metres)+' m, k2 '+_np.str(_np.round(field_gradient,4))+' T/m^2'
-            print('\t'+debugstring)
+            self._printout('\t'+debugstring)
 
 
 
@@ -437,9 +437,9 @@ class elements(functions):
         self.madxmachine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
 
         if self._debug:
-            print('\tConverted to:')
+            self._printout('\tConverted to:')
             debugstring = 'Solenoid '+elementid+', length '+_np.str(length_in_metres)+' m, ks '+_np.str(_np.round(field_in_Tesla,4))+' T'
-            print('\t'+debugstring)
+            self._printout('\t'+debugstring)
 
 
     def printline(self,linedict):
@@ -449,17 +449,17 @@ class elements(functions):
             number = _np.float(number)
             if number == 48:
                 self.machineprops.benddef = False
-                print('Switched Dipoles to Angle definition.')
+                self._printout('Switched Dipoles to Angle definition.')
             if number == 47:
                 self.machineprops.benddef = True
-                print('Switched Dipoles to field definition.')
+                self._printout('Switched Dipoles to field definition.')
         except ValueError:
             pass
 
 
     def correction(self,linedict):
         if self._correctedbeamdef == True:
-            print('\t Not Correction to original beam definition')
+            self._printout('\t Not Correction to original beam definition')
             return
         #Check if the previous line was the original beam definition and not an rms update
         if linedict['prevlinenum'] == 1.0 and not linedict['isAddition'] and self._beamdefined:
@@ -470,7 +470,7 @@ class elements(functions):
             sigma21 = correctiondata[0]
             sigma43 = correctiondata[5]
         else:
-            print('\tLength of correction line is incorrect')
+            self._printout('\tLength of correction line is incorrect')
             return
 
         emittoverbeta = self.beamprops.SigmaXP**2 * (1 - sigma21**2)
@@ -498,16 +498,16 @@ class elements(functions):
         self.beamprops.distrType = 'gausstwiss'
 
         if self._debug:
-            print('\tConverted to:')
-            print('\t Beam Correction. Sigma21 = ' + _np.str(sigma21) + ', Sigma43 = '  + _np.str(sigma43) + '.')
-            print('\t Beam distribution type now switched to "gausstwiss":')
-            print('\t Twiss Params:')
-            print('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-            print('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-            print('\t AlphaX = '+_np.str(self.beamprops.alfx))
-            print('\t AlphaY = '+_np.str(self.beamprops.alfy))
-            print('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-            print('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+            self._printout('\tConverted to:')
+            self._printout('\t Beam Correction. Sigma21 = ' + _np.str(sigma21) + ', Sigma43 = '  + _np.str(sigma43) + '.')
+            self._printout('\t Beam distribution type now switched to "gausstwiss":')
+            self._printout('\t Twiss Params:')
+            self._printout('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+            self._printout('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+            self._printout('\t AlphaX = '+_np.str(self.beamprops.alfx))
+            self._printout('\t AlphaY = '+_np.str(self.beamprops.alfy))
+            self._printout('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+            self._printout('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
 
 
 
@@ -524,6 +524,6 @@ class elements(functions):
         #    self.machineprops.beampiperadius = specialdata[1]
 
         #if self._debug:
-        #    print('\tConverted to:')
-        #    print('\t'+_np.str(specialdata[2]))
+        #    self._printout('\tConverted to:')
+        #    self._printout('\t'+_np.str(specialdata[2]))
 
