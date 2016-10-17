@@ -6,15 +6,15 @@ import string as _string
 from _General import functions
     
 class elements(functions):
-    def define_beam(self,line):
-        if self._is_addition(line):
+    def define_beam(self,linedict):
+        if linedict['isAddition']:
             if self._debug:
                 print('\tIgnoring beam rms addition.')
             return
         if self._beamdefined:
             self._numberparts += 1
             self.write()
-            print('Writing.')
+            print('Writing...')
             del self.gmadmachine
             del self.madxmachine
             self.gmadmachine = _pyBuilder.Machine()
@@ -24,28 +24,18 @@ class elements(functions):
             print('\tBeam redefinition found. Writing previous section to file.')
             print('\tSplitting into multiple machines.')
         
-        line = self._remove_label(line)
-        if len(line) < 8:
-            raise IndexError("Incorrect number of beam parameters.")
-
-        endofline = self._endofline(line[7])
-        
-        #Find momentum
-        if endofline != -1:
-            momentum = line[7][:endofline]
-        else:
-            momentum = line[7]
+        momentum = linedict['momentum']
 
         self._beamdefined = True
        
         #Convert momentum to energy and set distribution params.
         self._calculate_energy(momentum)
-        self.beamprops.SigmaX  = _np.float(line[1])
-        self.beamprops.SigmaY  = _np.float(line[3])
-        self.beamprops.SigmaXP = _np.float(line[2])
-        self.beamprops.SigmaYP = _np.float(line[4])
-        self.beamprops.SigmaE  = _np.float(line[6]) * 0.01 * (self.beamprops.beta**2) ## Convert from percentage mom spread to absolute espread
-        self.beamprops.SigmaT  = self._bunch_length_convert(_np.float(line[5])) ## Get bunch length in seconds.
+        self.beamprops.SigmaX  = _np.float(linedict['Sigmax'])
+        self.beamprops.SigmaY  = _np.float(linedict['Sigmay'])
+        self.beamprops.SigmaXP = _np.float(linedict['Sigmaxp'])
+        self.beamprops.SigmaYP = _np.float(linedict['Sigmayp'])
+        self.beamprops.SigmaE  = _np.float(linedict['SigmaE']) * 0.01 * (self.beamprops.beta**2) ## Convert from percentage mom spread to absolute espread
+        self.beamprops.SigmaT  = self._bunch_length_convert(_np.float(linedict['SigmaT'])) ## Get bunch length in seconds.
 
         
         #Calculate Initial Twiss params
@@ -80,17 +70,8 @@ class elements(functions):
             print('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
         
     
-    def drift(self,line):
-        label = self._get_label(line)
-        for ele in line[1:]:
-            if len(ele) > 0: #I.E. Not a blank space
-                endofline = self._endofline(ele)
-                if endofline == -1:
-                    driftlen = ele
-                    break
-                elif endofline != -1:
-                    driftlen = ele[:endofline]
-                    break
+    def drift(self,linedict):
+        driftlen = linedict['driftlen']
         if _np.float(driftlen) <= 0:
             if self._debug:
                 print('\tZero or negative length element, ignoring.')
@@ -113,23 +94,16 @@ class elements(functions):
             print('\t'+debugstring)
 
         
-    def dipole(self,line,linenum):
-        label = self._get_label(line)
-        dipoledata = []
-        for index,ele in enumerate(line[1:]):
-            if ele != '':
-                try:
-                    dipoledata.append(_np.float(ele))
-                except ValueError:
-                    dipoledata.append(ele)
+    def dipole(self,linedict):
+        linenum = linedict['linenum']
+        dipoledata = linedict['data']
         length = dipoledata[0]          # First two non-blanks must be the entries in a specific order.
         
         ## Get poleface rotation
         #e1 = self._facerotation(line,linenum-1) * (_np.pi / 180.0) * self.machineprops.bending  ## Entrance pole face rotation.
         #e2 = self._facerotation(line,linenum+1) * (_np.pi / 180.0) * self.machineprops.bending  ## Exit pole face rotation.
-        e1,e2 = self._facerotation(line,linenum)
-        e1 *= ((_np.pi / 180.0)*self.machineprops.bending)
-        e2 *= ((_np.pi / 180.0)*self.machineprops.bending)
+        e1 = linedict['e1'] * ((_np.pi / 180.0)*self.machineprops.bending)
+        e2 = linedict['e2'] * ((_np.pi / 180.0)*self.machineprops.bending)
         
         if self._debug:
             if e1 != 0:
@@ -194,21 +168,12 @@ class elements(functions):
             print('\t'+debugstring)
 
 
-    def change_bend(self,line):
+    def change_bend(self,linedict):
         '''Function to change the direction of the dipole bend. Can be a direction other than horizontal (i.e != n*pi).
             '''
         ## NOT FULLY TESTED.
-        angle = 0
+        angle = linedict['angle']
         rotation = False
-        for index,ele in enumerate(line[1:]): #For loops are iterating over blank space (delimiter)
-            if ele != ' ':
-                endofline = self._endofline(ele)
-                if len(ele) > 0 and endofline == -1: #I.E endofline is not in this element
-                    angle = ele
-                    break
-                elif len(ele) > 0 and endofline != -1: #endofline is in this element
-                    angle = _np.str(ele[:endofline])
-                    break
         self.machineprops.angle = _np.float(angle)
         if self.machineprops.angle >= 360:
             self.machineprops.angle = _np.mod(self.machineprops.angle,360)
@@ -244,15 +209,8 @@ class elements(functions):
         
 
 
-    def quadrupole(self,line):
-        label = self._get_label(line)
-        quaddata = []
-        for index,ele in enumerate(line[1:]):
-            if ele != '':
-                try:
-                    quaddata.append(_np.float(ele))
-                except ValueError:
-                    quaddata.append(ele)
+    def quadrupole(self,linedict):
+        quaddata = linedict['data']
         length = quaddata[0]        # First three non-blanks must be the entries in a specific order.
         field_at_tip = quaddata[1]  # Field in TRANSPORT units 
         pipe_rad = quaddata[2]      # Pipe Radius In TRANSPORT units
@@ -273,13 +231,13 @@ class elements(functions):
         field_gradient = (field_in_Tesla / pipe_in_metres) / self.beamprops.brho    #K1 in correct units
         
         self.machineprops.quads += 1
-        if label is not None: #Write to file
-            if field_gradient > 0:
-                elementid = 'QF'+_np.str(self.machineprops.quads)
-            elif field_gradient < 0:
-                elementid = 'QD'+_np.str(self.machineprops.quads)
-            else:
-                elementid = 'NULLQUAD'+_np.str(self.machineprops.quads)  #For K1 = 0. 
+        #if label is not None: #Write to file
+        if field_gradient > 0:
+            elementid = 'QF'+_np.str(self.machineprops.quads)
+        elif field_gradient < 0:
+            elementid = 'QD'+_np.str(self.machineprops.quads)
+        else:
+            elementid = 'NULLQUAD'+_np.str(self.machineprops.quads)  #For K1 = 0.
 
         self.gmadmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
         self.madxmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
@@ -299,8 +257,8 @@ class elements(functions):
 
 
     def collimator(self,line):
-        ### Was used to write the location of a collimator as a string, redundant if file writing done with pybdsim.
         label = self._get_label(line)
+        ### Was used to write the location of a collimator as a string, redundant if file writing done with pybdsim.
         collstarted = False
         for index in self._collindex: #Look for existing collimator elements of the same name
             if index == label:
@@ -340,20 +298,13 @@ class elements(functions):
         collline2 = '! with slit size half widths of x = '+horwidth+' '+self.units['x']+' and y = '+verwidth+' '+self.units['x']+'.'
 
 
-    def acceleration(self,line):
+    def acceleration(self,linedict):
         ''' A Function that writes the properties of an acceleration element
             Only RF added for gmad, not for madx!
             '''
         # Redundant function until comments and /or acceleration components can be handled
         
-        label = self._get_label(line)
-        accdata = []
-        for index,ele in enumerate(line[1:]):
-            if ele != '':
-                try:
-                    accdata.append(_np.float(ele))
-                except ValueError:
-                    dummy = 1
+        accdata = linedict['data']
 
         acclen = accdata[0]
         e_gain = accdata[1]
@@ -431,15 +382,8 @@ class elements(functions):
 
 
 
-    def sextupole(self,line):
-        label = self._get_label(line)
-        sextudata = []
-        for index,ele in enumerate(line[1:]):
-            if ele != '':
-                try:
-                    sextudata.append(_np.float(ele))
-                except ValueError:
-                    sextudata.append(ele)
+    def sextupole(self,linedict):
+        sextudata = linedict['data']
         length = sextudata[0]        # First three non-blanks must be the entries in a specific order.
         field_at_tip = sextudata[1]  # Field in TRANSPORT units
         pipe_rad = sextudata[2]      # Pipe Radius In TRANSPORT units
@@ -473,15 +417,8 @@ class elements(functions):
 
 
 
-    def solenoid(self,line):
-        label = self._get_label(line)
-        soledata = []
-        for index,ele in enumerate(line[1:]):
-            if ele != '':
-                try:
-                    soledata.append(_np.float(ele))
-                except ValueError:
-                    soledata.append(ele)
+    def solenoid(self,linedict):
+        soledata = linedict['data']
         length = soledata[0]        # First three non-blanks must be the entries in a specific order.
         field = soledata[1]         # Field in TRANSPORT units
         
@@ -505,42 +442,31 @@ class elements(functions):
             print('\t'+debugstring)
 
 
-
-    def printline(self,line):
-        label = self._get_label(line)
-        for ele in line[1:]:
-            try:
-                number = _np.float(ele)
-                if number == 48:
-                    self.machineprops.benddef = False
-                    print('Switched Dipoles to Angle definition.')
-                if number == 47:
-                    self.machineprops.benddef = True
-                    print('Switched Dipoles to field definition.')
-            except ValueError:
-                dummy=0
-
+    def printline(self,linedict):
+        number = linedict['data'][0]
+#        for ele in line[1:]:
+        try:
+            number = _np.float(number)
+            if number == 48:
+                self.machineprops.benddef = False
+                print('Switched Dipoles to Angle definition.')
+            if number == 47:
+                self.machineprops.benddef = True
+                print('Switched Dipoles to field definition.')
+        except ValueError:
+            pass
 
 
-    def correction(self,line,linenum):
+    def correction(self,linedict):
         if self._correctedbeamdef == True:
             print('\t Not Correction to original beam definition')
             return
         #Check if the previous line was the original beam definition and not an rms update
-        prevline = self.data[linenum-1].split(' ')
-        if _np.float(prevline[0]) == 1.0 and not self._is_addition(line) and self._beamdefined:
+        if linedict['prevlinenum'] == 1.0 and not linedict['isAddition'] and self._beamdefined:
             self._correctedbeamdef = True
         
-        label = self._get_label(line)
-        correctiondata = []
-        for index,ele in enumerate(line[1:]):
-            if ele != '':
-                try:
-                    correctiondata.append(_np.float(ele))
-                except ValueError:
-                    correctiondata.append(ele)
-
-        if len(correctiondata) > 15: #15 sigma elements
+        correctiondata = linedict['data']
+        if len(correctiondata) >= 15: #15 sigma elements
             sigma21 = correctiondata[0]
             sigma43 = correctiondata[5]
         else:
@@ -585,15 +511,9 @@ class elements(functions):
 
 
 
-    def special_input(self,line):
-        label = self._get_label(line)
-        specialdata = []
-        for index,ele in enumerate(line[1:]):
-            if ele != '':
-                try:
-                    specialdata.append(_np.float(ele))
-                except ValueError:
-                    specialdata.append(ele)
+    def special_input(self,linedict):
+        specialdata = linedict['data']
+
         if specialdata[0] == 16.0:  #X0 offset
             self.beamprops.X0 = specialdata[1]
         if specialdata[0] == 17.0:  #Y0 offset

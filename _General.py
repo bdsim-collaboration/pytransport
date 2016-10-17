@@ -278,8 +278,8 @@ class functions():
 
     def unit_change(self,line):
         '''Function to change the units (scaling) of various parameters'''
-        label,elenum = self._get_label(line)
-        
+        #slabel,elenum = self._get_label(line)
+        label = line['label']
         if label=='CM' or label=='MM' or label=='UM' or label=='NM':
             label = label.lower()
         ### Convert Energy Unit Cases:
@@ -293,32 +293,32 @@ class functions():
             label='GeV'
         if label=='TEV':
             label='TeV'
-        
-        if line[1] == '1.0':    #Horizontal and vertical beam size
+
+        if _np.float(line['number']) == 1:    #Horizontal and vertical beam size
             self.units['x'] = label
             self.units['y'] = label
             self.units['bend_vert_gap'] = label
             #self.units['pipe_rad'] = label
-        if line[1] == '2.0':    #Horizontal and vertical divergence
+        if _np.float(line['number']) == 2:    #Horizontal and vertical divergence
             self.units['xp'] = label
             self.units['yp'] = label
-        if line[1] == '3.0':    #Bending Magnet Gap
+        if _np.float(line['number']) == 3:    #Bending Magnet Gap
             self.units['bend_vert_gap'] = label
-        if line[1] == '4.0':    #Vertical Divergence ONLY
+        if _np.float(line['number']) == 4:    #Vertical Divergence ONLY
             self.units['yp'] = label
-        if line[1] == '5.0':    #Pulsed Beam Length 
+        if _np.float(line['number']) == 5:    #Pulsed Beam Length
             self.units['bunch_length'] = label
-        if line[1] == '6.0':    #Momentum Spread
+        if _np.float(line['number']) == 6:    #Momentum Spread
             self.units['momentum_spread'] = label   ## Percent
-        if line[1] == '7.0':    #Bend/pole face rotation
+        if _np.float(line['number']) == 7:    #Bend/pole face rotation
             pass
-        if line[1] == '8.0':    #Element Length
+        if _np.float(line['number']) == 8:    #Element Length
             self.units['element_length'] = label
-        if line[1] == '9.0':    #Magnetic Field
+        if _np.float(line['number']) == 9:    #Magnetic Field
             self.units['magnetic_fields'] = label
-        if line[1] == '10.0':   #Mass
+        if _np.float(line['number']) == 10:   #Mass
             print('Cannot change mass scale.')
-        if line[1] == '11.0':   #Momentum / energy gain during acc.
+        if _np.float(line['number']) == 11:   #Momentum / energy gain during acc.
             self.units['p_egain'] = label
 
 
