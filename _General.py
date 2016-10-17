@@ -191,10 +191,12 @@ class functions():
 
     def _get_label(self,line):
         '''Function to get element label from code line.'''
+        #if isinstance(line,_np.str):
         for elenum,ele in enumerate(line):
-            startslash = _string.find(ele,"/")
-            startquote = _string.find(ele,"'")
-            startequal = _string.find(ele,"=")
+            startslash   = _string.find(ele,"/")
+            startquote   = _string.find(ele,"'")
+            startequal   = _string.find(ele,"=")
+            startdbquote = _string.find(ele,'"')
             if startslash != -1:
                 end = 1 + startslash + _string.find(ele[(startslash+1):],"/")
                 label = ele[startslash+1:end]
