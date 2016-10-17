@@ -14,7 +14,7 @@ class functions():
             if len(line) == 10:
                 return True
     
-        else if type == 'input':
+        elif type == 'input':
             if len(line) > 8:
                 if (line[8] == '0.') or (line[8] == '0'):
                     return True
