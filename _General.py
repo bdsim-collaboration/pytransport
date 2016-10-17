@@ -229,6 +229,18 @@ class functions():
             line[elenum] = newval 
         return line 
             
+    def _get_elementdata(self,line):
+        data = []
+        name=''
+        for index,ele in enumerate(line[1:]):
+            if ele != '':
+                try:
+                    data.append(_np.float(ele))
+                except ValueError:
+                    name = ele
+        data.append(name)
+        return data
+
 
 
     def _get_indic(self):
