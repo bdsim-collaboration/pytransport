@@ -197,67 +197,209 @@ class pytransport(elements):
         for linenum,line in enumerate(self.data):
             if self._debug:
                 print('Processing line '+_np.str(linenum)+' :')
-                print('\t' + line)
-            if len(line) > 1:   #i.e line isn't equal to escape sequence line.
+                print('\t' + self.filedata[linenum])
+
+            #if len(line) > 1:   #i.e line isn't equal to escape sequence line.
                                 #This is a bit slapdash at the moment, needs better implementation.
-                self._line = _np.array(line.split(' '))
-                if self._is_sentinel(self._line):   # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT
-                    if self._debug:                 # fitting routine and is only written after the lattice definition,
-                        print('Sentinel Found.')    # so there's no point reading lines beyond it.
-                    break
-                self._line = self._remove_blanks(self._line)
-                ### Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
-                try: 
-                    if _np.float(self._line[0]) > 0:
-                        self._get_type(self._line,linenum)
-                    #if self._debug:
-                    #    print('\n')
-                except ValueError:
+                #self._line = _np.array(line.split(' '))
+            self._line = line
+            self._linenum = linenum
+            if self._is_sentinel(self._line):   # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT
+                if self._debug:                 # fitting routine and is only written after the lattice definition,
+                    print('Sentinel Found.')    # so there's no point reading lines beyond it.
+                break
+            ### Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
+            try: 
+                if _np.float(self._line[0]) > 0:
+                    if self.data[0][0] == 'OUTPUT':
+                        linedict = self._element_prepper(self._line,linenum,'output')
+                    else:
+                        self._line = self._remove_blanks(self._line)
+                        linedict = self._element_prepper(self._line,linenum,'input')
+                    self._get_type(linedict)
+                else:
                     if self._debug:
-                        if line[0] == '(' or line[0] == '/':
-                            errorline = '\tCannot process line '+_np.str(linenum)+', line is a comment.\n'
-                        elif line[0] == 'S':
-                            errorline = '\tCannot process line '+_np.str(linenum)+', line is for TRANSPORT fitting routine\n'
-                        else:
-                            errorline = '\tCannot process line '+_np.str(linenum)+' \n'
+                        print '\tLine number is 0 or negative, ignoring line.'
+            except ValueError:
+                if self._debug:
+                    if line[0] == '(' or line[0] == '/':
+                        errorline = '\tCannot process line '+_np.str(linenum)+', line is a comment.'
+                    elif line[0] == 'S':
+                        errorline = '\tCannot process line '+_np.str(linenum)+', line is for TRANSPORT fitting routine.'
+                    elif line[0] == '\n':
+                        errorline = '\tCannot process line '+_np.str(linenum)+', line is blank.'
 
-                        print(errorline)
+                    else:
+                        errorline = '\tCannot process line '+_np.str(linenum)+', reason unknown.'
+
+                    print(errorline)
         self.write()
+        
 
+    def _element_prepper(self,line,linenum,filetype='input'):
+        ''' Function to extract the data and prepare it for processing by each element function.
+            This has been written as the lattice lines from an input file and output file are different,
+            so it just a way of correctly ordering the information.
+            '''
+        linedict = {'elementnum' : 0.0,
+                    'name'       : ''}
+        
+        if _np.float(line[0]) == 15.0:
+            linedict['elementnum'] = 15.0
+            label  = self._get_label(line)
+            if filetype == 'output':
+                linedict['label'] = line[2].strip('"')
+            if filetype == 'input':
+                linedict['label'] = label
+            linedict['number'] = line[1]
+        
+        if _np.float(line[0]) == 20.0:
+            linedict['elementnum'] = 20.0
+            angle = 0 ##Default
+#                for index,ele in enumerate(line[1:]): #For loops are iterating over blank space (delimiter)
+#                    if ele != ' ':
+#                        endofline = self._endofline(ele)
+#                        if len(ele) > 0 and endofline == -1: #I.E endofline is not in this element
+#                            angle = ele
+#                            break
+#                        elif len(ele) > 0 and endofline != -1: #endofline is in this element
+#                            angle = _np.str(ele[:endofline])
+#                            break
+            endofline = self._endofline(line[1])
+            angle = line[1][:endofline]
+            linedict['angle'] = angle
+    
+        if _np.float(line[0]) == 1.0:
+            linedict['elementnum'] = 1.0
+            linedict['name'] = self._get_label(line)
+            linedict['isAddition'] = False
+            if self._is_addition(line,filetype):
+                linedict['isAddition'] = True
+            #line = self._remove_label(line)
+            if len(line) < 8:
+                raise IndexError("Incorrect number of beam parameters.")
+    
+            if filetype == 'input':
+                n = 0
+            elif filetype == 'output':
+                n = 1
+            
+            #Find momentum
+            #endofline = self._endofline(line[7+n])
+            #if endofline != -1:
+            #    linedict['momentum'] = line[7+n][:endofline]
+            #else:
+            linedict['momentum'] = line[7+n]
+            linedict['Sigmax']  = line[1+n]
+            linedict['Sigmay']  = line[3+n]
+            linedict['Sigmaxp'] = line[2+n]
+            linedict['Sigmayp'] = line[4+n]
+            linedict['SigmaT']  = line[5+n]
+            linedict['SigmaE']  = line[6+n]
+                
+        
+        if _np.float(line[0]) == 3.0:
+            linedict['elementnum'] = 3.0
+            linedict['name'] = self._get_label(line)
+            data = self._get_elementdata(line)
+            linedict['driftlen'] = data[0]
+            
+        if _np.float(line[0]) == 4.0:
+            linedict['elementnum'] = 4.0
+            linedict['name'] = self._get_label(line)
+            linedict['linenum'] = linenum
+            linedict['data'] = self._get_elementdata(line)
+            e1,e2 = self._facerotation(line,linenum)
+            linedict['e1'] = e1
+            linedict['e2'] = e2
+            
+        if _np.float(line[0]) == 5.0:
+            linedict['elementnum'] = 5.0
+            linedict['name'] = self._get_label(line)
+            linedict['data'] = self._get_elementdata(line)
 
-    def _get_type(self,line,linenum):
+        if _np.float(line[0]) == 6.0:
+            linedict['elementnum'] = 6.0
+
+        if _np.float(line[0]) == 12.0:
+            linedict['elementnum'] = 12.0
+            if filetype == 'input':
+                linedict['name'] = self._get_label(line)
+                linedict['data'] = self._get_elementdata(line)
+            elif filetype == 'output':
+                linedict['data'] = self._get_elementdata(line)[1:]
+                linedict['name'] = linedict['data'][1]
+
+            prevline = self.data[linenum-1]#.split(' ')
+            linedict['prevlinenum'] = _np.float(prevline[0])
+            linedict['isAddition'] = False
+            if self._is_addition(line):
+                linedict['isAddition'] = True
+
+        if _np.float(line[0]) == 11.0:
+            linedict['elementnum'] = 11.0
+            linedict['name'] = self._get_label(line)
+            linedict['data'] = self._get_elementdata(line)
+
+        if _np.float(line[0]) == 13.0:
+            linedict['elementnum'] = 13.0
+            linedict['data'] = self._get_elementdata(line)
+
+        if _np.float(line[0]) == 16.0:
+            linedict['elementnum'] = 16.0
+            linedict['data'] = self._get_elementdata(line)
+    
+        if _np.float(line[0]) == 18.0:
+            linedict['elementnum'] = 18.0
+            linedict['name'] = self._get_label(line)
+            linedict['data'] = self._get_elementdata(line)
+
+        if _np.float(line[0]) == 19.0:
+            linedict['elementnum'] = 19.0
+            linedict['name'] = self._get_label(line)
+            linedict['data'] = self._get_elementdata(line)
+
+        if _np.float(line[0]) == 9.0:
+            linedict['elementnum'] = 9.0
+
+        return linedict
+    
+    
+    
+
+    def _get_type(self,linedict):
         '''Function to read element type.
             '''
-        if _np.float(line[0]) == 15.0:      
-            self.unit_change(line)
-        if _np.float(line[0]) == 20.0:    
-            self.change_bend(line)
-        if _np.float(line[0]) == 1.0:
-            self.define_beam(line)
-        if _np.float(line[0]) == 3.0:     
-            self.drift(line)
-        if _np.float(line[0]) == 4.0:     
-            self.dipole(line,linenum)
-        if _np.float(line[0]) == 5.0:     
-            self.quadrupole(line)
-        if _np.float(line[0]) == 6.0:     
+        if linedict['elementnum'] == 15.0:
+            self.unit_change(linedict)
+        if linedict['elementnum'] == 20.0:
+            self.change_bend(linedict)
+        if linedict['elementnum'] == 1.0:
+            self.define_beam(linedict)
+        if linedict['elementnum'] == 3.0:
+            self.drift(linedict)
+        if linedict['elementnum'] == 4.0:
+            self.dipole(linedict)
+        if linedict['elementnum'] == 5.0:
+            self.quadrupole(linedict)
+        if linedict['elementnum'] == 6.0:
             pass
             #self.collimator(line)
-        if _np.float(line[0]) == 12.0:
-            self.correction(line,linenum)
-        if _np.float(line[0]) == 11.0:    
-            self.acceleration(line)
-        if _np.float(line[0]) == 13.0:
-            self.printline(line)
-        if _np.float(line[0]) == 16.0:
-            self.special_input(line)
-        if _np.float(line[0]) == 18.0:
-            self.sextupole(line)
-        if _np.float(line[0]) == 19.0:
+        if linedict['elementnum'] == 12.0:
+            self.correction(linedict)
+        if linedict['elementnum'] == 11.0:
+            self.acceleration(linedict)
+        if linedict['elementnum'] == 13.0:
+            self.printline(linedict)
+        if linedict['elementnum'] == 16.0:
+            self.special_input(linedict)
+        if linedict['elementnum'] == 18.0:
+            self.sextupole(linedict)
+        if linedict['elementnum'] == 19.0:
             self.solenoid(line)
 
         # 9.  : 'Repetition' - for nesting elements
-        if _np.float(line[0]) == 9.0:
+        if linedict['elementnum'] == 9.0:
             errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
             print(errorline)
 
