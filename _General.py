@@ -4,6 +4,7 @@ import string as _string
 import glob as _glob
 import os as _os
 import reader as _reader
+import sys
 
 class functions():
     def _is_addition(self,line,type='input'):
@@ -311,7 +312,17 @@ class functions():
         else:
             gmadcomment = None
         return gmadcomment
-    
+
+    def _printout(self,line):
+        sys.stdout.write(line+'\n')
+        logfile = self._file + '_conversion.log'
+        if self._outlog:
+            self._logfile = open(logfile, 'a')
+            self._logfile.write(line)
+            self._logfile.write('\n')
+            self._logfile.close()
+
+
     def _bunch_length_convert(self,bunch_length):
         ### Function to convert bunch length unit in TRANSPORT into seconds.
         scale = self.scale[self.units['bunch_length'][0]]   

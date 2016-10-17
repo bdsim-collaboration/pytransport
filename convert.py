@@ -99,7 +99,8 @@ class pytransport(elements):
                  gmadDir    = 'gmad',
                  madx       = False,
                  madxDir    = 'madx',
-                 auto       = True):
+                 auto       = True,
+                 outlog     = True):
 
         if particle == 'proton':
             p_mass = (_con.proton_mass) * (_con.c**2 / _con.e) / 1e9        ## Particle masses in same unit as TRANSPORT (GeV)
@@ -143,9 +144,9 @@ class pytransport(elements):
         'G':1e+9,
         'T':1e+12
             }
-        self._debug = False
-        if debug:
-            self._debug = True
+        self._debug  = debug
+        #boolean for outputting stream to a log file.
+        self._outlog = outlog
 
         #pytransport conversion classes
         self.beamprops = _beamprops(p_mass)
