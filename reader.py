@@ -135,6 +135,31 @@ class reader():
         return lattice
 
 
+    def _get_fits(self,flist):
+        foundfitstart = False
+        foundfitend = False
+        fits = []
+        for linenum,line in enumerate(flist):
+            if not foundfitstart:
+                if line == '0SENTINEL':
+                    fitstart = linenum
+                    foundfitstart = True
+            if not foundfitend:
+                splitline = self._remove_blanks(line.split(' '))
+                if splitline and splitline[0] == '*BEAM*' and not foundfitend:
+                    fitend = linenum
+                    foundfitend = True
+        if not foundfitstart:
+            print('No fitting output found.')
+            return None
+        elif foundfitstart and not foundfitend:
+                errorstring  = 'The start of the fitting output (first line containing "0SENTINEL") was found at line '+ _np.str(fitstart-1)+',\n'
+                errorstring += 'but the end of the fitting output (first line containing "*BEAM*") was not found. Please check the input file.'
+                raise IOError(errorstring)
+        fits.extend(flist[fitstart:fitend])
+        return fits
+
+
     def _get_output(self,flist):
         ''' Function to extract the output from a standard output file. The output will be an list of the lines
             for each element which conatins the beam data. Each element should contain the R and TRANSPORT matrices which
