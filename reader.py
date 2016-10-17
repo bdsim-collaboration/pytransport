@@ -108,7 +108,8 @@ class reader():
             '''
         foundlatticestart = False
         foundlatticeend = False
-
+        lattice = []
+        lattice.append('OUTPUT LATTICE')
         for linenum,line in enumerate(flist):
             if line == '0    0':
                 if not foundlatticestart:
@@ -130,7 +131,7 @@ class reader():
                 errorstring += 'but the end of a lattice (line = "0SENTINEL") was not found. Please check the input file.'
                 raise IOError(errorstring)
         else:
-            lattice = flist[latticestart:latticeend]
+            lattice.extend(flist[latticestart:latticeend])
         return lattice
 
 
