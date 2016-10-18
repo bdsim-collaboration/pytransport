@@ -126,27 +126,31 @@ class functions():
                     filedata = []
                     flist = temp._file_to_list(input)
                     lattice,output=temp._get_latticeandoutput(flist)
-                    for latticeline in lattice:
+                    for linenum, latticeline in enumerate(lattice):
                         latticeline = latticeline.replace(';','')
                         line = _np.array(latticeline.split(' '),dtype=_np.str)
                         line = self._remove_blanks(line)
+                        
                         # Method of dealing with split lines in the output
-                        # Split lines 'SHOULD' start with 000, but be careful.
-                        if line[0] == '000':
-                            prevline = data[-1]
-                            prevfileline = filedata[-1]
-                            data.pop()
-                            filedata.pop()
-                            templine = latticeline
-                            latticeline = prevfileline[:-1] + templine
-                            prevline = list(prevline)
-                            prevline.extend(list(line[1:]))
-                            line = _np.array(prevline)
-                        data.append(line)
-                        filedata.append(latticeline)
-#                        numlines += 1
-#                        if numlines >6:
-#                            break
+                        # Should only be applicable to type 12 entry (up to 15 variables)
+                        # It is assumed that the line is always split, so be careful.
+                        prevline = lattice[linenum-1].replace(';','')
+                        prevline = _np.array(prevline.split(' '),dtype=_np.str)
+                        prevline = self._remove_blanks(prevline)
+                        
+                        #Catch for any lines that are comments
+                        try:
+                            if (linenum > 0) and _np.abs(_np.float(line[0])) == 12.0:
+                                latticeline, line = self._joinsplitlines(linenum,lattice)
+                            # Ignore line after type 12 entry (second part of split line)
+                            if (linenum > 1) and _np.abs(_np.float(prevline[0])) == 12.0:
+                                pass
+                            else:
+                                data.append(line)
+                                filedata.append(latticeline)
+                        except ValueError:
+                            data.append(line)
+                            filedata.append(latticeline)
                     break
                 else:
                     endoflinepos = self._endofline(inputline)
@@ -165,6 +169,63 @@ class functions():
         self.filedata=filedata
 
 
+    def _joinsplitlines(self,linenum,lattice):
+        firstline = lattice[linenum].replace(';','')
+        latticeline = firstline #Copy for later
+        firstline = _np.array(firstline.split(' '),dtype=_np.str)
+        firstline = self._remove_blanks(firstline)
+        numericals = []
+        
+        #Keep entries that are strings of numbers
+        for i in firstline:
+            try:
+                number = _np.float(i)
+                numericals.append(_np.str(number))
+            except ValueError:
+                pass
+    
+        #Number of numerical elements minus the first which should be the entry type number.
+        #This is bascially a way of extracting any label or comments.
+        numelements = len(numericals) - 1
+
+        secline = lattice[linenum+1].replace(';','')
+        secline = _np.array(secline.split(' '),dtype=_np.str)
+        secline = self._remove_blanks(secline)
+        secnumericals = []
+
+        for i in secline:
+            try:
+                number = _np.float(i)
+                secnumericals.append("%.4f" %number)
+            except ValueError:
+                pass
+
+        #Second line should be 15 minus number of numerical elements from prev line.
+        #This is done to skip erroneous numbers in the line such as '000' which have
+        #appeared when lines have been split.
+        secline = secnumericals[-15+numelements:]
+        numericals.extend(secline)
+
+        #Add to latticeline so as to appear like one single line in the file
+        seclinetxt=""
+        for i in secline:
+            newline = "     " + i
+            seclinetxt += newline
+        latticeline += seclinetxt
+
+#        if line[0] == '000':
+#            prevline = data[-1]
+#            prevfileline = filedata[-1]
+#            data.pop()
+#            filedata.pop()
+#            templine = latticeline
+#            latticeline = prevfileline[:-1] + templine
+#            prevline = list(prevline)
+#            prevline.extend(list(line[1:]))
+#            line = _np.array(prevline)
+        line = _np.array(numericals)
+        return latticeline,line
+                        
     def _remove_blanks(self,line):
         ''' Function to remove '' from lines.
             '''
