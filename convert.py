@@ -227,14 +227,13 @@ class pytransport(elements):
             try: 
                 if _np.float(self._line[0]) > 0:
                     if self.data[0][0] == 'OUTPUT':
-                        linedict = self._element_prepper(self._line,linenum,'output')
+                        self._element_prepper(self._line,linenum,'output')
                     else:
-                        self._line = self._remove_blanks(self._line)
-                        linedict = self._element_prepper(self._line,linenum,'input')
-                    self._get_type(linedict)
+                        self._line = self._remove_illegals(self._line)
+                        self._element_prepper(self._line,linenum,'input')
                 else:
                     if self._debug:
-                        print '\tLine number is 0 or negative, ignoring line.'
+                        print '\tType code is 0 or negative, ignoring line.'
             except ValueError:
                 if self._debug:
                     if line[0] == '(' or line[0] == '/':
@@ -243,11 +242,14 @@ class pytransport(elements):
                         errorline = '\tCannot process line '+_np.str(linenum)+', line is for TRANSPORT fitting routine.'
                     elif line[0] == '\n':
                         errorline = '\tCannot process line '+_np.str(linenum)+', line is blank.'
-
                     else:
                         errorline = '\tCannot process line '+_np.str(linenum)+', reason unknown.'
 
                     self._printout(errorline)
+
+        for element in self._elementReg.elements:
+            self._get_type(element)
+
         self.write()
         
 
