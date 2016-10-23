@@ -136,6 +136,11 @@ class reader():
 
 
     def _get_fits(self,flist):
+        ''' Function to get the fit routine data from the standard transport output.
+            Returns two lists, the first with the direct output from the fitting data,
+            the second with the first line of each element in the output data, which contains the 
+            element parameters with their fitted values.
+            '''
         foundfitstart = False
         foundfitend = False
         fits = []
