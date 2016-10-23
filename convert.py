@@ -59,6 +59,18 @@ class _machineprops():
         self.beampiperadius = 20
 
 
+class _Registry():
+    def __init__(self):
+        self.elements = []
+        self.names    = []
+
+    def AddToRegistry(self,linedict):
+        if not isinstance(linedict,dict):
+            raise TypeError("Added element is not a Dictionary")
+        self.elements.append(linedict)
+        self.names.append(linedict['name'])
+
+
 class pytransport(elements):
     '''A module for converting a TRANSPORT file into gmad for use in BDSIM.
         
