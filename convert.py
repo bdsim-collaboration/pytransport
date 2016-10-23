@@ -214,9 +214,6 @@ class pytransport(elements):
                 self._printout('Processing line '+_np.str(linenum)+' :')
                 self._printout('\t' + self.filedata[linenum])
 
-            #if len(line) > 1:   #i.e line isn't equal to escape sequence line.
-                                #This is a bit slapdash at the moment, needs better implementation.
-                #self._line = _np.array(line.split(' '))
             self._line = line
             self._linenum = linenum
             if self._is_sentinel(self._line):   # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT
