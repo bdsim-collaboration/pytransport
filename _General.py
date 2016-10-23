@@ -523,6 +523,33 @@ class functions():
 
         self.beamprops.brho = mom_in_ev / _con.c
 
+
+    def _process_fits(self,fits):
+        # First split the fitting output into its respective sections (input problem step).
+        fitsections = []
+        fitsstarts=[]
+        # Start line of each section
+        for linenum,line in enumerate(fits):
+            if line.startswith('1'):
+                fitsstarts.append(linenum)
+            
+        for secnum in range(len(fitsstarts)):
+            if secnum+1 < len(fitsstarts):
+                section = fits[fitsstarts[secnum]:fitsstarts[secnum+1]]
+            else:
+                section = fits[fitsstarts[secnum]:]
+            lines=[]
+            for line in section:
+                lines.append(self._remove_illegals(line.split(' ')))
+            fitsections.append(lines)
+            
+        magnetlines = []
+        for section in fitsections:
+            for line in section:
+                if (len(line) > 0) and (line[0][0] == '*' and line[0][-1] == '*') and line[0] != '*FIT*':
+                    magnetlines.append(line)
+
+
     def _outputfits_to_registry(self,outputdata):
         isLegal ={'*DRIFT*' : 3.0,
                   '*QUAD*'  : 5.0,
