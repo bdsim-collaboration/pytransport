@@ -129,14 +129,14 @@ class functions():
                     for linenum, latticeline in enumerate(lattice):
                         latticeline = latticeline.replace(';','')
                         line = _np.array(latticeline.split(' '),dtype=_np.str)
-                        line = self._remove_blanks(line)
+                        line = self._remove_illegals(line)
                         
                         # Method of dealing with split lines in the output
                         # Should only be applicable to type 12 entry (up to 15 variables)
                         # It is assumed that the line is always split, so be careful.
                         prevline = lattice[linenum-1].replace(';','')
                         prevline = _np.array(prevline.split(' '),dtype=_np.str)
-                        prevline = self._remove_blanks(prevline)
+                        prevline = self._remove_illegals(prevline)
                         
                         #Catch for any lines that are comments
                         try:
@@ -158,7 +158,7 @@ class functions():
                     if endoflinepos > 0:
                         templine = inputline[:endoflinepos]
                     line = _np.array(templine.split(' '),dtype=_np.str)
-                    line = self._remove_blanks(line)
+                    line = self._remove_illegals(line)
                     data.append(line)
                     filedata.append(inputline)
             self._fileloaded = True
@@ -173,7 +173,7 @@ class functions():
         firstline = lattice[linenum].replace(';','')
         latticeline = firstline #Copy for later
         firstline = _np.array(firstline.split(' '),dtype=_np.str)
-        firstline = self._remove_blanks(firstline)
+        firstline = self._remove_illegals(firstline)
         numericals = []
         
         #Keep entries that are strings of numbers
@@ -190,7 +190,7 @@ class functions():
 
         secline = lattice[linenum+1].replace(';','')
         secline = _np.array(secline.split(' '),dtype=_np.str)
-        secline = self._remove_blanks(secline)
+        secline = self._remove_illegals(secline)
         secnumericals = []
 
         for i in secline:
@@ -225,13 +225,16 @@ class functions():
 #            line = _np.array(prevline)
         line = _np.array(numericals)
         return latticeline,line
-                        
-    def _remove_blanks(self,line):
-        ''' Function to remove '' from lines.
+    
+
+    def _remove_illegals(self,line):
+        ''' Function to remove '' and stray characters from lines.
             '''
+        illegal = ['"','','(',')']
+        
         linelist=[]
         for element in line:
-            if element != '' and element != '"':
+            if not illegal.__contains__(element):
                 linelist.append(element)
         line = _np.array(linelist)
         return line
