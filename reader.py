@@ -157,7 +157,13 @@ class reader():
                 errorstring += 'but the end of the fitting output (first line containing "*BEAM*") was not found. Please check the input file.'
                 raise IOError(errorstring)
         fits.extend(flist[fitstart:fitend])
-        return fits
+        
+        fitres = []
+        output = self._get_output(flist)
+        for element in output:
+            fitres.append(element[0])
+        
+        return fits,fitres
 
 
     def _get_output(self,flist):
