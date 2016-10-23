@@ -522,3 +522,26 @@ class functions():
             mom_in_ev = self.beamprops.momentum
 
         self.beamprops.brho = mom_in_ev / _con.c
+
+    def _outputfits_to_registry(self,outputdata):
+        isLegal ={'*DRIFT*' : 3.0,
+                  '*QUAD*'  : 5.0,
+                  '*BEND*'  : 4.0}
+                  
+        for line in outputdata:
+            append = False
+            linedict = {'elementnum' : 0.0,
+                        'name'       : ''}
+            data    = self._remove_illegals(line.split(' '))
+            eledata = self._get_elementdata(data)
+            label   = self._get_label(data)
+            if isLegal.__contains__(data[0]):
+                linedict['elementnum']  = isLegal[data[0]]
+                linedict['name']        = label
+                linedict['data']        = eledata
+                append = True
+
+            #Only add an element with a name to the fitting registry.
+            #(Element has to be named to be varied in the fitting routine).
+            if append and (label is not None) and (label != ''):
+                self._fitReg.AddToRegistry(linedict)
