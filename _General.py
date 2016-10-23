@@ -167,7 +167,7 @@ class functions():
                     filedata.append(inputline)
             self._fileloaded = True
         except IOError:
-            print 'Cannot open file.'
+            self._printout('Cannot open file.')
         f.close()
         self.data=data
         self.filedata=filedata
