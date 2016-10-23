@@ -126,6 +126,10 @@ class functions():
                     filedata = []
                     flist = temp._file_to_list(input)
                     lattice,output=temp._get_latticeandoutput(flist)
+                    fits,fitres = temp._get_fits(flist)
+                    self._outputfits_to_registry(fitres)
+                    if self._debug:
+                        self._printout('\tFound Sentinel output, adding fitting output to the fitting registry (self._fitReg)')
                     for linenum, latticeline in enumerate(lattice):
                         latticeline = latticeline.replace(';','')
                         line = _np.array(latticeline.split(' '),dtype=_np.str)
