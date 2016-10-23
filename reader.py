@@ -162,7 +162,7 @@ class reader():
 
     def _get_output(self,flist):
         ''' Function to extract the output from a standard output file. The output will be an list of the lines
-            for each element which conatins the beam data. Each element should contain the R and TRANSPORT matrices which
+            for each element which contains the beam data. Each element should contain the R and TRANSPORT matrices which
             are necessary so the beam info can be calculated.
             '''
         foundoutputstart = False
