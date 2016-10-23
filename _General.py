@@ -264,19 +264,31 @@ class functions():
             startdbquote = _string.find(ele,'"')
             if startslash != -1:
                 end = 1 + startslash + _string.find(ele[(startslash+1):],"/")
-                label = ele[startslash+1:end]
+                if end <= startslash:
+                    label = ele[startslash+1:]
+                else:
+                    label = ele[startslash+1:end]
                 break
             elif startquote != -1:
                 end = 1 + startquote + _string.find(ele[(startslash+1):],"'")
-                label = ele[startslash+1:end]
+                if end <= startquote:
+                    label = ele[startquote+1:]
+                else:
+                    label = ele[startquote+1:end]
                 break
             elif startequal != -1:
                 end = 1 + startequal + _string.find(ele[(startslash+1):],"=")
-                label = ele[startslash+1:end]
+                if end <= startequal:
+                    label = ele[startequal+1:]
+                else:
+                    label = ele[startequal+1:end]
                 break
             elif startdbquote != -1:
                 end = 1 + startdbquote + _string.find(ele[(startdbquote+1):],'"')
-                label = ele[startdbquote+1:end]
+                if end <= startdbquote:
+                    label = ele[startdbquote+1:]
+                else:
+                    label = ele[startdbquote+1:end]
                 break
             else:
                 label = None
