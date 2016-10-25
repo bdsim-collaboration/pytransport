@@ -520,16 +520,23 @@ class elements(functions):
 
         if specialdata[0] == 16.0:  #X0 offset
             self.beamprops.X0 = specialdata[1]
+            debugstring1 = '\tType 16: X0 beam offset,'
+            debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
         if specialdata[0] == 17.0:  #Y0 offset
             self.beamprops.Y0 = specialdata[1]
+            debugstring1 = '\tType 17: Y0 beam offset,'
+            debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
         if specialdata[0] == 18.0:  #Z0 offset
             self.beamprops.Z0 = specialdata[1]
+            debugstring1 = '\tType 18: Z0 beam offset,'
+            debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
+
         #if specialdata[0] == 5.0:   #beampiperadius (technically only vertical, but will apply a circle for now)
         #    self.machineprops.beampiperadius = specialdata[1]
-
-        #if self._debug:
-        #    self._printout('\tConverted to:')
-        #    self._printout('\t'+_np.str(specialdata[2]))
+        if self._debug:
+            self._printout('\tSpecial Input line:')
+            self._printout(debugstring1)
+            self._printout(debugstring2)
 
 
     def unit_change(self,linedict):
