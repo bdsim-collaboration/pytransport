@@ -235,7 +235,7 @@ class pytransport(elements):
                         self._element_prepper(self._line,linenum,'input')
                 else:
                     if self._debug:
-                        print '\tType code is 0 or negative, ignoring line.'
+                        self._printout('\tType code is 0 or negative, ignoring line.')
             except ValueError:
                 if self._debug:
                     if line[0] == '(' or line[0] == '/':
@@ -248,6 +248,9 @@ class pytransport(elements):
                         errorline = '\tCannot process line '+_np.str(linenum)+', reason unknown.'
 
                     self._printout(errorline)
+
+        if self._debug:
+            self._printout('Converting registry elements to pybdsim compatable format and adding to machine builder.')
 
         for element in self._elementReg.elements:
             self._get_type(element)
