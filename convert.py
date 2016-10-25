@@ -452,7 +452,7 @@ class pytransport(elements):
             if linedict['elementnum'] == 18.0:
                 self.sextupole(linedict)
             if linedict['elementnum'] == 19.0:
-                self.solenoid(line)
+                self.solenoid(linedict)
 
             # 9.  : 'Repetition' - for nesting elements
             if linedict['elementnum'] == 9.0:
