@@ -243,7 +243,7 @@ class elements(functions):
         self.madxmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
         
         if self._debug:
-            string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' KG, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
+            string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' G, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
             string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
             string3 = '\tBrho = ' + _np.str(_np.round(self.beamprops.brho,4)) + ' Tm. K1 = ' +_np.str(_np.round(field_gradient,4)) + ' m^-2'
             self._printout(string1)
