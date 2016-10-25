@@ -63,12 +63,14 @@ class _Registry():
     def __init__(self):
         self.elements = []
         self.names    = []
+        self.lines    = []
 
-    def AddToRegistry(self,linedict):
+    def AddToRegistry(self,linedict,line):
         if not isinstance(linedict,dict):
             raise TypeError("Added element is not a Dictionary")
         self.elements.append(linedict)
         self.names.append(linedict['name'])
+        self.lines.append(line)
 
 
 class pytransport(elements):
@@ -405,7 +407,8 @@ class pytransport(elements):
             if self._debug:
                 self._printout("\tEntry is a repetition control, adding to the element registry.")
 
-        self._elementReg.AddToRegistry(linedict)
+        rawline = self.filedata[linenum]
+        self._elementReg.AddToRegistry(linedict,rawline)
 
 
     def _get_type(self,linedict):
