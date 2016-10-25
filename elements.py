@@ -202,9 +202,9 @@ class elements(functions):
                 self._printout('\tConverted to:')
                 debugstring = 'Transform3D '+elementid+', angle '+_np.str(_np.round(self.machineprops.angle,4))+' rad'
                 self._printout('\t'+debugstring)
-            elif self.machineprops.angle == 1:
+            elif self.machineprops.angle == 180:
                 self._printout('Bending direction set to Right')
-            elif self.machineprops.angle == -1:
+            elif self.machineprops.angle == -180:
                 self._printout('Bending direction set to Left')
         
 
