@@ -527,3 +527,50 @@ class elements(functions):
         #    self._printout('\tConverted to:')
         #    self._printout('\t'+_np.str(specialdata[2]))
 
+
+    def unit_change(self,linedict):
+        '''Function to change the units (scaling) of various parameters'''
+        label = line['label']
+        if label=='CM' or label=='MM' or label=='UM' or label=='NM':
+            label = label.lower()
+        ### Convert Energy Unit Cases:
+        if label=='EV':
+            label='eV'
+        if label=='KEV':
+            label='keV'
+        if label=='MEV':
+            label='MeV'
+        if label=='GEV':
+            label='GeV'
+        if label=='TEV':
+            label='TeV'
+
+        if _np.float(linedict['number']) == 1:    #Horizontal and vertical beam size
+            self.units['x'] = label
+            self.units['y'] = label
+            self.units['bend_vert_gap'] = label
+            #self.units['pipe_rad'] = label
+        if _np.float(linedict['number']) == 2:    #Horizontal and vertical divergence
+            self.units['xp'] = label
+            self.units['yp'] = label
+        if _np.float(linedict['number']) == 3:    #Bending Magnet Gap
+            self.units['bend_vert_gap'] = label
+        if _np.float(linedict['number']) == 4:    #Vertical Divergence ONLY
+            self.units['yp'] = label
+        if _np.float(linedict['number']) == 5:    #Pulsed Beam Length
+            self.units['bunch_length'] = label
+        if _np.float(linedict['number']) == 6:    #Momentum Spread
+            self.units['momentum_spread'] = label   ## Percent
+        if _np.float(linedict['number']) == 7:    #Bend/pole face rotation
+            pass
+        if _np.float(linedict['number']) == 8:    #Element Length
+            self.units['element_length'] = label
+        if _np.float(linedict['number']) == 9:    #Magnetic Field
+            self.units['magnetic_fields'] = label
+        if _np.float(linedict['number']) == 10:   #Mass
+            self._printout('Cannot change mass scale.')
+        if _np.float(linedict['number']) == 11:   #Momentum / energy gain during acc.
+            self.units['p_egain'] = label
+
+
+            
