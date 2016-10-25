@@ -324,7 +324,13 @@ class pytransport(elements):
             linedict['SigmaE']  = line[6+n]
             if self._debug:
                 self._printout("\tEntry is a Beam definition or r.m.s addition, adding to the element registry.")
-                
+
+        if _np.float(line[0]) == 2.0:
+            linedict['elementnum'] = 2.0
+            linedict['name'] = self._get_label(line)
+            linedict['data'] = self._get_elementdata(line)
+            if self._debug:
+                self._printout("\tEntry is a poleface rotation, adding to the element registry.")
         
         if _np.float(line[0]) == 3.0:
             linedict['elementnum'] = 3.0
@@ -458,11 +464,15 @@ class pytransport(elements):
             if linedict['elementnum'] == 9.0:
                 errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
                 self._printout(errorline)
+            if linedict['elementnum'] == 2.0:
+                errorline = '\tLine is a poleface rotation which is handled by the previous or next dipole element.'
+                self._printout(errorline)
+
 
             self._printout('\n')
 
+
         ### OTHER TYPES WHICH CAN BE IGNORED:
-        # 2.  : Dipole poleface rotation (handled in dipole line).
         # 6.0.X : Update RX matrix used in TRANSPORT
         # 7.  : 'Shift beam centroid'
         # 8.  : Magnet alignment tolerances
