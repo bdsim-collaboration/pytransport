@@ -252,9 +252,7 @@ class pytransport(elements):
         if self._debug:
             self._printout('Converting registry elements to pybdsim compatable format and adding to machine builder.')
 
-        for element in self._elementReg.elements:
-            self._get_type(element)
-            self._printout('\n')
+        self.ProcessAndBuild()
 
         self.write()
         
@@ -418,41 +416,49 @@ class pytransport(elements):
         self._elementReg.AddToRegistry(linedict,rawline)
 
 
-    def _get_type(self,linedict):
-        '''Function to read element type.
+    def ProcessAndBuild(self):
+        '''Function to convert the registry elements into pybdsim format and add to the pybdsim builder.
             '''
-        if linedict['elementnum'] == 15.0:
-            self.unit_change(linedict)
-        if linedict['elementnum'] == 20.0:
-            self.change_bend(linedict)
-        if linedict['elementnum'] == 1.0:
-            self.define_beam(linedict)
-        if linedict['elementnum'] == 3.0:
-            self.drift(linedict)
-        if linedict['elementnum'] == 4.0:
-            self.dipole(linedict)
-        if linedict['elementnum'] == 5.0:
-            self.quadrupole(linedict)
-        if linedict['elementnum'] == 6.0:
-            pass
-            #self.collimator(line)
-        if linedict['elementnum'] == 12.0:
-            self.correction(linedict)
-        if linedict['elementnum'] == 11.0:
-            self.acceleration(linedict)
-        if linedict['elementnum'] == 13.0:
-            self.printline(linedict)
-        if linedict['elementnum'] == 16.0:
-            self.special_input(linedict)
-        if linedict['elementnum'] == 18.0:
-            self.sextupole(linedict)
-        if linedict['elementnum'] == 19.0:
-            self.solenoid(line)
+        for linenum,linedict in enumerate(self._elementReg.elements):
+            if self._debug:
+                self._printout('Converting line:')
+                convertline = '\t' + self._elementReg.lines[linenum]
+                self._printout(convertline)
+    
+            if linedict['elementnum'] == 15.0:
+                self.unit_change(linedict)
+            if linedict['elementnum'] == 20.0:
+                self.change_bend(linedict)
+            if linedict['elementnum'] == 1.0:
+                self.define_beam(linedict)
+            if linedict['elementnum'] == 3.0:
+                self.drift(linedict)
+            if linedict['elementnum'] == 4.0:
+                self.dipole(linedict)
+            if linedict['elementnum'] == 5.0:
+                self.quadrupole(linedict)
+            if linedict['elementnum'] == 6.0:
+                pass
+                #self.collimator(line)
+            if linedict['elementnum'] == 12.0:
+                self.correction(linedict)
+            if linedict['elementnum'] == 11.0:
+                self.acceleration(linedict)
+            if linedict['elementnum'] == 13.0:
+                self.printline(linedict)
+            if linedict['elementnum'] == 16.0:
+                self.special_input(linedict)
+            if linedict['elementnum'] == 18.0:
+                self.sextupole(linedict)
+            if linedict['elementnum'] == 19.0:
+                self.solenoid(line)
 
-        # 9.  : 'Repetition' - for nesting elements
-        if linedict['elementnum'] == 9.0:
-            errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
-            self._printout(errorline)
+            # 9.  : 'Repetition' - for nesting elements
+            if linedict['elementnum'] == 9.0:
+                errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
+                self._printout(errorline)
+
+            self._printout('\n')
 
         ### OTHER TYPES WHICH CAN BE IGNORED:
         # 2.  : Dipole poleface rotation (handled in dipole line).
