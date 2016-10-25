@@ -571,4 +571,5 @@ class functions():
             #Only add an element with a name to the fitting registry.
             #(Element has to be named to be varied in the fitting routine).
             if append and (label is not None) and (label != ''):
-                self._fitReg.AddToRegistry(linedict)
+                self._fitReg.AddToRegistry(linedict,line)
+
