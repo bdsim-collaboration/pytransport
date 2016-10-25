@@ -51,7 +51,7 @@ class elements(functions):
         self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
 
         if self._debug:
-            self._printout('\t Beam definition :')
+            self._printout('\tBeam definition :')
             self._printout('\t distrType = ' + self.beamprops.distrType)
             self._printout('\t energy = ' + _np.str(self.beamprops.tot_energy)+ ' ' +self.units['p_egain'])
             self._printout('\t SigmaX = ' + _np.str(self.beamprops.SigmaX)  + ' ' +self.units['x'])
@@ -444,22 +444,26 @@ class elements(functions):
 
     def printline(self,linedict):
         number = linedict['data'][0]
-#        for ele in line[1:]:
         try:
             number = _np.float(number)
             if number == 48:
                 self.machineprops.benddef = False
-                self._printout('Switched Dipoles to Angle definition.')
-            if number == 47:
+                debugstring = '\t48. Switched Dipoles to Angle definition.'
+            elif number == 47:
                 self.machineprops.benddef = True
-                self._printout('Switched Dipoles to field definition.')
+                debugstring = '\t47. Switched Dipoles to field definition.'
+            else:
+                debugstring = '\tCode 13. ' + _np.str(number) + ' handling not implemented.'
         except ValueError:
             pass
+        if self._debug:
+            self._printout('\tTRANSPORT control line,')
+            self._printout(debugstring)
 
 
     def correction(self,linedict):
         if self._correctedbeamdef == True:
-            self._printout('\t Not Correction to original beam definition')
+            self._printout('\tNot Correction to original beam definition')
             return
         #Check if the previous line was the original beam definition and not an rms update
         if linedict['prevlinenum'] == 1.0 and not linedict['isAddition'] and self._beamdefined:

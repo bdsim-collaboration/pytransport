@@ -421,7 +421,8 @@ class pytransport(elements):
             '''
         for linenum,linedict in enumerate(self._elementReg.elements):
             if self._debug:
-                self._printout('Converting line:')
+                debugstring = 'Converting element number ' + _np.str(linenum) + ':'
+                self._printout(debugstring)
                 convertline = '\t' + self._elementReg.lines[linenum]
                 self._printout(convertline)
     
