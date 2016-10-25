@@ -254,6 +254,7 @@ class pytransport(elements):
 
         for element in self._elementReg.elements:
             self._get_type(element)
+            self._printout('\n')
 
         self.write()
         
