@@ -105,72 +105,60 @@ class functions():
         '''Load file to be converted into gmad format. 
            Some processing here too (removal of blank spaces etc)
             '''
-        data=[]
-        filedata=[]
         temp = _reader.reader()
 
         if not isinstance(input, _np.str):
             raise TypeError("Input must be a string")
         
-        infile = input.split('/')[-1] #Remove filepath, leave just filename
-        self._file = infile[:-4]         #Remove extension
-        f = open(input)
-        try:
-            numlines=0
+        infile = input.split('/')[-1]       #Remove filepath, leave just filename
+        self._file = infile[:-4]            #Remove extension
+        isOutput = self._is_Output(input)   #Is a TRANSPORT standard output file.
+
+        if isOutput:
+            flist = temp._file_to_list(input)
+            lattice,output=temp._get_latticeandoutput(flist)
+            fits,fitres = temp._get_fits(flist)
+            self._outputfits_to_registry(fitres)
+            if self._debug:
+                self._printout('\tAdding any fitting output to the fitting registry (self._fitReg)')
+            for linenum, latticeline in enumerate(lattice):
+                latticeline = latticeline.replace(';','')
+                line = _np.array(latticeline.split(' '),dtype=_np.str)
+                line = self._remove_illegals(line)
+                
+                # Method of dealing with split lines in the output
+                # Should only be applicable to type 12 entry (up to 15 variables)
+                # It is assumed that the line is always split, so be careful.
+                prevline = lattice[linenum-1].replace(';','')
+                prevline = _np.array(prevline.split(' '),dtype=_np.str)
+                prevline = self._remove_illegals(prevline)
+                
+                try:
+                    if (linenum > 0) and _np.abs(_np.float(line[0])) == 12.0:
+                        latticeline, line = self._joinsplitlines(linenum,lattice)
+                    # Ignore line after type 12 entry (second part of split line)
+                    if (linenum > 1) and _np.abs(_np.float(prevline[0])) == 12.0:
+                        pass
+                    else:
+                        self.data.append(line)
+                        self.filedata.append(latticeline)
+                except ValueError:
+                    self.data.append(line)
+                    self.filedata.append(latticeline)
+        else:
+            f = open(input)
             for inputline in f:
-                # If a line in the file is equal to one of these, then it's
-                # likely to be an output file, so instead, use the reader
-                if (inputline == '0    0\n') or (inputline == '0    0\r\n'):
-                    #reset lists
-                    data = []
-                    filedata = []
-                    flist = temp._file_to_list(input)
-                    lattice,output=temp._get_latticeandoutput(flist)
-                    fits,fitres = temp._get_fits(flist)
-                    self._outputfits_to_registry(fitres)
-                    if self._debug:
-                        self._printout('\tFound Sentinel output, adding fitting output to the fitting registry (self._fitReg)')
-                    for linenum, latticeline in enumerate(lattice):
-                        latticeline = latticeline.replace(';','')
-                        line = _np.array(latticeline.split(' '),dtype=_np.str)
-                        line = self._remove_illegals(line)
-                        
-                        # Method of dealing with split lines in the output
-                        # Should only be applicable to type 12 entry (up to 15 variables)
-                        # It is assumed that the line is always split, so be careful.
-                        prevline = lattice[linenum-1].replace(';','')
-                        prevline = _np.array(prevline.split(' '),dtype=_np.str)
-                        prevline = self._remove_illegals(prevline)
-                        
-                        #Catch for any lines that are comments
-                        try:
-                            if (linenum > 0) and _np.abs(_np.float(line[0])) == 12.0:
-                                latticeline, line = self._joinsplitlines(linenum,lattice)
-                            # Ignore line after type 12 entry (second part of split line)
-                            if (linenum > 1) and _np.abs(_np.float(prevline[0])) == 12.0:
-                                pass
-                            else:
-                                data.append(line)
-                                filedata.append(latticeline)
-                        except ValueError:
-                            data.append(line)
-                            filedata.append(latticeline)
-                    break
-                else:
-                    endoflinepos = self._endofline(inputline)
-                    templine = inputline
-                    if endoflinepos > 0:
-                        templine = inputline[:endoflinepos]
-                    line = _np.array(templine.split(' '),dtype=_np.str)
-                    line = self._remove_illegals(line)
-                    data.append(line)
-                    filedata.append(inputline)
-            self._fileloaded = True
-        except IOError:
-            self._printout('Cannot open file.')
-        f.close()
-        self.data=data
-        self.filedata=filedata
+                endoflinepos = self._endofline(inputline)
+                templine = inputline
+                if endoflinepos > 0:
+                    templine = inputline[:endoflinepos]
+                line = _np.array(templine.split(' '),dtype=_np.str)
+                line = self._remove_illegals(line)
+                self.data.append(line)
+                self.filedata.append(inputline)
+            f.close()
+
+        self._fileloaded = True
 
 
     def _joinsplitlines(self,linenum,lattice):

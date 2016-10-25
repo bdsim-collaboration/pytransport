@@ -132,8 +132,11 @@ class pytransport(elements):
         self._madxDir     = madxDir
         self._numberparts = -1
         self._collindex   = []  # An index of collimator labels
-        self._accstart    = []   # An index of the start of acceleration elements.
-        self.units={    ### Default TRANSPORT units
+        self._accstart    = []  # An index of the start of acceleration elements.
+        self.data         = []  # A list that will contain arrays of the element data
+        self.filedata     = []  # A list that will contain the raw strings from the input file
+
+        self.units        = {   # Default TRANSPORT units
         'x'                     :'cm',
         'xp'                    :'mrad',
         'y'                     :'cm',
