@@ -573,3 +573,22 @@ class functions():
             if append and (label is not None) and (label != ''):
                 self._fitReg.AddToRegistry(linedict,line)
 
+
+    def _is_Output(self,inputfile):
+        ''' Function to check if a file is a standard TRANSPORT output file.
+            Based upon existence of the line:
+                "0    0"
+            being present, which represents the TRANSPORT indicator card line.
+            '''
+        isOutput = False
+        try:
+            f = open(inputfile)
+            for inputline in f:
+                if (inputline == '0    0\n') or (inputline == '0    0\r\n'):
+                    isOutput = True
+                    break
+            f.close()
+        except IOError:
+            self._printout('Cannot open file.')
+        return isOutput
+
