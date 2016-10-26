@@ -200,12 +200,12 @@ class elements(functions):
         if self._debug:
             if rotation:
                 self._printout('\tConverted to:')
-                debugstring = 'Transform3D '+elementid+', angle '+_np.str(_np.round(self.machineprops.angle,4))+' rad'
+                debugstring = '\tTransform3D '+elementid+', angle '+_np.str(_np.round(self.machineprops.angle,4))+' rad'
                 self._printout('\t'+debugstring)
             elif self.machineprops.angle == 180:
-                self._printout('Bending direction set to Right')
+                self._printout('\tBending direction set to Right')
             elif self.machineprops.angle == -180:
-                self._printout('Bending direction set to Left')
+                self._printout('\tBending direction set to Left')
         
 
 
@@ -517,7 +517,9 @@ class elements(functions):
 
     def special_input(self,linedict):
         specialdata = linedict['data']
-
+        #default output
+        debugstring1 = '\tCode type not yet supported, or unknown code type.'
+        debugstring2 = ''
         if specialdata[0] == 16.0:  #X0 offset
             self.beamprops.X0 = specialdata[1]
             debugstring1 = '\tType 16: X0 beam offset,'
@@ -556,6 +558,10 @@ class elements(functions):
             label='GeV'
         if label=='TEV':
             label='TeV'
+
+        #default output
+        debugstring1 = '\tCode type not yet supported, or unknown code type.'
+        debugstring2 = ''
 
         if _np.float(number) == 1:    #Horizontal and vertical beam size
             self.units['x'] = label
