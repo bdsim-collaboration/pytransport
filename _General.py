@@ -501,7 +501,8 @@ class functions():
         for line in outputdata:
             append = False
             linedict = {'elementnum' : 0.0,
-                        'name'       : ''}
+                        'name'       : '',
+                        'length'     : 0.0}
             data    = self._remove_illegals(line.split(' '))
             eledata = self._get_elementdata(data)
             label   = self._get_label(data)
@@ -509,6 +510,7 @@ class functions():
                 linedict['elementnum']  = isLegal[data[0]]
                 linedict['name']        = label
                 linedict['data']        = eledata
+                linedict['length']      = eledata[1]
                 append = True
 
             #Only add an element with a name to the fitting registry.
