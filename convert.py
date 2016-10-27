@@ -304,6 +304,7 @@ class pytransport(elements):
                 if _np.float(self._line[0]) > 0:
                     if self.data[0][0] == 'OUTPUT':
                         self._element_prepper(self._line,linenum,'output')
+                        self.UpdateElementsFromFits()
                     else:
                         self._line = self._remove_illegals(self._line)
                         self._element_prepper(self._line,linenum,'input')
@@ -673,6 +674,118 @@ class pytransport(elements):
         self.madxmachine.AddOptions(self.options)   #redundant
 
     
+    def UpdateElementsFromFits(self):
+
+        #Functions that update the elements in the element registry.
+        #For debugging purposes, they return dictionaries of the element type,
+        #length change details, and which parameters were updated and the values in a list which
+        #follows the pattern of [parameter name (e.g. 'field'),oldvalue,newvalue]
+        
+        def _updateLength(index,fitindex,element):
+            oldlength  = self._elementReg.elements[index]['length']
+            lengthDiff = self._elementReg.elements[index]['length'] - element['length']
+            self._elementReg.elements[index]['length'] = element['length']  #Update length
+            self._elementReg.length[index:] += lengthDiff                   #Update running length of subsequent elements.
+            self._elementReg._totalLength += lengthDiff                     #Update total length
+            lendict = {'old' : _np.round(oldlength,5),
+                       'new' : _np.round(element['length'],5)}
+            return lendict
+
+        def _updateDrift(index,fitindex,element):
+            eledict = {'updated' : False,
+                       'element' : 'Drift',
+                       'params'  : []}
+
+            #Only length can be varied
+            if self._elementReg.elements[index]['length'] != element['length']:
+                lendict = _updateLength(index,fitindex,element)
+                eledict['updated'] = True
+                eledict['length']  = lendict
+            return eledict
+        
+        
+        def _updateQuad(index,fitindex,element):
+            eledict = {'updated' : False,
+                       'element' : 'Quadrupole',
+                       'params'  : []}
+            
+            if (self._elementReg.elements[index]['data'][1] != element['data'][1]):
+                oldvalue = self._elementReg.elements[index]['data'][1]
+                self._elementReg.elements[index]['data'][1] = element['data'][1]    #Field
+                eledict['updated'] = True
+                data = ['field', oldvalue, element['data'][1]]
+                eledict['params'].append(data)
+
+            if self._elementReg.elements[index]['length'] != element['length']:
+                self._elementReg.elements[index]['data'][0] = element['data'][0]    #Length in data
+                lendict = _updateLength(index,fitindex,element)
+                eledict['updated'] = True
+                eledict['length'] = lendict
+            return eledict
+                
+
+        def _updateDipole(index,fitindex,element):
+            eledict = {'updated' : False,
+                       'element' : 'Dipole',
+                       'params'  : []}
+            
+            ## Need code in here to handle variation in poleface rotation. Not urgent for now.
+            if (self._elementReg.elements[index]['data'][1] != element['data'][3]): #Field
+                oldvalue = self._elementReg.elements[index]['data'][1]
+                self._elementReg.elements[index]['data'][1] = element['data'][3]
+                eledict['updated'] = True
+                if self.machineprops.benddef:   #Transport can switch dipole input definition
+                    par = 'field'
+                else:
+                    par = 'angle'
+                data = [par, oldvalue, element['data'][3]]
+                eledict['params'].append(data)
+
+            if self._elementReg.elements[index]['length'] != element['length']:
+                self._elementReg.elements[index]['data'][0] = element['data'][0]    #Length in data
+                lendict = _updateLength(index,fitindex,element)
+                eledict['updated'] = True
+                eledict['length'] = lendict
+            return eledict
+
+
+        for index,name in enumerate(self._fitReg._uniquenames):
+            fitstart = self._fitReg.GetElementStartSPosition(name)
+            elestart = self._elementReg.GetElementStartSPosition(name)
+            fitindex = self._fitReg.GetElementIndex(name)
+            eleindex = self._elementReg.GetElementIndex(name)
+            for fitnum,fit in enumerate(fitstart):
+                for elenum,ele in enumerate(elestart):
+                    if _np.round(ele,5) == _np.round(fit,5):
+                        fitelement = self._fitReg.elements[fitindex[fitnum]]
+                        
+                        if fitelement['elementnum'] == 3:
+                            eledict = _updateDrift(eleindex[elenum],fitindex[fitnum],fitelement)
+                        elif fitelement['elementnum'] == 4:
+                            eledict = _updateDipole(eleindex[elenum],fitindex[fitnum],fitelement)
+                        elif fitelement['elementnum'] == 5:
+                            eledict = _updateQuad(eleindex[elenum],fitindex[fitnum],fitelement)
+            
+                        if self._debug and eledict['updated']:
+                            self._printout("\tElement "+_np.str(eleindex[elenum])+" was updated from fitting.")
+                            self._printout("\tOptics Output line:")
+                            self._printout("\t\t'"+self._fitReg.lines[fitindex[fitnum]]+"'")
+                            if eledict.has_key('length'):
+                                lenline = "\t"+eledict['element']+" length updated to "
+                                lenline +=  + _np.str(eledict['length']['new']) + " (from " + _np.str(eledict['length']['old']) + ")."
+                                self._printout(lenline)
+                            for param in eledict['params']:
+                                parline = "\t"+eledict['element']+" "+param[0]+" updated to "+_np.str(param[2])+" (from "+_np.str(param[1])+")."
+                                self._printout(parline)
+                            self._printout("\n")
+                
+                        break
+
+
+
+
+
+
 
 
 
