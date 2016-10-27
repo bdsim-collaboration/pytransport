@@ -515,8 +515,11 @@ class functions():
 
             #Only add an element with a name to the fitting registry.
             #(Element has to be named to be varied in the fitting routine).
+            #Otherwise update the total length of the machine.
             if append and (label is not None) and (label != ''):
                 self._fitReg.AddToRegistry(linedict,line)
+            else:
+                self._fitReg.UpdateLength(linedict)
 
 
     def _is_Output(self,inputfile):
