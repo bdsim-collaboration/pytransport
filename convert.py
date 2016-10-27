@@ -681,6 +681,7 @@ class pytransport(elements):
         #length change details, and which parameters were updated and the values in a list which
         #follows the pattern of [parameter name (e.g. 'field'),oldvalue,newvalue]
         
+        #Length update common to nearly all elements, seperate function to prevent duplication
         def _updateLength(index,fitindex,element):
             oldlength  = self._elementReg.elements[index]['length']
             lengthDiff = self._elementReg.elements[index]['length'] - element['length']
@@ -709,9 +710,9 @@ class pytransport(elements):
                        'element' : 'Quadrupole',
                        'params'  : []}
             
-            if (self._elementReg.elements[index]['data'][1] != element['data'][1]):
+            if (self._elementReg.elements[index]['data'][1] != element['data'][1]): #Field
                 oldvalue = self._elementReg.elements[index]['data'][1]
-                self._elementReg.elements[index]['data'][1] = element['data'][1]    #Field
+                self._elementReg.elements[index]['data'][1] = element['data'][1]
                 eledict['updated'] = True
                 data = ['field', oldvalue, element['data'][1]]
                 eledict['params'].append(data)
