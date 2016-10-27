@@ -335,6 +335,7 @@ class pytransport(elements):
         linedict = {'elementnum' : 0.0,
                     'name'       : '',
                     'length'     : 0.0}
+        numElements = _np.str(len(self._elementReg.elements))
         
         if _np.float(line[0]) == 15.0:
             linedict['elementnum'] = 15.0
@@ -345,7 +346,7 @@ class pytransport(elements):
                 linedict['label'] = label
             linedict['number'] = line[1]
             if self._debug:
-                self._printout("\tEntry is a Unit Control, adding to the element registry.")
+                self._printout("\tEntry is a Unit Control, adding to the element registry as element " + numElements + ".")
         
         if _np.float(line[0]) == 20.0:
             linedict['elementnum'] = 20.0
@@ -363,7 +364,7 @@ class pytransport(elements):
             angle = line[1][:endofline]
             linedict['angle'] = angle
             if self._debug:
-                self._printout("\tEntry is a coordinate rotation, adding to the element registry.")
+                self._printout("\tEntry is a coordinate rotation, adding to the element registry as element " + numElements + ".")
 
     
         if _np.float(line[0]) == 1.0:
@@ -394,14 +395,14 @@ class pytransport(elements):
             linedict['SigmaT']  = line[5+n]
             linedict['SigmaE']  = line[6+n]
             if self._debug:
-                self._printout("\tEntry is a Beam definition or r.m.s addition, adding to the element registry.")
+                self._printout("\tEntry is a Beam definition or r.m.s addition, adding to the element registry as element " + numElements + ".")
 
         if _np.float(line[0]) == 2.0:
             linedict['elementnum'] = 2.0
             linedict['name'] = self._get_label(line)
             linedict['data'] = self._get_elementdata(line)
             if self._debug:
-                self._printout("\tEntry is a poleface rotation, adding to the element registry.")
+                self._printout("\tEntry is a poleface rotation, adding to the element registry as element " + numElements + ".")
         
         if _np.float(line[0]) == 3.0:
             linedict['elementnum'] = 3.0
@@ -409,7 +410,7 @@ class pytransport(elements):
             data = self._get_elementdata(line)
             linedict['length'] = data[0]
             if self._debug:
-                self._printout("\tEntry is a drift tube, adding to the element registry.")
+                self._printout("\tEntry is a drift tube, adding to the element registry as element " + numElements + ".")
             
         if _np.float(line[0]) == 4.0:
             linedict['elementnum'] = 4.0
@@ -422,7 +423,7 @@ class pytransport(elements):
             linedict['e1'] = e1
             linedict['e2'] = e2
             if self._debug:
-                self._printout("\tEntry is a dipole, adding to the element registry.")
+                self._printout("\tEntry is a dipole, adding to the element registry as element " + numElements + ".")
 
         if _np.float(line[0]) == 5.0:
             linedict['elementnum'] = 5.0
@@ -431,12 +432,12 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             if self._debug:
-                self._printout("\tEntry is a quadrupole, adding to the element registry.")
+                self._printout("\tEntry is a quadrupole, adding to the element registry as element " + numElements + ".")
 
         if _np.float(line[0]) == 6.0:
             linedict['elementnum'] = 6.0
             if self._debug:
-                self._printout("\tEntry is a Transform update, adding to the element registry.")
+                self._printout("\tEntry is a Transform update, adding to the element registry as element " + numElements + ".")
 
         if _np.float(line[0]) == 12.0:
             linedict['elementnum'] = 12.0
@@ -453,7 +454,7 @@ class pytransport(elements):
             if self._is_addition(line):
                 linedict['isAddition'] = True
             if self._debug:
-                self._printout("\tEntry is a beam rotation, adding to the element registry.")
+                self._printout("\tEntry is a beam rotation, adding to the element registry as element " + numElements + ".")
                 
         if _np.float(line[0]) == 11.0:
             linedict['elementnum'] = 11.0
@@ -462,19 +463,19 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             if self._debug:
-                self._printout("\tEntry is an acceleration element, adding to the element registry.")
+                self._printout("\tEntry is an acceleration element, adding to the element registry as element " + numElements + ".")
         
         if _np.float(line[0]) == 13.0:
             linedict['elementnum'] = 13.0
             linedict['data'] = self._get_elementdata(line)
             if self._debug:
-                self._printout("\tEntry is a Input/Output control, adding to the element registry.")
+                self._printout("\tEntry is a Input/Output control, adding to the element registry as element " + numElements + ".")
         
         if _np.float(line[0]) == 16.0:
             linedict['elementnum'] = 16.0
             linedict['data'] = self._get_elementdata(line)
             if self._debug:
-                self._printout("\tEntry is a special input, adding to the element registry.")
+                self._printout("\tEntry is a special input, adding to the element registry as element " + numElements + ".")
 
         if _np.float(line[0]) == 18.0:
             linedict['elementnum'] = 18.0
@@ -483,7 +484,7 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             if self._debug:
-                self._printout("\tEntry is a sextupole, adding to the element registry.")
+                self._printout("\tEntry is a sextupole, adding to the element registry as element " + numElements + ".")
         
         if _np.float(line[0]) == 19.0:
             linedict['elementnum'] = 19.0
@@ -492,12 +493,12 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             if self._debug:
-                self._printout("\tEntry is a solenoid, adding to the element registry.")
+                self._printout("\tEntry is a solenoid, adding to the element registry as element " + numElements + ".")
         
         if _np.float(line[0]) == 9.0:
             linedict['elementnum'] = 9.0
             if self._debug:
-                self._printout("\tEntry is a repetition control, adding to the element registry.")
+                self._printout("\tEntry is a repetition control, adding to the element registry as element " + numElements + ".")
 
         rawline = self.filedata[linenum]
         self._elementReg.AddToRegistry(linedict,rawline)
