@@ -72,6 +72,22 @@ class _Registry():
         self.names.append(linedict['name'])
         self.lines.append(line)
 
+    def GetElementIndex(self,name):
+        if not self.names.__contains__(name):
+            return -1
+        else:
+            #Add all elements of the same name as a single element may be
+            #fitted multiple times. Choose the last of these elements.
+            elenums = []
+            for index,elename in enumerate(self.names):
+                if elename == name:
+                    elenums.append(index)
+
+            return elenums[-1]
+
+    def GetElement(self,name):
+        elenum = self.GetElementIndex(name)
+        return self.elements[elenum]
 
 class pytransport(elements):
     '''A module for converting a TRANSPORT file into gmad for use in BDSIM.
