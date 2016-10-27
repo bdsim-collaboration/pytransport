@@ -42,34 +42,73 @@ class functions():
         linelist.reverse()   #Search for poleface in reverse line order
 
         for line in linelist:
+            elecode = 0
             try:
-                if _np.float(line[0]) == 4.0:
-                    break
-                elif _np.float(line[0]) == 2.0:
-                    endof = self._endofline(line[1])
-                    if endof != -1:
-                        anglein = _np.round(_np.float(line[1][:endof]),4)
-                    else:
-                        anglein = _np.round(_np.float(line[1]),4)
-                    break
-                else:
-                    pass
+                elecode = _np.float(line[0])
             except ValueError:
                 pass
-        for line in self.data[linenum+1:(linenum+6)]:
-            try:
-                if _np.float(line[0]) == 4.0:
-                    break
-                elif _np.float(line[0]) == 2.0:
-                    endof = self._endofline(line[1])
-                    if endof != -1:
-                        angleout = _np.round(_np.float(line[1][:endof]),4)
+            
+            if _np.float(line[0]) == 4.0:
+                break
+            elif _np.float(line[0]) == 2.0:
+                endof = self._endofline(line[1])
+                if endof != -1:
+                    try:
+                        anglein = _np.round(_np.float(line[1][:endof]),4)
+                    except ValueError:
+                        try:
+                            anglein = _np.round(_np.float(line[2][:endof]),4)
+                        except ValueError:
+                            pass
                     else:
-                        angleout = _np.round(_np.float(line[1]),4)
-                    break
+                        pass
                 else:
-                    pass
+                    try:
+                        anglein = _np.round(_np.float(line[1]),4)
+                    except ValueError:
+                        try:
+                            anglein = _np.round(_np.float(line[2]),4)
+                        except ValueError:
+                            pass
+                    else:
+                        pass
+                break
+            else:
+                pass
+
+        for line in self.data[linenum+1:(linenum+6)]:
+            elecode = 0
+            try:
+                elecode = _np.float(line[0])
             except ValueError:
+                pass
+            
+            if _np.float(line[0]) == 4.0:
+                break
+            elif _np.float(line[0]) == 2.0:
+                endof = self._endofline(line[1])
+                if endof != -1:
+                    try:
+                        angleout = _np.round(_np.float(line[1][:endof]),4)
+                    except ValueError:
+                        try:
+                            angleout = _np.round(_np.float(line[2][:endof]),4)
+                        except ValueError:
+                            pass
+                    else:
+                        pass
+                else:
+                    try:
+                        angleout = _np.round(_np.float(line[1]),4)
+                    except ValueError:
+                        try:
+                            angleout = _np.round(_np.float(line[2]),4)
+                        except ValueError:
+                            pass
+                    else:
+                        pass
+                break
+            else:
                 pass
         return anglein,angleout
     
