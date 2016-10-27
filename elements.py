@@ -71,7 +71,7 @@ class elements(functions):
         
     
     def drift(self,linedict):
-        driftlen = linedict['driftlen']
+        driftlen = linedict['length']
         if _np.float(driftlen) <= 0:
             if self._debug:
                 self._printout('\tZero or negative length element, ignoring.')
