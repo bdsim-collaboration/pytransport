@@ -61,10 +61,11 @@ class _machineprops():
 
 class _Registry():
     def __init__(self):
-        self.elements = []
-        self.names    = []
-        self.lines    = []
-        self.length   = []
+        self.elements     = []
+        self.names        = []
+        self.lines        = []
+        self.length       = []
+        self._uniquenames = []
         self._totalLength = 0
 
     def AddToRegistry(self,linedict,line):
@@ -72,6 +73,9 @@ class _Registry():
             raise TypeError("Added element is not a Dictionary")
         self.elements.append(linedict)
         self.names.append(linedict['name'])
+        if not self._uniquenames.__contains__(linedict['name']):
+            self._uniquenames.append(linedict['name'])
+        
         self.lines.append(line)
         #Cumulative length
         length = round(linedict['length'],5)
