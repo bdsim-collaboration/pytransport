@@ -65,6 +65,7 @@ class _Registry():
         self.names    = []
         self.lines    = []
         self.length   = []
+        self._totalLength = 0
 
     def AddToRegistry(self,linedict,line):
         if not isinstance(linedict,dict):
@@ -73,11 +74,12 @@ class _Registry():
         self.names.append(linedict['name'])
         self.lines.append(line)
         #Cumulative length
-        length = linedict['length']
+        length = round(linedict['length'],5)
         if (len(self.length) > 0):
-            self.length.append(round(length + self.length[-1],5))
+            self.length.append(length + self._totalLength)
         else:
-            self.length.append(round(length,5))
+            self.length.append(length)
+        self._totalLength += length
 
     def GetElementIndex(self,name):
         if not self.names.__contains__(name):
