@@ -548,7 +548,7 @@ class functions():
             if isLegal.__contains__(data[0]):
                 linedict['elementnum']  = isLegal[data[0]]
                 linedict['name']        = label
-                linedict['data']        = eledata
+                linedict['data']        = eledata[1:] #first value is elementnum.
                 linedict['length']      = eledata[1]
                 append = True
 
