@@ -133,6 +133,16 @@ class _Registry():
             startS  = endS - length
             return round(startS,5)
 
+    def UpdateLength(self,linedict):
+        ''' Function to increases the machines length, but does not add element data.
+            This is so the S positions of named elements in the fitting registry can 
+            be calculated correctly.
+            '''
+        if not isinstance(linedict,dict):
+            raise TypeError("Added element is not a Dictionary")
+        self._totalLength += linedict['length']
+
+
 class pytransport(elements):
     '''A module for converting a TRANSPORT file into gmad for use in BDSIM.
         
