@@ -96,6 +96,18 @@ class _Registry():
         elenum = self.GetElementIndex(name)
         return self.elements[elenum]
 
+    def GetElementEndSPosition(self,name):
+        elenum = self.GetElementIndex(name)
+        return self.length[elenum]
+
+    def GetElementStartSPosition(self,name):
+        elenum  = self.GetElementIndex(name)
+        endS    = self.GetElementEndSPosition(name)
+        element = self.elements[elenum]
+        length  = element['length']
+        startS  = endS - length
+        return round(startS,5)
+
 class pytransport(elements):
     '''A module for converting a TRANSPORT file into gmad for use in BDSIM.
         
