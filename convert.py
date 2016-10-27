@@ -83,32 +83,55 @@ class _Registry():
 
     def GetElementIndex(self,name):
         if not self.names.__contains__(name):
-            return -1
+            return []
         else:
             #Add all elements of the same name as a single element may be
-            #fitted multiple times. Choose the last of these elements.
+            #used multiple times.
             elenums = []
             for index,elename in enumerate(self.names):
                 if elename == name:
                     elenums.append(index)
-
-            return elenums[-1]
+            return elenums
 
     def GetElement(self,name):
         elenum = self.GetElementIndex(name)
-        return self.elements[elenum]
+        if isinstance(elenum,list):
+            elements = []
+            for num in elenum:
+                elements.append(self.elements[num])
+            return elements
+        else:
+            return self.elements[elenum]
+
 
     def GetElementEndSPosition(self,name):
         elenum = self.GetElementIndex(name)
-        return self.length[elenum]
+        if isinstance(elenum,list):
+            elements = []
+            for num in elenum:
+                elements.append(self.length[num])
+            return elements
+        else:
+            return self.length[elenum]
+
 
     def GetElementStartSPosition(self,name):
         elenum  = self.GetElementIndex(name)
         endS    = self.GetElementEndSPosition(name)
-        element = self.elements[elenum]
-        length  = element['length']
-        startS  = endS - length
-        return round(startS,5)
+
+        if isinstance(elenum,list):
+            elements = []
+            for index,num in enumerate(elenum):
+                element = self.elements[num]
+                length  = element['length']
+                startS  = endS[index] - length
+                elements.append(round(startS,5))
+            return elements
+        else:
+            element = self.elements[elenum]
+            length  = element['length']
+            startS  = endS - length
+            return round(startS,5)
 
 class pytransport(elements):
     '''A module for converting a TRANSPORT file into gmad for use in BDSIM.
