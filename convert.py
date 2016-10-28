@@ -516,7 +516,18 @@ class pytransport(elements):
             if self._debug:
                 debugstring = 'Converting element number ' + _np.str(linenum) + ':'
                 self._printout(debugstring)
-                convertline = '\t' + self._elementReg.lines[linenum]
+                convertline = '\t'
+                for keynum,key in enumerate(linedict.keys()):
+                    if keynum != 0:
+                        convertline += ', '
+                    if key == 'data':
+                        convertline += 'element data:'
+                        for ele in linedict[key]:
+                            convertline += ('\t'+_np.str(ele))
+                    else:
+                        convertline += (key + ': '+_np.str(linedict[key]))
+                    if keynum == len(linedict.keys()):
+                        convertline += '.'
                 self._printout(convertline)
     
             if linedict['elementnum'] == 15.0:
