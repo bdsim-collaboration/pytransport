@@ -46,17 +46,18 @@ class _machineprops():
     '''A class containing the number of elements and angular properties (i.e bending direction)
         '''
     def __init__(self):
-        self.benddef = True # True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
-        self.bending = 1    # +VE = bends to the right for positive particles
-        self.angle = 0      # dipole rotation angle
-        self.drifts     = 0 # nr of drifts
-        self.dipoles    = 0
-        self.rf         = 0
-        self.quads      = 0
-        self.sextus     = 0
-        self.transforms = 0
-        self.solenoids  = 0
+        self.benddef        = True # True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
+        self.bending        = 1    # +VE = bends to the right for positive particles
+        self.angle          = 0    # dipole rotation angle
+        self.drifts         = 0    # nr of drifts
+        self.dipoles        = 0
+        self.rf             = 0
+        self.quads          = 0
+        self.sextus         = 0
+        self.transforms     = 0
+        self.solenoids      = 0
         self.beampiperadius = 20
+        self.fringeIntegral = 0
 
 
 class _Registry():
