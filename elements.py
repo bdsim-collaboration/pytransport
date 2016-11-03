@@ -520,6 +520,17 @@ class elements(functions):
         #default output
         debugstring1 = '\tCode type not yet supported, or unknown code type.'
         debugstring2 = ''
+        if specialdata[0] == 5.0:   #beampiperadius (technically only vertical, but will apply a circle for now)
+            debugstring1 = '\tType 5: Vertical half aperture,'
+            #self.machineprops.beampiperadius = specialdata[1]
+            debugstring2 = '\tNot setting vertical aperture, feature not supported yet.'
+            if self.machineprops.fringeIntegral == 0:
+                self.machineprops.fringeIntegral = 0.5  #default if a vertical aperture is specified.
+                debugstring2 += 'K1 not set, setting K1 to default of 0.5.'
+        if specialdata[0] == 7.0:   #Fringe Field integral
+            self.machineprops.fringeIntegral = specialdata[1]
+            debugstring1 = '\tType 7: K1 Fringe field integral,'
+            debugstring2 = '\tIntegral set to ' + _np.str(specialdata[1]) + '.'
         if specialdata[0] == 16.0:  #X0 offset
             self.beamprops.X0 = specialdata[1]
             debugstring1 = '\tType 16: X0 beam offset,'
@@ -533,8 +544,6 @@ class elements(functions):
             debugstring1 = '\tType 18: Z0 beam offset,'
             debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
 
-        #if specialdata[0] == 5.0:   #beampiperadius (technically only vertical, but will apply a circle for now)
-        #    self.machineprops.beampiperadius = specialdata[1]
         if self._debug:
             self._printout('\tSpecial Input line:')
             self._printout(debugstring1)
