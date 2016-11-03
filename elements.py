@@ -110,7 +110,22 @@ class elements(functions):
                 self._printout('\tPreceding element ('+_np.str(linenum-1)+') provides an entrance poleface rotation of '+_np.str(_np.round(e1,4))+' rad.')
             if e2 != 0:
                 self._printout('\tFollowing element ('+_np.str(linenum+1)+') provides an exit poleface rotation of '+_np.str(_np.round(e2,4))+' rad.')
-        
+    
+        ##Fringe Field Integrals
+        fintval  = 0
+        fintxval = 0
+        if e1 != 0:
+            fintval  = self.machineprops.fringeIntegral
+        if e2 != 0:
+            fintxval = self.machineprops.fringeIntegral
+        if self._debug:
+            if (fintval != 0) or (fintxval != 0):
+                self._printout('\tA previous entry set the fringe field integral K1='+_np.str(self.machineprops.fringeIntegral)+'.')
+            if (fintval != 0) and (e1 != 0):
+                self._printout('\tSetting fint='+_np.str(fintval)+'.')
+            if (fintxval != 0) and (e2 != 0):
+                self._printout('\tSetting fintx='+_np.str(fintxval)+'.')
+
         ##Calculate bending angle
         if self.machineprops.benddef:
             bfield = dipoledata[1]
@@ -140,14 +155,14 @@ class elements(functions):
         
         ##Check for non zero pole face rotation
         if (e1 != 0) and (e2 != 0):
-            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),e2=_np.round(e2,4))
-            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),e2=_np.round(e2,4))
+            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),e2=_np.round(e2,4),fint=fintval,fintx=fintxval)
+            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),e2=_np.round(e2,4),fint=fintval,fintx=fintxval)
         elif (e1 != 0) and (e2 == 0):
-            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4))
-            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4))
+            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),fint=fintval)
+            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e1=_np.round(e1,4),fint=fintval)
         elif (e1 == 0) and (e2 != 0):
-            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=_np.round(e2,4))
-            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=_np.round(e2,4))
+            self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=_np.round(e2,4),fintx=fintxval)
+            self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4),e2=_np.round(e2,4),fintx=fintxval)
         else:
             self.gmadmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4))
             self.madxmachine.AddDipole(name=elementid,category='sbend',length=length_in_metres,angle=_np.round(angle,4))
@@ -162,9 +177,18 @@ class elements(functions):
                 polefacestr = ', e2= '+_np.str(_np.round(e2,4))+' rad'
             else:
                 polefacestr = ''
+            
+            if (fintval != 0) and (fintxval != 0):
+                fringestr = ' , fint= '+_np.str(fintval)+', fintx= '+_np.str(fintxval)
+            elif (fintval != 0) and (fintxval == 0):
+                fringestr = ' , fint= '+_np.str(fintval)
+            elif (fintval == 0) and (fintxval != 0):
+                fringestr = ' , fintx= '+_np.str(fintxval)
+            else:
+                fringestr = ''
 
             self._printout('\tConverted to:')
-            debugstring = 'Dipole '+elementid+', length= '+_np.str(length_in_metres)+' m, angle= '+_np.str(_np.round(angle,4))+' rad'+polefacestr
+            debugstring = 'Dipole '+elementid+', length= '+_np.str(length_in_metres)+' m, angle= '+_np.str(_np.round(angle,4))+' rad'+polefacestr+fringestr
             self._printout('\t'+debugstring)
 
 
