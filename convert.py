@@ -58,7 +58,8 @@ class _machineprops():
         self.solenoids      = 0
         self.beampiperadius = 20
         self.fringeIntegral = 0
-
+        self.dipoleVertAper = 0
+        self.apertureType   = 'circular'
 
 class _Registry():
     def __init__(self):
