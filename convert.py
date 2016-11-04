@@ -221,7 +221,7 @@ class pytransport(elements):
         'element_length'        :'m',
         'magnetic_fields'       :'kG',
         'p_egain'               :'GeV', # Momentum / energy gain during acceleration.
-        'bend_vert_gap'         :'cm',  # Vertical Gap in dipoles
+        'bend_vert_gap'         :'cm',  # Vertical half-gap in dipoles
         'pipe_rad'              :'cm',
         'beta_func'             :'m',
         'emittance'             :'mm mrad'
