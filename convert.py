@@ -681,6 +681,7 @@ class pytransport(elements):
         self.options.SetBeamPipeThickness(bpt=5,unitsstring='mm')
         self.options.SetSamplerDiameter(radius=1,unitsstring='m')
         self.options.SetStopTracks(stop=True)
+        self.options.SetIncludeFringeFields(on=True)
         
         self.gmadmachine.AddOptions(self.options)
         self.madxmachine.AddOptions(self.options)   #redundant
