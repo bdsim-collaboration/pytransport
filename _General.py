@@ -46,7 +46,8 @@ class functions():
             try:
                 elecode = _np.float(line[0])
             except ValueError:
-                pass
+                anglein = 0
+                break
             
             if _np.float(line[0]) == 4.0:
                 break
@@ -81,7 +82,8 @@ class functions():
             try:
                 elecode = _np.float(line[0])
             except ValueError:
-                pass
+                angleout=0
+                break
             
             if _np.float(line[0]) == 4.0:
                 break
