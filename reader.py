@@ -2,6 +2,9 @@ import numpy as _np
 import pybdsim
 
 class reader():
+    def __init__(self):
+        self._allowedIndicatorLines = ['0  100','0    0']
+
     def get_data(self,file,type=None):
         if isinstance(type,_np.str):
             if type == 'beam':
@@ -24,7 +27,7 @@ class reader():
                 f.close()
                 transdata = self.get_beam_output(file)
                 break
-            elif line == '0    0':
+            elif self._allowedIndicatorLines.__contains__(line):
                 #print "'0    0' found in line " + _np.str(i+1)
                 f.close()
                 transdata = self.get_standard_output(file)
@@ -111,9 +114,11 @@ class reader():
         lattice = []
         lattice.append('OUTPUT LATTICE')
         for linenum,line in enumerate(flist):
-            if line == '0    0':
+            if self._allowedIndicatorLines.__contains__(line):
                 if not foundlatticestart:
                     latticestart = linenum+1
+                    if flist[linenum+1] == '0INDICATOR VALUE WRONG OR MISSING - ZERO ASSUMED':
+                        latticestart += 1
                     foundlatticestart = True
             if line == '0SENTINEL':
                 if not foundlatticeend:
