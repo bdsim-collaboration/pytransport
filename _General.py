@@ -565,15 +565,20 @@ class functions():
 
     def _is_Output(self,inputfile):
         ''' Function to check if a file is a standard TRANSPORT output file.
-            Based upon existence of the line:
-                "0    0"
+            Based upon existence of the lines:
+                "0  XXX"
+                
             being present, which represents the TRANSPORT indicator card line.
+            X can be 0, 1, 2. Default is 0. 
             '''
+        temp = _reader.reader()
         isOutput = False
         try:
             f = open(inputfile)
             for inputline in f:
-                if (inputline == '0    0\n') or (inputline == '0    0\r\n'):
+                inputline = inputline.replace("\r",'')
+                inputline = inputline.replace("\n",'')
+                if (temp._allowedIndicatorLines.__contains__(inputline)):
                     isOutput = True
                     break
             f.close()
