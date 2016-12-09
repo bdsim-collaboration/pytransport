@@ -339,9 +339,10 @@ class pytransport(elements):
             This has been written as the lattice lines from an input file and output file are different,
             so it just a way of correctly ordering the information.
             '''
-        linedict = {'elementnum' : 0.0,
-                    'name'       : '',
-                    'length'     : 0.0}
+        linedict = {'elementnum'   : 0.0,
+                    'name'         : '',
+                    'length'       : 0.0,
+                    'isZeroLength' : True}
         numElements = _np.str(len(self._elementReg.elements))
         
         if _np.float(line[0]) == 15.0:
@@ -416,6 +417,7 @@ class pytransport(elements):
             linedict['name'] = self._get_label(line)
             data = self._get_elementdata(line)
             linedict['length'] = data[0]
+            linedict['isZeroLength'] = False
             if self._debug:
                 self._printout("\tEntry is a drift tube, adding to the element registry as element " + numElements + ".")
             
@@ -426,6 +428,7 @@ class pytransport(elements):
             data = self._get_elementdata(line)
             linedict['data'] = data
             linedict['length'] = data[0]
+            linedict['isZeroLength'] = False
             e1,e2 = self._facerotation(line,linenum)
             linedict['e1'] = e1
             linedict['e2'] = e2
@@ -438,6 +441,7 @@ class pytransport(elements):
             data = self._get_elementdata(line)
             linedict['data'] = data
             linedict['length'] = data[0]
+            linedict['isZeroLength'] = False
             if self._debug:
                 self._printout("\tEntry is a quadrupole, adding to the element registry as element " + numElements + ".")
 
@@ -469,6 +473,7 @@ class pytransport(elements):
             data = self._get_elementdata(line)
             linedict['data'] = data
             linedict['length'] = data[0]
+            linedict['isZeroLength'] = False
             if self._debug:
                 self._printout("\tEntry is an acceleration element, adding to the element registry as element " + numElements + ".")
         
@@ -490,6 +495,7 @@ class pytransport(elements):
             data = self._get_elementdata(line)
             linedict['data'] = data
             linedict['length'] = data[0]
+            linedict['isZeroLength'] = False
             if self._debug:
                 self._printout("\tEntry is a sextupole, adding to the element registry as element " + numElements + ".")
         
@@ -499,6 +505,7 @@ class pytransport(elements):
             data = self._get_elementdata(line)
             linedict['data'] = data
             linedict['length'] = data[0]
+            linedict['isZeroLength'] = False
             if self._debug:
                 self._printout("\tEntry is a solenoid, adding to the element registry as element " + numElements + ".")
         
@@ -755,7 +762,10 @@ class pytransport(elements):
                     par = 'angle'
                 data = [par, oldvalue, element['data'][3]]
                 eledict['params'].append(data)
-
+            print index
+            print fitindex
+            print element['length']
+            print self._elementReg.elements[index]['length']
             if self._elementReg.elements[index]['length'] != element['length']:
                 self._elementReg.elements[index]['data'][0] = element['data'][0]    #Length in data
                 lendict = _updateLength(index,fitindex,element)
@@ -771,9 +781,8 @@ class pytransport(elements):
             eleindex = self._elementReg.GetElementIndex(name)
             for fitnum,fit in enumerate(fitstart):
                 for elenum,ele in enumerate(elestart):
-                    if _np.round(ele,5) == _np.round(fit,5):
+                    if (_np.round(ele,5) == _np.round(fit,5)) and (not self._elementReg.elements[eleindex[elenum]]['isZeroLength']):
                         fitelement = self._fitReg.elements[fitindex[fitnum]]
-                        
                         if fitelement['elementnum'] == 3:
                             eledict = _updateDrift(eleindex[elenum],fitindex[fitnum],fitelement)
                         elif fitelement['elementnum'] == 4:
