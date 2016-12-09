@@ -368,8 +368,16 @@ class pytransport(elements):
 #                        elif len(ele) > 0 and endofline != -1: #endofline is in this element
 #                            angle = _np.str(ele[:endofline])
 #                            break
-            endofline = self._endofline(line[1])
-            angle = line[1][:endofline]
+            if len(line) == 2:   #i.e has a label
+                endofline = self._endofline(line[1])
+                angle = line[1][:endofline]
+            else:
+                for index in line[1:]:
+                    try:
+                        angle = _np.float(index)
+                        break
+                    except ValueError:
+                        pass
             linedict['angle'] = angle
             if self._debug:
                 self._printout("\tEntry is a coordinate rotation, adding to the element registry as element " + numElements + ".")
