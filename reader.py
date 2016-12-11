@@ -68,7 +68,7 @@ class reader():
                     foundlatticeend = True
         if not foundlatticestart:
             if not foundlatticeend:
-                raise IOError('No lattice found in '+self.file+'.')
+                raise IOError('No lattice found in '+self._general.file+'.')
             else:
                 errorstring  = 'The end of a lattice (line = "0SENTINEL") was found at line '+ _np.str(latticeend+1)+',\n'
                 errorstring += 'but the start of a lattice (line = "0    0") was not found. Please check the input file.'
@@ -384,7 +384,7 @@ class optics():
                 break
         if not foundoutputstart:
             if not foundoutputend:
-                raise IOError('No output found in '+self.file+'.')
+                raise IOError('No output found in '+self._general.file+'.')
             else:
                 errorstring  = 'The end of a lattice (line containing "0*LENGTH*") was found at line '+ _np.str(outputend+1)+',\n'
                 errorstring += 'but the start of a lattice (first line containing "*BEAM*") was not found. Please check the input file.'
