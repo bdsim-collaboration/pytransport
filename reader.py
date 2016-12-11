@@ -45,10 +45,12 @@ class reader():
         return transdata
 
 
-    def _getLattice(self,flist):
+    def _getLattice(self,file):
         ''' Function to extract the lattice from a standard output file. No processing at the moment, but
             this function should identify the chunk that is the lattice.
             '''
+        flist = self._general._LoadFile(file)
+        
         foundlatticestart = False
         foundlatticeend = False
         lattice = []
@@ -80,12 +82,14 @@ class reader():
         return lattice
 
 
-    def _getFits(self,flist):
+    def _getFits(self,file):
         ''' Function to get the fit routine data from the standard transport output.
             Returns two lists, the first with the direct output from the fitting data,
             the second with the first line of each element in the output data, which contains the 
             element parameters with their fitted values.
             '''
+        flist = self._general._LoadFile(file)
+    
         foundfitstart = False
         foundfitend = False
         fits = []
@@ -115,8 +119,9 @@ class reader():
         
         return fits,fitres
 
-    def _getLatticeAndOptics(self,flist):
-        lattice = self._getLattice(flist)
+    def _getLatticeAndOptics(self,file):
+        flist = self._general._LoadFile(file)
+        lattice = self._getLattice(file)
         optics = self.optics._getOptics(flist)
         return lattice,optics
     
@@ -456,13 +461,13 @@ class optics():
                 incorrect sign. This doesn't affect the resulting beam size, but beware 
                 that a direct dispersion comparison to another lattice may appear incorrect.
             '''
-        flist = self._general._file_to_list(file)
+        flist = self._general._LoadFile(file)
         transdata = self._processBeamOptics(flist)
         return transdata
   
   
     def _getStandardOptics(self,file):
-        flist = self._general._file_to_list(file)
+        flist = self._general._LoadFile(file)
         optics = self._getOptics(flist)
         transdata = self._processStandardOptics(optics)
         return transdata
@@ -495,7 +500,7 @@ class _general():
         return newline
 
 
-    def _file_to_list(self,file):
+    def _LoadFile(self,file):
         ''' Converts the input file into a list. The data has to be in a format other than
             handling line by line (using next()). 
             
@@ -503,6 +508,8 @@ class _general():
             by line. This may be an inefficent method but the input file should not be very 
             large so it should not require a large amount of memory.
             '''
+        if file == '':
+            print 'No file name supplied.'
         self.file = file
         flist=[]
         infile = open(file)
