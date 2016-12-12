@@ -608,11 +608,14 @@ class functions():
             is required, the use of fitting does not need to be known.
             '''
         eleNum = line[0]
-        for characNum in range(len(eleNum[2:])):
-            try:
-                converted = _np.float(eleNum[:characNum+2])
-            except ValueError:
-                break
-        typeNum = eleNum[:characNum+2]
+        if (len(eleNum) > 2):
+            for characNum in range(len(eleNum[2:])):
+                try:
+                    converted = _np.float(eleNum[:characNum+2])
+                except ValueError:
+                    break
+            typeNum = eleNum[:characNum+2]
+        else:
+            typeNum = eleNum
         return typeNum
 
