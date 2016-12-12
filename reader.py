@@ -552,7 +552,16 @@ class _general():
         infile.close()
         return flist
 
+    def _updateElementLine(self,line):
+        if (line[0] == '*Z') and (line[1] == 'ROT*'):
+            newline = []
+            elementType = '*Z ROT*'
+            newline.append(elementType)
+            for element in line[2:]:
+                newline.append(element)
+        else:
+            newline = line
 
-
+        return newline
 
 
