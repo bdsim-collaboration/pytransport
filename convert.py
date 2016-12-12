@@ -196,17 +196,27 @@ class pytransport(elements):
             p_mass = (_con.proton_mass) * (_con.c**2 / _con.e) / 1e9        ## Particle masses in same unit as TRANSPORT (GeV)
         elif particle == 'e-' or particle == 'e+':                          
             p_mass = (_con.electron_mass) * (_con.c**2 / _con.e) / 1e9
+            
+        #initialise registries
         self._elementReg  = _Registry()
         self._fitReg      = _Registry()
-        self._particle    = particle
-        self._beamdefined = False
+        
+        #beam definition
+        self._particle         = particle
+        self._beamdefined      = False
         self._correctedbeamdef = False
+        
+        #File input and output
         self._fileloaded  = False
         self._gmadoutput  = gmad
         self._gmadDir     = gmadDir
         self._madxoutput  = madx
         self._madxDir     = madxDir
         self._numberparts = -1
+        
+        #transport optics output is modified to be a single line
+        self._singleLineOptics = False
+        
         self._collindex   = []  # An index of collimator labels
         self._accstart    = []  # An index of the start of acceleration elements.
         self.data         = []  # A list that will contain arrays of the element data
