@@ -217,7 +217,8 @@ class elements(functions):
             ## MadX Builder does not have transform 3d 
             # Comment out and print warning
             #self.madxmachine.AddTransform3D(name=elementid,psi=anginrad)
-            print 'Warning, MadX Builder does not have Transform 3D!'
+            if self._debug:
+                print 'Warning, MadX Builder does not have Transform 3D!'
             
             rotation = True
         
