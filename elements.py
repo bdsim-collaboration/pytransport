@@ -476,6 +476,10 @@ class elements(functions):
             elif number == 47:
                 self.machineprops.benddef = True
                 debugstring = '\t47. Switched Dipoles to field definition.'
+            elif number == 19:
+                if self._checkSingleLineOutput(self._filename):
+                    self._singleLineOptics = True
+                    debugstring = '\t19. Optics output switched to single line per element.'
             else:
                 debugstring = '\tCode 13. ' + _np.str(number) + ' handling not implemented.'
         except ValueError:
