@@ -130,6 +130,46 @@ class reader():
 class optics():
     def __init__(self):
         self._general = _general()
+        self.transdata = {
+            'Sigma_x'   :[],
+            'Sigma_xp'  :[],
+            'Sigma_y'   :[],
+            'Sigma_yp'  :[],
+            'S'         :[],
+            'Alph_x'    :[],
+            'Alph_y'    :[],
+            'Beta_x'    :[],
+            'Beta_y'    :[],
+            'Emitt_x'   :[],
+            'Emitt_y'   :[],
+            'Disp_x'    :[],
+            'Disp_y'    :[],
+            'Sigma_p'   :[],
+            'Momentum'  :[],
+            'E'         :[], # kinetic energy
+            'Name'      :[],
+            'Type'      :[]
+            }
+        self.transunits = { # TODO: some unit for now, needs to be extracted from output / convert.py !)
+            'Sigma_x'   :'mm',
+            'Sigma_xp'  :'mrad',
+            'Sigma_y'   :'mm',
+            'Sigma_yp'  :'mrad',
+            'S'         :'m',
+            'Alph_x'    :'',
+            'Alph_y'    :'',
+            'Beta_x'    :'mm / mrad',
+            'Beta_y'    :'mm / mrad',
+            'Emitt_x'   :'mm mrad',
+            'Emitt_y'   :'mm mrad',
+            'Disp_x'    :'',
+            'Disp_y'    :'',
+            'Sigma_p'   :'MeV/c',
+            'Momentum'  :'MeV/c',
+            'E'         :'MeV', # kinetic energy
+            'Name'      :'',
+            'Type'      :''
+            }
 
     def _processBeamOptics(self,flist):
         transdata = {
@@ -243,46 +283,7 @@ class optics():
 
 
     def _processStandardOpticsMultiLines(self,elementlist):
-        transdata = {
-            'Sigma_x'   :[],
-            'Sigma_xp'  :[],
-            'Sigma_y'   :[],
-            'Sigma_yp'  :[],
-            'S'         :[],
-            'Alph_x'    :[],
-            'Alph_y'    :[],
-            'Beta_x'    :[],
-            'Beta_y'    :[],
-            'Emitt_x'   :[],
-            'Emitt_y'   :[],
-            'Disp_x'    :[],
-            'Disp_y'    :[],
-            'Sigma_p'   :[],
-            'Momentum'  :[],
-            'E'         :[], # kinetic energy
-            'Name'      :[],
-            'Type'      :[]
-            }
-        transunits = { # TODO: some unit for now, needs to be extracted from output / convert.py !)
-            'Sigma_x'   :'mm',
-            'Sigma_xp'  :'mrad',
-            'Sigma_y'   :'mm',
-            'Sigma_yp'  :'mrad',
-            'S'         :'m',
-            'Alph_x'    :'',
-            'Alph_y'    :'',
-            'Beta_x'    :'mm / mrad',
-            'Beta_y'    :'mm / mrad',
-            'Emitt_x'   :'mm mrad',
-            'Emitt_y'   :'mm mrad',
-            'Disp_x'    :'',
-            'Disp_y'    :'',
-            'Sigma_p'   :'MeV/c',
-            'Momentum'  :'MeV/c',
-            'E'         :'MeV', # kinetic energy
-            'Name'      :'',
-            'Type'      :''
-            }
+
         #okElements=['BEAM','CORR','DRIFT','QUAD','SLIT','ADD TO BEAM','BEND','ROTAT','Z RO']
         notokElements=['AXIS SHIFT']
         
@@ -341,43 +342,186 @@ class optics():
                     alfx    = _np.sqrt((gammax * betx)-1)
                     alfy    = _np.sqrt((gammax * betx)-1)
 
-                    transdata['Sigma_x'].append(sigx/1000)
-                    transdata['Sigma_xp'].append(sigxp)
-                    transdata['Sigma_y'].append(sigy/1000)
-                    transdata['Sigma_yp'].append(sigyp)
-                    transdata['S'].append(s)
-                    transdata['Alph_x'].append(alfx)
-                    transdata['Alph_y'].append(alfy)
-                    transdata['Beta_x'].append(betx)
-                    transdata['Beta_y'].append(bety)
-                    transdata['Emitt_x'].append(ex)
-                    transdata['Emitt_y'].append(ey)
-                    transdata['Disp_x'].append(dx)
-                    transdata['Disp_y'].append(dy)
-                    transdata['Sigma_p'].append(sigp)
-                    transdata['Momentum'].append(momentum)
-                    transdata['E'].append(energy)
-                    transdata['Name'].append(name)
-                    transdata['Type'].append(type)
+                    self.transdata['Sigma_x'].append(sigx/1000)
+                    self.transdata['Sigma_xp'].append(sigxp)
+                    self.transdata['Sigma_y'].append(sigy/1000)
+                    self.transdata['Sigma_yp'].append(sigyp)
+                    self.transdata['S'].append(s)
+                    self.transdata['Alph_x'].append(alfx)
+                    self.transdata['Alph_y'].append(alfy)
+                    self.transdata['Beta_x'].append(betx)
+                    self.transdata['Beta_y'].append(bety)
+                    self.transdata['Emitt_x'].append(ex)
+                    self.transdata['Emitt_y'].append(ey)
+                    self.transdata['Disp_x'].append(dx)
+                    self.transdata['Disp_y'].append(dy)
+                    self.transdata['Sigma_p'].append(sigp)
+                    self.transdata['Momentum'].append(momentum)
+                    self.transdata['E'].append(energy)
+                    self.transdata['Name'].append(name)
+                    self.transdata['Type'].append(type)
                     num_elements += 1 
 
         def get_elementdata(index):             # Function to get the data for each element, rather than each key.
             elementlist2=[]                      # There's probably a better container type for this, but I'm familiar with
-            for name in transdata.keys():   # dictionaries, and it works (for now).
-                elementlist2.append(transdata[name][index])
+            for name in self.transdata.keys():   # dictionaries, and it works (for now).
+                elementlist2.append(self.transdata[name][index])
         
             return elementlist2
 
         data = pybdsim.Data.BDSAsciiData()      # Now convert the dict into BDSAsciiData instance for final output.
-        for name, unit in transunits.iteritems():
+        for name, unit in self.transunits.iteritems():
             data._AddProperty(name,unit)
         for i in range(num_elements):
             data.append(get_elementdata(i))
 
         return data
 
+
     def _processStandardOpticsSingleLine(self,elementlist):
-        return elementlist
+    
+        #seperate R matrix table from sigma matrix elements
+        rMatrixElements = elementlist[-1]
+        rMatrix = []
+
+        #Second to last is column headers for R matrix table
+        sMatrix = elementlist[:-2]
+
+        for element in rMatrixElements[1:]:
+            rMatrix.append(self._general._remove_blanks(element.split(' ')))
+
+        num_elements = 0
+        momentum = 0.0
+        energy   = 0.0
+        proton_mass = 938.272
+        notokElements=['AXIS SHIFT']
+        okRElements=[3,4,5] #ok element types for R matrix matching
+
+        for element in sMatrix:
+            if len(element) > 1:  # I.e not a fit or matrix-modifying element
+                elementLine = self._general._remove_blanks(element[0].split(' '))
+                elementLine = self._general._updateElementLine(elementLine)
+                type    = elementLine[0].strip('*') #element type
+                typenum = _np.float(elementLine[1])
+
+                #Get line with sigma data.
+                #Element can have an additional line with fitting vary code data
+                if len(element) == 3:
+                    sigmaLine = element[2]
+                else:
+                    sigmaLine = element[1]
+
+                if not notokElements.__contains__(type):
+                    name = self._general._removeIllegals(elementLine[2]) #remove illegal characters
+
+                    if type=="BEAM" or type=="ACC":
+                        momentum = _np.float(elementLine[-2])
+                        energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
+
+                    if len(element) > 6:    #In case beam is defined before output format change.
+                        s       = _np.float(self._general._remove_blanks(element[1].split(' '))[0])
+                        sigx    = _np.float(self._general._remove_blanks(element[1].split(' '))[3])
+                        sigxp   = _np.float(self._general._remove_blanks(element[2].split(' '))[1])
+                        sigy    = _np.float(self._general._remove_blanks(element[3].split(' '))[1])
+                        sigyp   = _np.float(self._general._remove_blanks(element[4].split(' '))[1])
+                        sigt    = _np.float(self._general._remove_blanks(element[5].split(' '))[1])
+                        sigp    = _np.float(self._general._remove_blanks(element[6].split(' '))[1])
+
+                        try:
+                            r21 = _np.float(self._general._remove_blanks(element[2].split(' '))[3])
+                        except IndexError:
+                            r21 = 0
+                        try:
+                            r43 = _np.float(self._general._remove_blanks(element[4].split(' '))[5])
+                        except IndexError:
+                            r43 = 0
+                    else:
+                        s       = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[0])
+                        sigx    = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[2])
+                        sigxp   = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[4])
+                        sigy    = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[6])
+                        sigyp   = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[8])
+                        sigt    = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[10])
+                        sigp    = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[12])
+                        r21     = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[14])
+                        r43     = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[15])
+                
+                    ## Add/Subtract small amount if sin of phase space ellipse rotation is +/-one.
+                    ## This comes from the output annoyingly rounding the code to one ,
+                    ## which produces a div by zero later in the beta and gamma calculations.
+                    if r21 == 1.0:
+                        r21 -= 1e-4
+                    if r21 == -1.0:
+                        r21 += 1e-4
+                    
+                    if r43 == 1.0:
+                        r43 -= 1e-4
+                    if r43 == -1.0:
+                        r43 += 1e-4
+                    
+                    dx = 0
+                    dy = 0
+
+                    #Find matching R matrix element and get dispersion
+                    for rElement in rMatrix:
+                        if okRElements.__contains__(_np.float(rElement[1])) and (_np.float(rElement[0]) == s) and (rElement[2] == name):
+                            #Dispersion position dependent on existence of field strength in output
+                            #Field stength written before first *, which should be the 4th element
+                            if rElement.index('*') == 4:
+                                dx = _np.float(rElement[15])
+                                dy = _np.float(rElement[17])
+                            else:
+                                dx = _np.float(rElement[14])
+                                dy = _np.float(rElement[16])
+                            
+                    
+                    #Calculate twiss parameters
+                    xpint   = _np.sqrt(sigxp**2 * (1 - r21**2))
+                    ypint   = _np.sqrt(sigyp**2 * (1 - r43**2))
+                    
+                    ex      = sigx*xpint
+                    ey      = sigy*ypint
+                    betx    = sigx**2 / ex
+                    bety    = sigy**2 / ey
+                    gammax  = sigxp**2 / ex
+                    gammay  = sigyp**2 / ey
+                    alfx    = _np.sqrt((gammax * betx)-1)
+                    alfy    = _np.sqrt((gammax * betx)-1)
+
+                    self.transdata['Sigma_x'].append(sigx/1000)
+                    self.transdata['Sigma_xp'].append(sigxp)
+                    self.transdata['Sigma_y'].append(sigy/1000)
+                    self.transdata['Sigma_yp'].append(sigyp)
+                    self.transdata['S'].append(s)
+                    self.transdata['Alph_x'].append(alfx)
+                    self.transdata['Alph_y'].append(alfy)
+                    self.transdata['Beta_x'].append(betx)
+                    self.transdata['Beta_y'].append(bety)
+                    self.transdata['Emitt_x'].append(ex)
+                    self.transdata['Emitt_y'].append(ey)
+                    self.transdata['Disp_x'].append(dx)
+                    self.transdata['Disp_y'].append(dy)
+                    self.transdata['Sigma_p'].append(sigp)
+                    self.transdata['Momentum'].append(momentum)
+                    self.transdata['E'].append(energy)
+                    self.transdata['Name'].append(name)
+                    self.transdata['Type'].append(type)
+                    num_elements += 1
+
+        def get_elementdata(index):             # Function to get the data for each element, rather than each key.
+            elementlist2=[]                      # There's probably a better container type for this, but I'm familiar with
+            for name in self.transdata.keys():   # dictionaries, and it works (for now).
+                elementlist2.append(self.transdata[name][index])
+        
+            return elementlist2
+
+        data = pybdsim.Data.BDSAsciiData()      # Now convert the dict into BDSAsciiData instance for final output.
+        for name, unit in self.transunits.iteritems():
+            data._AddProperty(name,unit)
+        for i in range(num_elements):
+            data.append(get_elementdata(i))
+        
+        return data
 
 
     def _getOptics(self,flist):
@@ -428,7 +572,7 @@ class optics():
             if linenum == (len(output)-1):
                 finalelement = True
             try:
-                if line[1] == '*':
+                if (line[1] == '*') or (line[:9] == '0POSITION'):
                     if line[2:11] == 'TRANSFORM':   #Is midway through element output
                         pass
                     elif elementstart == False: #Current line must be start of the element
