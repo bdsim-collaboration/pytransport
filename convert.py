@@ -300,6 +300,21 @@ class pytransport(elements):
         if not self._fileloaded:
             self._printout('No file loaded.')
             return
+
+        self.AddLatticeToRegistry()
+
+        if self._debug:
+            self._printout('Converting registry elements to pybdsim compatable format and adding to machine builder.')
+
+        self.ProcessAndBuild()
+        self.write()
+
+
+    def AddLatticeToRegistry(self):
+        ''' Function that loops over the lattice, adds the elements to the element registry,
+            and updates any elements that have fitted parameters.
+            '''
+        
         for linenum,line in enumerate(self.data):
             if self._debug:
                 self._printout('Processing line '+_np.str(linenum)+' :')
@@ -336,13 +351,6 @@ class pytransport(elements):
 
                     self._printout(errorline)
 
-        if self._debug:
-            self._printout('Converting registry elements to pybdsim compatable format and adding to machine builder.')
-
-        self.ProcessAndBuild()
-
-        self.write()
-        
 
     def _element_prepper(self,line,linenum,filetype='input'):
         ''' Function to extract the data and prepare it for processing by each element function.
