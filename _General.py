@@ -602,6 +602,11 @@ class functions():
 
 
     def _getTypeNum(self,line):
+        ''' Function to extract the element type number (type code).
+            Written because element types can contain alphabetcial 
+            characters when fits are used, e.g: 5.0A. Only the number 
+            is required, the use of fitting does not need to be known.
+            '''
         eleNum = line[0]
         for characNum in range(len(eleNum[2:])):
             try:
