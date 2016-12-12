@@ -519,6 +519,18 @@ class _general():
         # remove last element as it will be blank (due to added space)
         return stripline[:-1]
 
+    def _removeIllegals(self,line):
+        ''' Function to remove '' and stray characters from lines.
+            '''
+        illegal = ['"','','(',')']
+        
+        modLine=''
+        for element in line:
+            if not illegal.__contains__(element):
+                modLine += element
+        return modLine
+
+
     def _split_negatives(self,line):
         newline=[]
         for element in line:
