@@ -780,9 +780,9 @@ class pytransport(elements):
                        'params'  : []}
             
             ## Need code in here to handle variation in poleface rotation. Not urgent for now.
-            if (self._elementReg.elements[index]['data'][1] != element['data'][3]): #Field
+            if (self._elementReg.elements[index]['data'][1] != element['data'][1]): #Field
                 oldvalue = self._elementReg.elements[index]['data'][1]
-                self._elementReg.elements[index]['data'][1] = element['data'][3]
+                self._elementReg.elements[index]['data'][1] = element['data'][1]
                 eledict['updated'] = True
                 if self.machineprops.benddef:   #Transport can switch dipole input definition
                     par = 'field'
