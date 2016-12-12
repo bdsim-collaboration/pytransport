@@ -209,7 +209,7 @@ class elements(functions):
 
         
         elif self.machineprops.angle != 0:                        #If not 180 degrees, use transform3d.      
-            self.machineprops.angle *= -1                         #For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.  
+            #self.machineprops.angle *= -1                         #For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.
             anginrad = self.machineprops.angle * (_np.pi / 180)
             self.machineprops.transforms += 1
             elementid = 't'+_np.str(self.machineprops.transforms)
