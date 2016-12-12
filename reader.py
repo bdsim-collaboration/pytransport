@@ -385,31 +385,39 @@ class optics():
             for each element which contains the beam data. Each element should contain the R and TRANSPORT matrices which
             are necessary so the beam info can be calculated.
             '''
-        foundoutputstart = False
-        foundoutputend = False
-
+        foundOpticsStart = False
+        foundOpticsEnd   = False
+        foundRMatrixElementStart = False
+        
         for linenum,line in enumerate(flist):
             splitline = self._general._remove_blanks(line.split(' '))
-            if splitline and splitline[0] == '*BEAM*' and not foundoutputstart:
-                outputstart=linenum
-                foundoutputstart = True
+            if splitline and splitline[0] == '*BEAM*' and not foundOpticsStart:
+                opticsStart=linenum
+                foundOpticsStart = True
             if splitline and splitline[0] == '0*LENGTH*':
-                outputend = linenum
-                foundoutputend = True
-                break
-        if not foundoutputstart:
-            if not foundoutputend:
+                opticsEnd = linenum
+                foundOpticsEnd = True
+            if splitline and splitline[0] == '0POSITION':
+                rMatrixElementStart = linenum
+                foundRMatrixElementStart = True
+    
+        if not foundOpticsStart:
+            if not foundOpticsEnd:
                 raise IOError('No output found in '+self._general.file+'.')
             else:
                 errorstring  = 'The end of a lattice (line containing "0*LENGTH*") was found at line '+ _np.str(outputend+1)+',\n'
                 errorstring += 'but the start of a lattice (first line containing "*BEAM*") was not found. Please check the input file.'
                 raise IOError(errorstring)
-        elif not foundoutputend:
+        elif not foundOpticsEnd:
                 errorstring  = 'The start of a lattice (first line containing "*BEAM*") was found at line '+ _np.str(outputstart-1)+',\n'
                 errorstring += 'but the end of a lattice (line containing "0*LENGTH*") was not found. Please check the input file.'
                 raise IOError(errorstring)
         else:
-            output = flist[outputstart:outputend]
+            output = flist[opticsStart:opticsEnd]
+
+        #Append rest of the file which should only contain a table of R Matrix elements.
+        if foundRMatrixElementStart:
+            output.extend(flist[rMatrixElementStart:])
 
         #Split the list of all element data into their individual elements.
         elementlist=[]
