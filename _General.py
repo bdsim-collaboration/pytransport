@@ -600,3 +600,14 @@ class functions():
                 return False
         return True
 
+
+    def _getTypeNum(self,line):
+        eleNum = line[0]
+        for characNum in range(len(eleNum[2:])):
+            try:
+                converted = _np.float(eleNum[:characNum+2])
+            except ValueError:
+                break
+        typeNum = eleNum[:characNum+2]
+        return typeNum
+
