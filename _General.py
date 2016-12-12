@@ -153,12 +153,12 @@ class functions():
         
         infile = input.split('/')[-1]       #Remove filepath, leave just filename
         self._file = infile[:-4]            #Remove extension
+        self._filename = input
         isOutput = self._is_Output(input)   #Is a TRANSPORT standard output file.
 
         if isOutput:
-            flist = temp._file_to_list(input)
-            lattice,output=temp._get_latticeandoutput(flist)
-            fits,fitres = temp._get_fits(flist)
+            lattice,output=temp._getLatticeAndOptics(input)
+            fits,fitres = temp._getFits(input)
             self._outputfits_to_registry(fitres)
             if self._debug:
                 self._printout('\tAdding any fitting output to the fitting registry (self._fitReg)')
