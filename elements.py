@@ -469,6 +469,7 @@ class elements(functions):
 
     def printline(self,linedict):
         number = linedict['data'][0]
+        debugstring=''
         try:
             number = _np.float(number)
             if number == 48:
