@@ -1,5 +1,6 @@
 import numpy as _np
 import pybdsim
+import pytransport as _pyt
 
 class reader():
     def __init__(self):
@@ -230,7 +231,18 @@ class optics():
         return data
 
 
-    def _processStandardOptics(self,elementlist):
+    def _processStandardOptics(self,elementlist,filename):
+        conv = _pyt.convert.pytransport(filename,madx=False,auto=False,debug=False)
+        conv.AddLatticeToRegistry()
+        conv.ProcessAndBuild()
+        if conv._singleLineOptics:
+            optics = self._processStandardOpticsSingleLine(elementlist)
+        else:
+            optics = self._processStandardOpticsMultiLines(elementlist)
+        return optics
+
+
+    def _processStandardOpticsMultiLines(self,elementlist):
         transdata = {
             'Sigma_x'   :[],
             'Sigma_xp'  :[],
@@ -364,6 +376,9 @@ class optics():
 
         return data
 
+    def _processStandardOpticsSingleLine(self,elementlist):
+        return elementlist
+
 
     def _getOptics(self,flist):
         ''' Function to extract the output from a standard output file. The output will be an list of the lines
@@ -416,10 +431,18 @@ class optics():
                         elementendline = linenum
                 if elementstart and finalelement:
                     element = output[elementstartline:]
-                    elementlist.append(element)
+                    if element[-1][:2] == 'IO':
+                        elementlist.append(element[:-1])
+                        elementlist.append(element[-1])
+                    else:
+                        elementlist.append(element)
                 if elementstart and elementend: #If the start and end of the element are found, append and reset
                     element = output[elementstartline:elementendline]
-                    elementlist.append(element)
+                    if element[-1][:2] == 'IO':
+                        elementlist.append(element[:-1])
+                        elementlist.append(element[-1])
+                    else:
+                        elementlist.append(element)
                     elementend = False
                     elementstart = False
                 if elementstart == False and elementend == False:   #Though if it's been reset, it must be because the
@@ -428,6 +451,7 @@ class optics():
             except IndexError:
                 pass
         return elementlist
+
 
     def _getBeamOptics(self,file):
         ''' Returns a BDSAsciiData instance of parameters from the input file.
@@ -469,7 +493,7 @@ class optics():
     def _getStandardOptics(self,file):
         flist = self._general._LoadFile(file)
         optics = self._getOptics(flist)
-        transdata = self._processStandardOptics(optics)
+        transdata = self._processStandardOptics(optics,file)
         return transdata
 
 
