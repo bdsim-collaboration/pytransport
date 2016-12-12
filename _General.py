@@ -586,3 +586,17 @@ class functions():
             self._printout('Cannot open file.')
         return isOutput
 
+
+    def _checkSingleLineOutputApplied(self,file):
+        ''' Function to check if the control element that print element output in
+            a single line was successfully applied. Check needed as not all versions
+            of TRANSPORT can run this type code.
+            '''
+        reader = _reader.reader()
+        flist  = reader._general._LoadFile(file)
+        optics = reader.optics._getOptics(flist)
+        for element in optics:
+            if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
+                return False
+        return True
+
