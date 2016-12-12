@@ -595,14 +595,16 @@ class pytransport(elements):
 
             # 9.  : 'Repetition' - for nesting elements
             if linedict['elementnum'] == 9.0:
-                errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
-                self._printout(errorline)
+                if self._debug:
+                    errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
+                    self._printout(errorline)
             if linedict['elementnum'] == 2.0:
-                errorline = '\tLine is a poleface rotation which is handled by the previous or next dipole element.'
-                self._printout(errorline)
-
-
-            self._printout('\n')
+                if self._debug:
+                    errorline = '\tLine is a poleface rotation which is handled by the previous or next dipole element.'
+                    self._printout(errorline)
+            
+            if self._debug:
+                self._printout('\n')
 
 
         ### OTHER TYPES WHICH CAN BE IGNORED:
@@ -788,10 +790,6 @@ class pytransport(elements):
                     par = 'angle'
                 data = [par, oldvalue, element['data'][3]]
                 eledict['params'].append(data)
-            print index
-            print fitindex
-            print element['length']
-            print self._elementReg.elements[index]['length']
             if self._elementReg.elements[index]['length'] != element['length']:
                 self._elementReg.elements[index]['data'][0] = element['data'][0]    #Length in data
                 lendict = _updateLength(index,fitindex,element)
