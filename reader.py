@@ -295,12 +295,12 @@ class optics():
         for element in elementlist:
             if len(element) > 1:  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
-                type    = element[0].split('*')[1]
-                if not notokElements.__contains__(type):
+                elementType = element[0].split('*')[1]
+                if not notokElements.__contains__(elementType):
                     # rest of first line split with spaces
                     splitline = self._general._remove_blanks(element[0].split('*')[2].split(' '))
                     name    = splitline[1].strip('"')
-                    if type=="BEAM" or type=="ACC":
+                    if elementType=="BEAM" or elementType=="ACC":
                         momentum = _np.float(splitline[-2])
                         energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
                     s       = _np.float(self._general._remove_blanks(element[1].split(' '))[0])
@@ -359,7 +359,7 @@ class optics():
                     self.transdata['Momentum'].append(momentum)
                     self.transdata['E'].append(energy)
                     self.transdata['Name'].append(name)
-                    self.transdata['Type'].append(type)
+                    self.transdata['Type'].append(elementType)
                     num_elements += 1 
 
         def get_elementdata(index):             # Function to get the data for each element, rather than each key.
@@ -401,7 +401,7 @@ class optics():
             if len(element) > 1:  # I.e not a fit or matrix-modifying element
                 elementLine = self._general._remove_blanks(element[0].split(' '))
                 elementLine = self._general._updateElementLine(elementLine)
-                type    = elementLine[0].strip('*') #element type
+                elementType = elementLine[0].strip('*') #element type
                 typenum = _np.float(elementLine[1])
 
                 #Get line with sigma data.
@@ -411,10 +411,10 @@ class optics():
                 else:
                     sigmaLine = element[1]
 
-                if not notokElements.__contains__(type):
+                if not notokElements.__contains__(elementType):
                     name = self._general._removeIllegals(elementLine[2]) #remove illegal characters
 
-                    if type=="BEAM" or type=="ACC":
+                    if elementType=="BEAM" or elementType=="ACC":
                         momentum = _np.float(elementLine[-2])
                         energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
 
@@ -505,7 +505,7 @@ class optics():
                     self.transdata['Momentum'].append(momentum)
                     self.transdata['E'].append(energy)
                     self.transdata['Name'].append(name)
-                    self.transdata['Type'].append(type)
+                    self.transdata['Type'].append(elementType)
                     num_elements += 1
 
         def get_elementdata(index):             # Function to get the data for each element, rather than each key.
