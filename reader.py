@@ -293,7 +293,7 @@ class optics():
         energy   = 0.0
         proton_mass = 938.272
         for element in elementlist:
-            if len(element) > 1:  # I.e not a fit or matrix-modifying element
+            if (not isinstance(element,_np.str)) and (len(element) > 1):  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
                 elementType = element[0].split('*')[1]
                 if not notokElements.__contains__(elementType):
