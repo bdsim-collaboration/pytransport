@@ -22,4 +22,4 @@ convert.pytransport('FOR001.DAT')
 # Read TRANSPORT output
 from pytransport import reader
 a = reader.reader()
-data = a.get_data('FOR002.DAT')
+data = a.getOptics('FOR002.DAT')
