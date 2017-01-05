@@ -174,14 +174,23 @@ class pytransport(elements):
         gmad: boolean
             Write the converted output into gmad format, default = True.
             
+        gmadDir: string
+            Output directory for gmad format, default = 'gmad'
+
         madx: boolean
             write the converted output into madx format, dafault = False.
             
+        madxDir: string
+            Output directory for madx format, default = 'madx'
+
         auto: boolean
             Automatically convert and output the file, default = True.
 
         keepName: boolean
             Keep original element name if present, default = False
+
+        outlog: boolean
+            Output stream to a log file, default = True
         '''
     def __init__(self,inputfile,
                  particle   = 'proton',
@@ -254,7 +263,6 @@ class pytransport(elements):
         'T':1e+12
             }
         self._debug  = debug
-        #boolean for outputting stream to a log file.
         self._outlog = outlog
 
         #pytransport conversion classes
