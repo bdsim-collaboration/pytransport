@@ -545,7 +545,15 @@ class pytransport(elements):
             linedict['isZeroLength'] = False
             if self._debug:
                 self._printout("\tEntry is a solenoid, adding to the element registry as element " + numElements + ".")
-        
+
+        if typeNum == 22.0:
+            if self._debug:
+                self._printout("\tEntry is a space charge element, adding to the element registry as element " + numElements + ".")
+
+        if typeNum == 23.0:
+            if self._debug:
+                self._printout("\tEntry is a buncher, adding to the element registry as element " + numElements + ".")
+
         rawline = self.filedata[linenum]
         self._elementReg.AddToRegistry(linedict,rawline)
 
@@ -576,7 +584,8 @@ class pytransport(elements):
             if self._combineDrifts:
                 if (lastElementWasADrift and
                     linedict['elementnum'] != 3.0 and 
-                    linedict['elementnum'] != 6.0):
+                    linedict['elementnum'] != 6.0 and
+                    linedict['elementnum'] < 20.0):
                     # write possibly combined drift
                     if self._debug:
                         self._printout('\tConvert delayed drift(s)')
@@ -644,6 +653,8 @@ class pytransport(elements):
         # 8.  : Magnet alignment tolerances
         # 10. : Fitting constraint
         # 14. : Arbitrary transformation of TRANSPORT matrix
+        # 22. : Space charge element
+        # 23. : RF Cavity (Buncher), changes bunch energy spread
 
         # Write also last drift
         if self._combineDrifts:
