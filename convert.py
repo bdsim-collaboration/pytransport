@@ -489,6 +489,19 @@ class pytransport(elements):
             if self._debug:
                 self._printout("\tEntry is a Transform update, adding to the element registry as element " + numElements + ".")
 
+        if typeNum == 9.0:
+            if self._debug:
+                self._printout("\tEntry is a repetition control, adding to the element registry as element " + numElements + ".")
+
+        if typeNum == 11.0:
+            linedict['name'] = self._get_label(line)
+            data = self._get_elementdata(line)
+            linedict['data'] = data
+            linedict['length'] = data[0]
+            linedict['isZeroLength'] = False
+            if self._debug:
+                self._printout("\tEntry is an acceleration element, adding to the element registry as element " + numElements + ".")
+
         if typeNum == 12.0:
             if filetype == 'input':
                 linedict['name'] = self._get_label(line)
@@ -505,15 +518,6 @@ class pytransport(elements):
             if self._debug:
                 self._printout("\tEntry is a beam rotation, adding to the element registry as element " + numElements + ".")
                 
-        if typeNum == 11.0:
-            linedict['name'] = self._get_label(line)
-            data = self._get_elementdata(line)
-            linedict['data'] = data
-            linedict['length'] = data[0]
-            linedict['isZeroLength'] = False
-            if self._debug:
-                self._printout("\tEntry is an acceleration element, adding to the element registry as element " + numElements + ".")
-        
         if typeNum == 13.0:
             linedict['data'] = self._get_elementdata(line)
             if self._debug:
@@ -542,10 +546,6 @@ class pytransport(elements):
             if self._debug:
                 self._printout("\tEntry is a solenoid, adding to the element registry as element " + numElements + ".")
         
-        if typeNum == 9.0:
-            if self._debug:
-                self._printout("\tEntry is a repetition control, adding to the element registry as element " + numElements + ".")
-
         rawline = self.filedata[linenum]
         self._elementReg.AddToRegistry(linedict,rawline)
 
