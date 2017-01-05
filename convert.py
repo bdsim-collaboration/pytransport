@@ -360,14 +360,15 @@ class pytransport(elements):
                         self._printout('\tType code is 0 or negative, ignoring line.')
             except ValueError:
                 if self._debug:
+                    errorline = '\tCannot process line '+_np.str(linenum)+', '
                     if line[0][0] == '(' or line[0][0] == '/':
-                        errorline = '\tCannot process line '+_np.str(linenum)+', line is a comment.'
+                        errorline += 'line is a comment.'
                     elif line[0][0] == 'S':
-                        errorline = '\tCannot process line '+_np.str(linenum)+', line is for TRANSPORT fitting routine.'
+                        errorline = 'line is for TRANSPORT fitting routine.'
                     elif line[0] == '\n':
-                        errorline = '\tCannot process line '+_np.str(linenum)+', line is blank.'
+                        errorline = 'line is blank.'
                     else:
-                        errorline = '\tCannot process line '+_np.str(linenum)+', reason unknown.'
+                        errorline = 'reason unknown.'
 
                     self._printout(errorline)
 
