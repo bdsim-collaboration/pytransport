@@ -77,10 +77,7 @@ class elements(functions):
                 self._printout('\tZero or negative length element, ignoring.')
             return
     
-        if self.units['element_length'] != 'm':
-            length_in_metres = _np.float(driftlen) * self.scale[self.units['element_length'][0]]  #Convert to metres.
-        else:
-            length_in_metres = _np.float(driftlen)
+        length_in_metres = _np.float(driftlen) * self._scale_to_meters('element_length')
 
         self.machineprops.drifts += 1
         elementid = ''
@@ -149,10 +146,7 @@ class elements(functions):
             angle = angle_in_deg * (_np.pi/180.) * self.machineprops.bending
         
         ##Convert element length
-        if self.units['element_length'] != 'm':
-            length_in_metres = length * self.scale[self.units['element_length'][0]]
-        else:
-            length_in_metres = length
+        length_in_metres = length * self._scale_to_meters('element_length')
         
         self.machineprops.dipoles += 1
         elementid = ''
@@ -255,15 +249,8 @@ class elements(functions):
         field_in_Gauss = field_at_tip * self.scale[self.units['magnetic_fields'][0]] #Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  #Convert to Tesla
         
-        if self.units['bend_vert_gap'] != 'm':
-            pipe_in_metres = pipe_rad * self.scale[self.units['bend_vert_gap'][0]]  #Scale to meters
-        else:
-            pipe_in_metres = pipe_rad
-    
-        if self.units['element_length'] != 'm':
-            length_in_metres = length * self.scale[self.units['element_length'][0]] #Scale to meters
-        else:
-            length_in_metres = length
+        pipe_in_metres = pipe_rad * self._scale_to_meters('bend_vert_gap')
+        length_in_metres = length * self._scale_to_meters('element_length')
         
         field_gradient = (field_in_Tesla / pipe_in_metres) / self.beamprops.brho    #K1 in correct units
         
@@ -432,16 +419,9 @@ class elements(functions):
         field_in_Gauss = field_at_tip * self.scale[self.units['magnetic_fields'][0]] #Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  #Convert to Tesla
         
-        if self.units['bend_vert_gap'] != 'm':
-            pipe_in_metres = pipe_rad * self.scale[self.units['bend_vert_gap'][0]]  #Scale to meters
-        else:
-            pipe_in_metres = pipe_rad
-        
-        if self.units['element_length'] != 'm':
-            length_in_metres = length * self.scale[self.units['element_length'][0]] #Scale to meters
-        else:
-            length_in_metres = length
-        
+        pipe_in_metres = pipe_rad * self._scale_to_meters('bend_vert_gap')
+        length_in_metres = length * self._scale_to_meters('element_length')
+
         field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.beamprops.brho    #K2 in correct units
         
         self.machineprops.sextus += 1
@@ -470,10 +450,7 @@ class elements(functions):
         field_in_Gauss = field * self.scale[self.units['magnetic_fields'][0]] #Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  #Convert to Tesla
         
-        if self.units['element_length'] != 'm':
-            length_in_metres = length * self.scale[self.units['element_length'][0]] #Scale to meters
-        else:
-            length_in_metres = length
+        length_in_metres = length * self._scale_to_meters('element_length')
                 
         self.machineprops.solenoids += 1
         elementid = ''

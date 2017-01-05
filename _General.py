@@ -442,6 +442,14 @@ class functions():
         return blseconds
 
 
+    def _scale_to_meters(self,quantity):
+        ''' Function to scale quantity (string) to meters, returns conversion factor'''
+        if self.units[quantity] != 'm':
+            conversionFactor = self.scale[self.units[quantity][0]]
+        else:
+            conversionFactor = 1
+        return conversionFactor
+
     def _calculate_energy(self,momentum):
         '''Function to calculate:
                 Total Energy
