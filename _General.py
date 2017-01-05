@@ -603,7 +603,7 @@ class functions():
 
     def _getTypeNum(self,line):
         ''' Function to extract the element type number (type code).
-            Written because element types can contain alphabetcial 
+            Written because element types can contain alphabetical 
             characters when fits are used, e.g: 5.0A. Only the number 
             is required, the use of fitting does not need to be known.
             '''
@@ -614,8 +614,8 @@ class functions():
                     converted = _np.float(eleNum[:characNum+2])
                 except ValueError:
                     break
-            typeNum = eleNum[:characNum+2]
+            typeNum = _np.float(eleNum[:characNum+2])
         else:
-            typeNum = eleNum
+            typeNum = _np.float(eleNum)
         return typeNum
 

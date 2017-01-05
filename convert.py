@@ -380,7 +380,7 @@ class pytransport(elements):
                     'length'       : 0.0,
                     'isZeroLength' : True}
         numElements = _np.str(len(self._elementReg.elements))
-        typeNum = _np.float(self._getTypeNum(line))
+        typeNum = self._getTypeNum(line)
         linedict['elementnum'] = typeNum
         
         if typeNum == 15.0:
