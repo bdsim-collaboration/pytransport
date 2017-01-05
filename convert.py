@@ -189,20 +189,24 @@ class pytransport(elements):
         keepName: boolean
             Keep original element name if present, default = False
 
+        combineDrifts: boolean
+            Combine consecutive drifts into a single drift, default = False
+
         outlog: boolean
             Output stream to a log file, default = True
         '''
     def __init__(self,inputfile,
-                 particle   = 'proton',
-                 debug      = False,
-                 distrType  = 'gauss',
-                 gmad       = True,
-                 gmadDir    = 'gmad',
-                 madx       = False,
-                 madxDir    = 'madx',
-                 auto       = True,
-                 keepName   = False,
-                 outlog     = True):
+                 particle      = 'proton',
+                 debug         = False,
+                 distrType     = 'gauss',
+                 gmad          = True,
+                 gmadDir       = 'gmad',
+                 madx          = False,
+                 madxDir       = 'madx',
+                 auto          = True,
+                 keepName      = False,
+                 combineDrifts = False,
+                 outlog        = True):
 
         if particle == 'proton':
             p_mass = (_con.proton_mass) * (_con.c**2 / _con.e) / 1e9        ## Particle masses in same unit as TRANSPORT (GeV)
@@ -229,6 +233,7 @@ class pytransport(elements):
         #transport optics output is modified to be a single line
         self._singleLineOptics = False
         self._keepName         = keepName
+        self._combineDrifts    = combineDrifts
         
         self._collindex   = []  # An index of collimator labels
         self._accstart    = []  # An index of the start of acceleration elements.
@@ -316,7 +321,7 @@ class pytransport(elements):
         self.AddLatticeToRegistry()
 
         if self._debug:
-            self._printout('Converting registry elements to pybdsim compatable format and adding to machine builder.')
+            self._printout('Converting registry elements to pybdsim compatible format and adding to machine builder.')
 
         self.ProcessAndBuild()
         self.write()
@@ -561,6 +566,8 @@ class pytransport(elements):
     def ProcessAndBuild(self):
         '''Function to convert the registry elements into pybdsim format and add to the pybdsim builder.
             '''
+        if self._combineDrifts:
+            lastElementWasADrift = False
         for linenum,linedict in enumerate(self._elementReg.elements):
             if self._debug:
                 debugstring = 'Converting element number ' + _np.str(linenum) + ':'
@@ -578,7 +585,15 @@ class pytransport(elements):
                     if keynum == len(linedict.keys()):
                         convertline += '.'
                 self._printout(convertline)
-    
+
+            if self._combineDrifts:
+                if lastElementWasADrift and linedict['elementnum'] != 3.0:
+                    # write possibly combined drift
+                    if self._debug:
+                        self._printout('\tConvert delayed drift(s)')
+                    self.drift(linedictDrift)
+                    lastElementWasADrift = False
+
             if linedict['elementnum'] == 15.0:
                 self.unit_change(linedict)
             if linedict['elementnum'] == 20.0:
@@ -586,7 +601,21 @@ class pytransport(elements):
             if linedict['elementnum'] == 1.0:
                 self.define_beam(linedict)
             if linedict['elementnum'] == 3.0:
-                self.drift(linedict)
+                if self._combineDrifts:
+                    if self._debug:
+                        self._printout('\tDelay drift')
+                    if lastElementWasADrift:
+                        # update linedictDrift
+                        linedictDrift['length'] += linedict['length']
+                        # keep first non-empty name
+                        if not linedictDrift['name']:
+                            linedictDrift['name'] = linedict['name']
+                    else:
+                        # new linedictDrift
+                        linedictDrift = linedict
+                        lastElementWasADrift = True
+                else:
+                    self.drift(linedict)
             if linedict['elementnum'] == 4.0:
                 self.dipole(linedict)
             if linedict['elementnum'] == 5.0:
@@ -620,13 +649,19 @@ class pytransport(elements):
             if self._debug:
                 self._printout('\n')
 
-
         ### OTHER TYPES WHICH CAN BE IGNORED:
         # 6.0.X : Update RX matrix used in TRANSPORT
         # 7.  : 'Shift beam centroid'
         # 8.  : Magnet alignment tolerances
         # 10. : Fitting constraint
         # 14. : Arbitrary transformation of TRANSPORT matrix
+
+        # Write also last drift
+        if self._combineDrifts:
+            if lastElementWasADrift:
+                if self._debug:
+                    self._printout('\tConvert delayed drift(s)')
+                self.drift(linedictDrift)
        
     def create_beam(self):
         '''Function to prepare the beam for writing.
