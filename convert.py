@@ -175,11 +175,13 @@ class pytransport(elements):
             Write the converted output into gmad format, default = True.
             
         madx: boolean
-            write the converted outout into madx format, dafault = False.
+            write the converted output into madx format, dafault = False.
             
         auto: boolean
             Automatically convert and output the file, default = True.
 
+        keepName: boolean
+            Keep original element name if present, default = False
         '''
     def __init__(self,inputfile,
                  particle   = 'proton',
@@ -190,6 +192,7 @@ class pytransport(elements):
                  madx       = False,
                  madxDir    = 'madx',
                  auto       = True,
+                 keepName   = False,
                  outlog     = True):
 
         if particle == 'proton':
@@ -216,6 +219,7 @@ class pytransport(elements):
         
         #transport optics output is modified to be a single line
         self._singleLineOptics = False
+        self._keepName         = keepName
         
         self._collindex   = []  # An index of collimator labels
         self._accstart    = []  # An index of the start of acceleration elements.

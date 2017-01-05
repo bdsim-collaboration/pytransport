@@ -83,7 +83,11 @@ class elements(functions):
             length_in_metres = _np.float(driftlen)
 
         self.machineprops.drifts += 1
-        elementid = 'DR'+_np.str(self.machineprops.drifts)
+        elementid = ''
+        if self._keepName:
+            elementid = linedict['name']
+        if not elementid: # check on empty string
+            elementid = 'DR'+_np.str(self.machineprops.drifts)
 
         self.gmadmachine.AddDrift(name=elementid,length=length_in_metres)
         self.madxmachine.AddDrift(name=elementid,length=length_in_metres)
@@ -151,7 +155,11 @@ class elements(functions):
             length_in_metres = length
         
         self.machineprops.dipoles += 1
-        elementid = 'BM'+_np.str(self.machineprops.dipoles)
+        elementid = ''
+        if self._keepName:
+            elementid = linedict['name']
+        if not elementid: # check on empty string
+            elementid = 'BM'+_np.str(self.machineprops.dipoles)
         
         ##Check for non zero pole face rotation
         if (e1 != 0) and (e2 != 0):
@@ -212,7 +220,11 @@ class elements(functions):
             #self.machineprops.angle *= -1                         #For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.
             anginrad = self.machineprops.angle * (_np.pi / 180)
             self.machineprops.transforms += 1
-            elementid = 't'+_np.str(self.machineprops.transforms)
+            elementid = ''
+            if self._keepName:
+                elementid = linedict['name']
+            if not elementid: # check on empty string
+                elementid = 't'+_np.str(self.machineprops.transforms)
             self.gmadmachine.AddTransform3D(name=elementid,psi=anginrad)
             ## MadX Builder does not have transform 3d 
             # Comment out and print warning
@@ -256,13 +268,17 @@ class elements(functions):
         field_gradient = (field_in_Tesla / pipe_in_metres) / self.beamprops.brho    #K1 in correct units
         
         self.machineprops.quads += 1
-        #if label is not None: #Write to file
-        if field_gradient > 0:
-            elementid = 'QF'+_np.str(self.machineprops.quads)
-        elif field_gradient < 0:
-            elementid = 'QD'+_np.str(self.machineprops.quads)
-        else:
-            elementid = 'NULLQUAD'+_np.str(self.machineprops.quads)  #For K1 = 0.
+
+        elementid = ''
+        if self._keepName:
+            elementid = linedict['name']
+        if not elementid: # check on empty string
+            if field_gradient > 0:
+                elementid = 'QF'+_np.str(self.machineprops.quads)
+            elif field_gradient < 0:
+                elementid = 'QD'+_np.str(self.machineprops.quads)
+            else:
+                elementid = 'NULLQUAD'+_np.str(self.machineprops.quads)  #For K1 = 0.
 
         self.gmadmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
         self.madxmachine.AddQuadrupole(name=elementid,length=length_in_metres,k1=_np.round(field_gradient,4))
@@ -429,7 +445,11 @@ class elements(functions):
         field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.beamprops.brho    #K2 in correct units
         
         self.machineprops.sextus += 1
-        elementid = 'SEXT'+_np.str(self.machineprops.sextus)
+        elementid = ''
+        if self._keepName:
+            elementid = linedict['name']
+        if not elementid: # check on empty string
+            elementid = 'SEXT'+_np.str(self.machineprops.sextus)
         
         self.gmadmachine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
         self.madxmachine.AddSextupole(name=elementid,length=length_in_metres,k2=_np.round(field_gradient,4))
@@ -456,7 +476,11 @@ class elements(functions):
             length_in_metres = length
                 
         self.machineprops.solenoids += 1
-        elementid = 'SOLE'+_np.str(self.machineprops.solenoids)
+        elementid = ''
+        if self._keepName:
+            elementid = linedict['name']
+        if not elementid: # check on empty string
+            elementid = 'SOLE'+_np.str(self.machineprops.solenoids)
         
         self.gmadmachine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
         self.madxmachine.AddSolenoid(name=elementid,length=length_in_metres,ks=_np.round(field_in_Tesla,4))
