@@ -334,7 +334,9 @@ class pytransport(elements):
         
         for linenum,line in enumerate(self.data):
             if self._debug:
-                self._printout('Processing line '+_np.str(linenum)+' :')
+                self._printout('Processing tokenised line '+_np.str(linenum)+' :')
+                self._printout('\t' + str(line))
+                self._printout('Original :')
                 self._printout('\t' + self.filedata[linenum])
 
             self._line = line
@@ -358,9 +360,9 @@ class pytransport(elements):
                         self._printout('\tType code is 0 or negative, ignoring line.')
             except ValueError:
                 if self._debug:
-                    if line[0] == '(' or line[0] == '/':
+                    if line[0][0] == '(' or line[0][0] == '/':
                         errorline = '\tCannot process line '+_np.str(linenum)+', line is a comment.'
-                    elif line[0] == 'S':
+                    elif line[0][0] == 'S':
                         errorline = '\tCannot process line '+_np.str(linenum)+', line is for TRANSPORT fitting routine.'
                     elif line[0] == '\n':
                         errorline = '\tCannot process line '+_np.str(linenum)+', line is blank.'
