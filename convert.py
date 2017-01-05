@@ -587,7 +587,9 @@ class pytransport(elements):
                 self._printout(convertline)
 
             if self._combineDrifts:
-                if lastElementWasADrift and linedict['elementnum'] != 3.0:
+                if (lastElementWasADrift and
+                    linedict['elementnum'] != 3.0 and 
+                    linedict['elementnum'] != 6.0):
                     # write possibly combined drift
                     if self._debug:
                         self._printout('\tConvert delayed drift(s)')
