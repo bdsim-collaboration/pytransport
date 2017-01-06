@@ -72,12 +72,12 @@ class elements(functions):
     
     def drift(self,linedict):
         driftlen = linedict['length']
-        if _np.float(driftlen) <= 0:
+        if driftlen <= 0:
             if self._debug:
                 self._printout('\tZero or negative length element, ignoring.')
             return
     
-        length_in_metres = _np.float(driftlen) * self._scale_to_meters('element_length')
+        length_in_metres = driftlen * self._scale_to_meters('element_length')
 
         self.machineprops.drifts += 1
         elementid = ''
@@ -282,48 +282,23 @@ class elements(functions):
             self._printout('\t'+debugstring)
 
 
+    def collimator(self,linedict):
+        ''' A Function that writes the properties of a collimator element
+            Only added for gmad, not for madx!
+            '''
 
+        length_in_metres = linedict['length'] * self._scale_to_meters('element_length')
+        aperx_in_metres = linedict['aperx'] * self._scale_to_meters('x')
+        apery_in_metres = linedict['apery'] * self._scale_to_meters('y')
 
-    def collimator(self,line):
-        label = self._get_label(line)
-        ### Was used to write the location of a collimator as a string, redundant if file writing done with pybdsim.
-        collstarted = False
-        for index in self._collindex: #Look for existing collimator elements of the same name
-            if index == label:
-                collstarted = True      #If one already exists, that must be the start of the collimator
-                break
-        
-        if collstarted == True:          
-            #If the start already exists, input line must be for collimator end
-            coll = 'ends'
-        else:
-            coll = 'starts'
-        self._collindex.append(label) #Add to collimator list
+        self.machineprops.collimators += 1
+        elementid = ''
+        if self._keepName:
+            elementid = linedict['name']
+        if not elementid: # check on empty string
+            elementid = 'COL'+_np.str(self.machineprops.collimators)
 
-        collidata = []
-        for index,ele in enumerate(line[1:]): # Iterate over line to extract data
-            if ele != '':
-                try:
-                    collidata.append(_np.float(ele))
-                except ValueError:
-                    dummy=1
-
-        horwidth = 'Unknown'
-        verwidth = 'Unknown'
-        # Determine which entry is for horiz. and vert.
-        if collidata[0] == 1.0:
-            horwidth = _np.str(collidata[1])
-        elif collidata[0] == 3.0:
-            verwidth = _np.str(collidata[1])
-
-        if len(collidata) > 2:
-            if collidata[2] == 1.0:
-                horwidth = _np.str(collidata[3])
-            elif collidata[2] == 3.0:
-                verwidth = _np.str(collidata[3])
-
-        collline  = '! A collimator labelled ' + label +' ' + coll + ' here'
-        collline2 = '! with slit size half widths of x = '+horwidth+' '+self.units['x']+' and y = '+verwidth+' '+self.units['x']+'.'
+        self.gmadmachine.AddRCol(name=elementid,length=length_in_metres,xsize=aperx_in_metres, ysize=apery_in_metres)
 
 
     def acceleration(self,linedict):

@@ -56,6 +56,7 @@ class _machineprops():
         self.sextus         = 0
         self.transforms     = 0
         self.solenoids      = 0
+        self.collimators    = 0
         self.beampiperadius = 20
         self.fringeIntegral = 0
         self.dipoleVertAper = 0
@@ -235,7 +236,6 @@ class pytransport(elements):
         self._keepName         = keepName
         self._combineDrifts    = combineDrifts
         
-        self._collindex   = []  # An index of collimator labels
         self._accstart    = []  # An index of the start of acceleration elements.
         self.data         = []  # A list that will contain arrays of the element data
         self.filedata     = []  # A list that will contain the raw strings from the input file
@@ -489,8 +489,38 @@ class pytransport(elements):
                 self._printout("\tEntry is a quadrupole, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 6.0:
+
+            # Since collimators have zero length in TRANSPORT, chosen to use length of next drift instead if present.
+            # TODO add check if there is a next line
+            nextline = self.data[linenum+1]
+            nextTypeNum = self._getTypeNum(nextline)
+            if nextTypeNum == 3.0:
+                nextData = self._get_elementdata(nextline)
+                linedict['length'] = nextData[0]
+                linedict['isZeroLength'] = False
+
+            linedict['name'] = self._get_label(line)
+            # Determine which entry is for horiz. and vert.
+            aperx = self.machineprops.beampiperadius
+            apery = self.machineprops.beampiperadius
+            if _np.float(line[1]) == 1.0:
+                aperx = line[2]
+            elif _np.float(line[1]) == 3.0:
+                apery = line[2]
+
+            if len(line) > 4:
+                if _np.float(line[3]) == 1.0:
+                    aperx = line[4]
+                elif _np.float(line[3]) == 3.0:
+                    apery = line[4]
+            linedict['aperx'] = _np.float(aperx)
+            linedict['apery'] = _np.float(apery)
+
             if self._debug:
-                self._printout("\tEntry is a Transform update, adding to the element registry as element " + numElements + ".")
+                # updated TRANSPORT
+                self._printout("\tEntry is a collimator, adding to the element registry as element " + numElements + ".")
+                # original TRANSPORT
+                # self._printout("\tEntry is a Transform update, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 9.0:
             if self._debug:
@@ -564,6 +594,7 @@ class pytransport(elements):
     def ProcessAndBuild(self):
         '''Function to convert the registry elements into pybdsim format and add to the pybdsim builder.
             '''
+        skipNextDrift = False # used for collimators
         if self._combineDrifts:
             lastElementWasADrift = False
         for linenum,linedict in enumerate(self._elementReg.elements):
@@ -587,7 +618,6 @@ class pytransport(elements):
             if self._combineDrifts:
                 if (lastElementWasADrift and
                     linedict['elementnum'] != 3.0 and 
-                    linedict['elementnum'] != 6.0 and
                     linedict['elementnum'] < 20.0):
                     # write possibly combined drift
                     if self._debug:
@@ -602,6 +632,9 @@ class pytransport(elements):
             if linedict['elementnum'] == 1.0:
                 self.define_beam(linedict)
             if linedict['elementnum'] == 3.0:
+                if skipNextDrift:
+                    skipNextDrift = False
+                    continue
                 if self._combineDrifts:
                     if self._debug:
                         self._printout('\tDelay drift')
@@ -622,8 +655,10 @@ class pytransport(elements):
             if linedict['elementnum'] == 5.0:
                 self.quadrupole(linedict)
             if linedict['elementnum'] == 6.0:
-                pass
-                #self.collimator(line)
+                self.collimator(linedict)
+                # Length gotten from next drift
+                if linedict['length'] > 0.0:
+                    skipNextDrift = True
             if linedict['elementnum'] == 12.0:
                 self.correction(linedict)
             if linedict['elementnum'] == 11.0:
