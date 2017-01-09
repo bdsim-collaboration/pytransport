@@ -479,7 +479,6 @@ class pytransport(elements):
                 self._printout("\tEntry is a dipole, adding to the element registry as element " + numElements + ".")
 
         if _np.float(line[0][:2]) == 5.0:
-            linedict['elementnum'] = 5.0
             linedict['name'] = self._get_label(line)
             data = self._get_elementdata(line)
             linedict['data'] = data
