@@ -363,7 +363,7 @@ class pytransport(elements):
                     errorline = '\tCannot process line '+_np.str(linenum)+', '
                     if line[0][0] == '(' or line[0][0] == '/':
                         errorline += 'line is a comment.'
-                    elif line[0][0] == 'S':
+                    elif line[0][0] == 'S': #S used as first character in SENTINEL command.
                         errorline = 'line is for TRANSPORT fitting routine.'
                     elif line[0] == '\n':
                         errorline = 'line is blank.'
