@@ -270,7 +270,8 @@ class pytransport(elements):
             }
         self._debug  = debug
         self._outlog = outlog
-
+        self._typeCode6IsTransUpdate = True #Definition of type code 6, true is transform update, false is collimator
+ 
         #pytransport conversion classes
         self.beamprops = _beamprops(p_mass)
         self.beamprops.distrType = distrType
