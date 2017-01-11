@@ -205,6 +205,7 @@ class pytransport(elements):
                  madx          = False,
                  madxDir       = 'madx',
                  auto          = True,
+                 dontSplit     = False,
                  keepName      = False,
                  combineDrifts = False,
                  outlog        = True):
@@ -279,10 +280,15 @@ class pytransport(elements):
         self.gmadmachine = _pyBuilder.Machine()
         self.madxmachine = _mdBuilder.Machine()
 
+        #Automatic writing and machine splitting
+        self._auto = auto
+        self._dontSplit = dontSplit
+
         #load file automatically
         self._load_file(inputfile)
-        if auto:
+        if self._auto:
             self.transport2gmad()
+        
 
 
     def write(self):
@@ -629,7 +635,12 @@ class pytransport(elements):
             if linedict['elementnum'] == 20.0:
                 self.change_bend(linedict)
             if linedict['elementnum'] == 1.0:
-                self.define_beam(linedict)
+                #Add beam on first definition
+                if not self._beamdefined:
+                    self.define_beam(linedict)
+                #Only update beyond first definition if splitting is permitted
+                elif not self._dontSplit:
+                    self.define_beam(linedict)
             if linedict['elementnum'] == 3.0:
                 if skipNextDrift:
                     skipNextDrift = False

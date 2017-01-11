@@ -11,7 +11,7 @@ class elements(functions):
             if self._debug:
                 self._printout('\tIgnoring beam rms addition.')
             return
-        if self._beamdefined:
+        if self._beamdefined and not self._dontSplit:
             self._numberparts += 1
             self.write()
             self._printout('Writing...')
