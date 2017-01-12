@@ -352,51 +352,6 @@ class elements(functions):
             accline3 = '! and a wavelength of '+_np.str(wavel)+' '+_self.units['bunch_length']+'. \n'
 
 
-    def _acc_sequence(self,inputline):
-        '''Function to calculate the total length of a sequence of accelerator components.
-            '''
-        ## UNTESTED ##
-        
-        # Redundant function until comments and /or acceleration components can be handled.
-        concat=''
-        for ele in inputline:                       #Concat string back together
-            concat += ele
-            if ele != inputline[-1]:
-                concat += ' '
-        ele=0
-        for linenum,line in enumerate(self.data):   #Find start of accelerator element sequence
-            if line == concat:
-                seq_start = linenum
-                break
-        accparts=[]
-        accelements = 0
-        isacc = True
-        while isacc:                                #Find remainder of acc sequence
-            a = self.data[seq_start+accelements].split(' ')
-            if a[0] == '11.':
-                accparts.append(a)
-                accelements += 1
-            else:
-                isacc = False
-        acccopy = accparts #temp copy of data
-        accparts=[]
-        for part in acccopy:               #Calculate total length of accelerator part.
-            accdata=[]
-            for index,ele in enumerate(part[1:]):
-                if ele != '':
-                    try:
-                        accdata.append(_np.float(ele))
-                    except ValueError:
-                        pass
-            accparts.append(accdata)
-        accarray = _np.array(accparts)
-        tot_len = _np.sum(accarray[2:,0])
-        #Write to file
-        accline = '! An electrostatic accelerator section goes here, of length '+_np.str(tot_len)+' '+self.units['element_length']+','
-        accline2= '!split into '+_np.str(accelements-1)+' elements, with a total voltage of '+_np.str(_np.round(accarray[0,1],3))+' GV.'
-
-
-
     def sextupole(self,linedict):
         sextudata = linedict['data']
         length = sextudata[0]        # First three non-blanks must be the entries in a specific order.
