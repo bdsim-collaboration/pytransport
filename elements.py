@@ -317,6 +317,14 @@ class elements(functions):
 
         self.gmadmachine.AddRCol(name=elementid,length=length_in_metres,xsize=aperx_in_metres, ysize=apery_in_metres)
 
+        if self._debug:
+            debugstring = '\tCollimator, x aperture = ' + _np.str(aperx_in_metres) + ' m, y aperture = ' + _np.str(apery_in_metres) + ' m.'
+            self._printout(debugstring)
+            self._printout('\tConverted to:')
+            debugstring = 'Collimator '+elementid+', length= '+_np.str(length_in_metres)+' m, xsize= '+_np.str(_np.round(aperx_in_metres,4))
+            debugstring +=' m, ysize= '+_np.str(_np.round(apery_in_metres,4)) + ' m.'
+            self._printout('\t'+debugstring)
+
 
     def acceleration(self,linedict):
         ''' A Function that writes the properties of an acceleration element
