@@ -384,7 +384,7 @@ class functions():
                     data.append(_np.float(ele))
                 except ValueError:
                     name = ele
-        data.append(name)
+        #data.append(name)
         return data
 
 
