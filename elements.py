@@ -286,10 +286,27 @@ class elements(functions):
         ''' A Function that writes the properties of a collimator element
             Only added for gmad, not for madx!
             '''
+        colldata = linedict['data']
+        
+        # Determine which entry is for horiz. and vert.
+        aperx = self.machineprops.beampiperadius
+        apery = self.machineprops.beampiperadius
+        if _np.float(colldata[0]) == 1.0:
+            aperx = colldata[1]
+        elif _np.float(colldata[0]) == 3.0:
+            apery = colldata[1]
+
+        if len(colldata) > 2:
+            if _np.float(colldata[2]) == 1.0:
+                aperx = colldata[3]
+            elif _np.float(colldata[2]) == 3.0:
+                apery = colldata[3]
+        aperx = _np.float(aperx)
+        apery = _np.float(apery)
 
         length_in_metres = linedict['length'] * self._scale_to_meters('element_length')
-        aperx_in_metres = linedict['aperx'] * self._scale_to_meters('x')
-        apery_in_metres = linedict['apery'] * self._scale_to_meters('y')
+        aperx_in_metres = aperx * self._scale_to_meters('x')
+        apery_in_metres = apery * self._scale_to_meters('y')
 
         self.machineprops.collimators += 1
         elementid = ''

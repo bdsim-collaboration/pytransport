@@ -495,60 +495,44 @@ class pytransport(elements):
                 self._printout("\tEntry is a quadrupole, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 6.0:
-            physicalElements = [1.0, 3.0, 4.0, 5.0, 11.0, 18.0, 19.0]
+            physicalElements = [1.0, 3.0, 4.0, 5.0, 6.0, 11.0, 18.0, 19.0]
             
             #boolean for updating the dict if a drift is successfully found
             updateLinedict = False
             
-            # Since collimators have zero length in TRANSPORT, chosen to use length of next drift instead if present.
-            # Check next 5 elements for drift, next immediate element may be non-physical element which can be ignored
-            # as it shouldnt affect the beamline. Ignore beam definition too in the case where machine splitting is not permitted.
-            for nextLineNum in (_np.arange(5)+1+linenum):
-                #Try except to catch indexerror if no next line
-                try:
-                    nextline = self.data[nextLineNum]
+            #Only iterate if not the last element
+            if linenum == len(self.data):
+                pass
+            else:
+                # Since collimators have zero length in TRANSPORT, chosen to use length of next drift instead if present.
+                # Check all remaining elements for the next drift, following element(s) may be non-physical element which can be ignored
+                # as it shouldnt affect the beamline. Ignore beam definition too in the case where machine splitting is not permitted.
+                for nextline in self.data[linenum+1:]:
                     nextTypeNum = self._getTypeNum(nextline)
                     if nextTypeNum == 3.0:
-                        updateLinedict = True
                         nextData = self._get_elementdata(nextline)
                         linedict['length'] = nextData[0]
                         linedict['isZeroLength'] = False
+                        linedict['name'] = self._get_label(line)
+                        data = self._get_elementdata(line)
+                        linedict['data'] = data
                         break
                     #stop if physical element or beam redef if splitting permitted
                     elif physicalElements.__contains__(nextTypeNum):
                         if (nextTypeNum == 1.0) and self._dontSplit:
+                            pass
+                        elif (nextTypeNum == 6.0) and self._typeCode6IsTransUpdate:
                             pass
                         else:
                             break
                     #ignore non-physical element
                     else:
                         pass
-                except IndexError:
-                    pass
-                        
-            if updateLinedict:
-                linedict['name'] = self._get_label(line)
-                # Determine which entry is for horiz. and vert.
-                aperx = self.machineprops.beampiperadius
-                apery = self.machineprops.beampiperadius
-                if _np.float(line[1]) == 1.0:
-                    aperx = line[2]
-                elif _np.float(line[1]) == 3.0:
-                    apery = line[2]
+                
+            if self._debug:
+                #Can be either transform update or collimator, a 16. 14 entry changes the definition but is only processed after ALL elements are added to the registry.
+                self._printout("\tEntry is either a Transform update or collimator, adding to the element registry as element " + numElements + ".")
 
-                if len(line) > 4:
-                    if _np.float(line[3]) == 1.0:
-                        aperx = line[4]
-                    elif _np.float(line[3]) == 3.0:
-                        apery = line[4]
-                linedict['aperx'] = _np.float(aperx)
-                linedict['apery'] = _np.float(apery)
-
-                if self._debug:
-                    # updated TRANSPORT
-                    self._printout("\tEntry is a collimator, adding to the element registry as element " + numElements + ".")
-                    # original TRANSPORT
-                    # self._printout("\tEntry is a Transform update, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 9.0:
             if self._debug:
