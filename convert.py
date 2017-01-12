@@ -680,6 +680,8 @@ class pytransport(elements):
                     # Length gotten from next drift
                     if linedict['length'] > 0.0:
                         skipNextDrift = True
+                else:
+                    self._transformUpdate(linedict)
             if linedict['elementnum'] == 12.0:
                 self.correction(linedict)
             if linedict['elementnum'] == 11.0:

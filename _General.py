@@ -632,3 +632,9 @@ class functions():
             typeNum = _np.float(eleNum)
         return typeNum
 
+    def _transformUpdate(self,linedict):
+        if self._debug and (linedict['elementnum'] == 6.0):
+            errorline  = '\tElement is either a transform update or a collimator. The type code 6 definition
+            errorline2 = '\thas not been switched to collimators, therefore nothing will be done for this element.'
+            self._printout(errorline)
+            self._printout(errorline2)
