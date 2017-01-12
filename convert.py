@@ -495,6 +495,9 @@ class pytransport(elements):
                 self._printout("\tEntry is a quadrupole, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 6.0:
+            # element is a collimator or transform update
+            # transform update is later ignored so only update linedict as if collimator
+
             physicalElements = [1.0, 3.0, 4.0, 5.0, 11.0, 18.0, 19.0]
             
             # Since collimators have zero length in TRANSPORT, chosen to use length of next drift instead if present.
@@ -540,10 +543,7 @@ class pytransport(elements):
             linedict['apery'] = _np.float(apery)
 
             if self._debug:
-                # updated TRANSPORT
-                self._printout("\tEntry is a collimator, adding to the element registry as element " + numElements + ".")
-                # original TRANSPORT
-                # self._printout("\tEntry is a Transform update, adding to the element registry as element " + numElements + ".")
+                self._printout("\tEntry is a collimator or a transform update, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 9.0:
             if self._debug:
