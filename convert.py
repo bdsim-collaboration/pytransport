@@ -688,7 +688,7 @@ class pytransport(elements):
             if linedict['elementnum'] == 5.0:
                 self.quadrupole(linedict)
             if linedict['elementnum'] == 6.0:
-                #if not self._typeCode6IsTransUpdate:
+                if not self._typeCode6IsTransUpdate:
                     self.collimator(linedict)
                     # Length gotten from next drift
                     if linedict['length'] > 0.0:
