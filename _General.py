@@ -186,6 +186,9 @@ class functions():
                 except ValueError:
                     self.data.append(line)
                     self.filedata.append(latticeline)
+                except IndexError:
+                    pass
+                    
         else:
             f = open(input)
             for inputline in f:

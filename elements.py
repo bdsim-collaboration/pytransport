@@ -11,7 +11,7 @@ class elements(functions):
             if self._debug:
                 self._printout('\tIgnoring beam rms addition.')
             return
-        if self._beamdefined:
+        if self._beamdefined and not self._dontSplit:
             self._numberparts += 1
             self.write()
             self._printout('Writing...')
@@ -537,6 +537,15 @@ class elements(functions):
             self.machineprops.fringeIntegral = specialdata[1]
             debugstring1 = '\tType 7: K1 Fringe field integral,'
             debugstring2 = '\tIntegral set to ' + _np.str(specialdata[1]) + '.'
+        if specialdata[0] == 14.0:  #Definition of element type code 6.
+            if self._typeCode6IsTransUpdate:
+                self._typeCode6IsTransUpdate = False
+                typeCode6def = 'Collimator'
+            else:
+                self._typeCode6IsTransUpdate = True
+                typeCode6def = 'Transform Update'
+            debugstring1 = '\tType 14: Type code 6 definition,'
+            debugstring2 = '\tDefinition set to ' + typeCode6def + '.'
         if specialdata[0] == 16.0:  #X0 offset
             self.beamprops.X0 = specialdata[1]
             debugstring1 = '\tType 16: X0 beam offset,'
