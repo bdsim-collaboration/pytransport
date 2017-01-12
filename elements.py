@@ -308,15 +308,27 @@ class elements(functions):
         # Redundant function until comments and /or acceleration components can be handled
         
         accdata = linedict['data']
+        acclen = linedict['length']
+        e_gain = linedict['voltage']
 
-        acclen = accdata[0]
-        e_gain = accdata[1]
+        # TODO add phase_lag and wavelength to BDSIM
 
-        # TODO add phase_lag and wavelength
-
-        # protect against zero length
+        # If zero length then start of a sequence, save total accelerating voltage
         if acclen == 0.0:
-            acclen = 1e-6
+            self._isAccSequence = True
+            self._totalAccVoltage = e_gain
+            self._e_gain_prev = 0.0 # start at 0
+            return
+
+        if self._isAccSequence:
+            # voltage means voltage relative to the end of this segment
+            e_rel_gain = e_gain - self._e_gain_prev
+            self._e_gain_prev = e_gain # store for next segment
+            if e_gain == 1.0: # end of sequence
+                self._isAccSequence = False
+
+            e_gain = e_rel_gain * self._totalAccVoltage
+            
         gradient = e_gain * (self.scale[self.units['p_egain'][0]] / 1e6) / (acclen * self.scale[self.units['element_length'][0]]) # gradient in MV/m
 
         self.machineprops.rf += 1
@@ -331,8 +343,8 @@ class elements(functions):
         #if len(accdata) == 2:       # Newer case with multiple elements
             #self._acc_sequence(line)
         if len(accdata) == 4:     # Older case for single element
-            phase_lag = accdata[2]
-            wavel = accdata[3]
+            phase_lag = linedict['phase_lag']
+            wavel = linedict['wavel']
             
             #Write to file
             accline =  '! An accelerator element goes here of length '+_np.str(acclen)+' '+self.units['element_length']+', \n'

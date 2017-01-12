@@ -271,6 +271,7 @@ class pytransport(elements):
         self._debug  = debug
         self._outlog = outlog
         self._typeCode6IsTransUpdate = True #Definition of type code 6, true is transform update, false is collimator
+        self._isAccSequence = False # Definition of type code 11 is not an accelerator sequence
  
         #pytransport conversion classes
         self.beamprops = _beamprops(p_mass)
@@ -554,7 +555,11 @@ class pytransport(elements):
             data = self._get_elementdata(line)
             linedict['data'] = data
             linedict['length'] = data[0]
+            linedict['voltage'] = data[1]
             linedict['isZeroLength'] = False
+            if len(data) == 4:     # Older case for single element
+                linedict['phase_lag'] = data[2]
+                linedict['wavel']     = data[3]
             if self._debug:
                 self._printout("\tEntry is an acceleration element, adding to the element registry as element " + numElements + ".")
 
