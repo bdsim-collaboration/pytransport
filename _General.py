@@ -213,14 +213,14 @@ class functions():
         firstline = _np.array(firstline.split(' '),dtype=_np.str)
         firstline = self._remove_illegals(firstline)
         numericals = []
-        
+        nonnumericals = []
         #Keep entries that are strings of numbers
         for i in firstline:
             try:
                 number = _np.float(i)
                 numericals.append(_np.str(number))
             except ValueError:
-                pass
+                nonnumericals.append(i)
     
         #Number of numerical elements minus the first which should be the entry type number.
         #This is bascially a way of extracting any label or comments.
@@ -261,6 +261,10 @@ class functions():
 #            prevline = list(prevline)
 #            prevline.extend(list(line[1:]))
 #            line = _np.array(prevline)
+
+        #Add name to output
+        if len(nonnumericals) == 1:
+            numericals.append(nonnumericals[0])
         line = _np.array(numericals)
         return latticeline,line
     

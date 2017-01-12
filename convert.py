@@ -556,12 +556,8 @@ class pytransport(elements):
                 self._printout("\tEntry is an acceleration element, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 12.0:
-            if filetype == 'input':
-                linedict['name'] = self._get_label(line)
-                linedict['data'] = self._get_elementdata(line)
-            elif filetype == 'output':
-                linedict['data'] = self._get_elementdata(line)[1:]
-                linedict['name'] = linedict['data'][1]
+            linedict['data'] = self._get_elementdata(line)
+            linedict['name'] = self._get_label(line)
 
             prevline = self.data[linenum-1]#.split(' ')
             linedict['prevlinenum'] = _np.float(prevline[0])
