@@ -478,7 +478,7 @@ class pytransport(elements):
             if self._debug:
                 self._printout("\tEntry is a dipole, adding to the element registry as element " + numElements + ".")
 
-        if _np.float(line[0][:2]) == 5.0:
+        if typeNum == 5.0:
             linedict['name'] = self._get_label(line)
             data = self._get_elementdata(line)
             linedict['data'] = data
@@ -767,7 +767,7 @@ class pytransport(elements):
         if self.beamprops.Y0 != 0:
             self.gmadbeam.SetY0(self.beamprops.Y0,unitsstring=self.units['y'])
         if self.beamprops.Z0 != 0:
-            self.gmadbeam.SetZ0(self.beamprops.Z0,unitsstring=self.units['x'])
+            self.gmadbeam.SetZ0(self.beamprops.Z0,unitsstring=self.units['z'])
 
         
         if self._debug:
