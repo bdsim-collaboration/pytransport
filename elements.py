@@ -320,7 +320,8 @@ class elements(functions):
         if not elementid: # check on empty string
             elementid = 'COL'+_np.str(self.machineprops.collimators)
 
-        self.gmadmachine.AddRCol(name=elementid,length=length_in_metres,xsize=aperx_in_metres, ysize=apery_in_metres)
+        collimatorMaterial = 'copper' # Default in BDSIM, added to prevent warnings
+        self.gmadmachine.AddRCol(name=elementid,length=length_in_metres,xsize=aperx_in_metres, ysize=apery_in_metres, material=collimatorMaterial)
 
         if self._debug:
             debugstring = '\tCollimator, x aperture = ' + _np.str(aperx_in_metres) + ' m, y aperture = ' + _np.str(apery_in_metres) + ' m.'
