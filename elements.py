@@ -286,6 +286,11 @@ class elements(functions):
         ''' A Function that writes the properties of a collimator element
             Only added for gmad, not for madx!
             '''
+        
+        if linedict['length'] <= 0:
+            if self._debug:
+                self._printout('\tZero or negative length element, ignoring.')
+            return
         colldata = linedict['data']
         
         # Determine which entry is for horiz. and vert.

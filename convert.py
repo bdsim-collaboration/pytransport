@@ -637,9 +637,11 @@ class pytransport(elements):
                     linedict['elementnum'] < 20.0):
                     # write possibly combined drift
                     if self._debug:
-                        self._printout('\tConvert delayed drift(s)')
+                        self._printout('\n\tConvert delayed drift(s)')
                     self.drift(linedictDrift)
                     lastElementWasADrift = False
+                    if self._debug:
+                        self._printout('\n\tNow convert element number' + _np.str(linenum))
 
             if linedict['elementnum'] == 15.0:
                 self.unit_change(linedict)
