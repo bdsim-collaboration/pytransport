@@ -8,8 +8,9 @@ from elements import elements
 import os as _os
 
 class _beamprops():
-    '''A class containing the properties of the inital beam distribution.
-        '''
+    """
+    A class containing the properties of the inital beam distribution.
+    """
     def __init__(self,p_mass=938.272):
         # beam properties that are updated along the lattice
         self.momentum = 0
@@ -43,8 +44,9 @@ class _beamprops():
 
 
 class _machineprops():
-    '''A class containing the number of elements and angular properties (i.e bending direction)
-        '''
+    """
+    A class containing the number of elements and angular properties (i.e bending direction)
+    """
     def __init__(self):
         self.benddef        = True # True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
         self.bending        = 1    # +VE = bends to the right for positive particles
@@ -141,61 +143,63 @@ class _Registry():
             return round(startS,5)
 
     def UpdateLength(self,linedict):
-        ''' Function to increases the machines length, but does not add element data.
-            This is so the S positions of named elements in the fitting registry can 
-            be calculated correctly.
-            '''
+        """
+        Function to increases the machines length, but does not add element data.
+        This is so the S positions of named elements in the fitting registry can 
+        be calculated correctly.
+        """
         if not isinstance(linedict,dict):
             raise TypeError("Added element is not a Dictionary")
         self._totalLength += linedict['length']
 
 
 class pytransport(elements):
-    '''A module for converting a TRANSPORT file into gmad for use in BDSIM.
+    """
+    A module for converting a TRANSPORT file into gmad for use in BDSIM.
         
-        To use:
-            self = pytransport.convert.pytransport(inputfile)
+    To use:
+    
+    >>> self = pytransport.convert.pytransport(inputfile)
             
-        Will output the lattice in the appropriate format.
+    Will output the lattice in the appropriate format.
 
-        Parameters
-        -------------------------------
+    Parameters:
         
-        particle: string
-            The particle type, default = 'proton'.
+    particle: string
+        The particle type, default = 'proton'.
         
-        debug: boolean
-            Output debug strings, default = False.
+    debug: boolean
+        Output debug strings, default = False.
             
-        distrType: string
-            The distribution type of the beam, default = 'gauss'.
-            Can only handle 'gauss' and 'gausstwiss'. If madx output is specified,
-            the madx beam distribution is 'madx'.
+    distrType: string
+        The distribution type of the beam, default = 'gauss'.
+        Can only handle 'gauss' and 'gausstwiss'. If madx output is specified,
+        the madx beam distribution is 'madx'.
             
-        gmad: boolean
-            Write the converted output into gmad format, default = True.
+    gmad: boolean
+        Write the converted output into gmad format, default = True.
             
-        gmadDir: string
-            Output directory for gmad format, default = 'gmad'
+    gmadDir: string
+        Output directory for gmad format, default = 'gmad'
 
-        madx: boolean
-            write the converted output into madx format, dafault = False.
+    madx: boolean
+        write the converted output into madx format, dafault = False.
             
-        madxDir: string
-            Output directory for madx format, default = 'madx'
+    madxDir: string
+        Output directory for madx format, default = 'madx'
 
-        auto: boolean
-            Automatically convert and output the file, default = True.
+    auto: boolean
+        Automatically convert and output the file, default = True.
 
-        keepName: boolean
-            Keep original element name if present, default = False
+    keepName: boolean
+        Keep original element name if present, default = False
 
-        combineDrifts: boolean
-            Combine consecutive drifts into a single drift, default = False
-
-        outlog: boolean
-            Output stream to a log file, default = True
-        '''
+    combineDrifts: boolean
+        Combine consecutive drifts into a single drift, default = False
+    
+    outlog: boolean
+        Output stream to a log file, default = True
+    """
     def __init__(self,inputfile,
                  particle      = 'proton',
                  debug         = False,
@@ -320,8 +324,9 @@ class pytransport(elements):
 
 
     def transport2gmad(self):
-        '''Function to convert TRANSPORT file on a line by line basis.
-            '''
+        """
+        Function to convert TRANSPORT file on a line by line basis.
+        """
         if not self._fileloaded:
             self._printout('No file loaded.')
             return
@@ -336,9 +341,10 @@ class pytransport(elements):
 
 
     def AddLatticeToRegistry(self):
-        ''' Function that loops over the lattice, adds the elements to the element registry,
-            and updates any elements that have fitted parameters.
-            '''
+        """
+        Function that loops over the lattice, adds the elements to the element registry,
+        and updates any elements that have fitted parameters.
+        """
         
         for linenum,line in enumerate(self.data):
             if self._debug:
@@ -382,10 +388,11 @@ class pytransport(elements):
 
 
     def _element_prepper(self,line,linenum,filetype='input'):
-        ''' Function to extract the data and prepare it for processing by each element function.
-            This has been written as the lattice lines from an input file and output file are different,
-            so it just a way of correctly ordering the information.
-            '''
+        """
+        Function to extract the data and prepare it for processing by each element function.
+        This has been written as the lattice lines from an input file and output file are different,
+        so it just a way of correctly ordering the information.
+        """
         linedict = {'elementnum'   : 0.0,
                     'name'         : '',
                     'length'       : 0.0,
@@ -608,8 +615,9 @@ class pytransport(elements):
 
 
     def ProcessAndBuild(self):
-        '''Function to convert the registry elements into pybdsim format and add to the pybdsim builder.
-            '''
+        """
+        Function to convert the registry elements into pybdsim format and add to the pybdsim builder.
+        """
         skipNextDrift = False # used for collimators
         if self._combineDrifts:
             lastElementWasADrift = False
@@ -728,8 +736,9 @@ class pytransport(elements):
                 self.drift(linedictDrift)
        
     def create_beam(self):
-        '''Function to prepare the beam for writing.
-            '''
+        """
+        Function to prepare the beam for writing.
+        """
         #different beam objects depending on output type
         self.madxbeam = self.madxmachine.beam
         self.gmadbeam = self.gmadmachine.beam
