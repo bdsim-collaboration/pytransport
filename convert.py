@@ -809,8 +809,9 @@ class pytransport(elements):
         self.madxmachine.AddBeam(self.madxbeam)
 
     def create_options(self):
-        """ Function to set the Options for the BDSIM machine.
-            """
+        """
+        Function to set the Options for the BDSIM machine.
+        """
         self.options = _Options.Options()
         self.options.SetPhysicsList(physicslist='em')
         self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius, unitsstring=self.units['pipe_rad'])
