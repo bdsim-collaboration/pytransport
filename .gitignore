@@ -1,2 +1,6 @@
 *.pyc
 *~
+#emacs autosave
+\#*\#
+build
+pybdsim.egg-info
