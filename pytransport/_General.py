@@ -548,7 +548,7 @@ class functions:
             data = self._remove_illegals(line.split(' '))
             eledata = self._get_elementdata(data)
             label = self._get_label(data)
-            if isLegal.__contains__(data[0]):
+            if data[0] in isLegal:
                 linedict['elementnum'] = isLegal[data[0]]
                 linedict['name'] = label
                 linedict['data'] = eledata[1:]  # first value is elementnum.

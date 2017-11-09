@@ -294,7 +294,7 @@ class optics:
             if (not isinstance(element, _np.str)) and (len(element) > 1):  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
                 elementType = element[0].split('*')[1]
-                if not notokElements.__contains__(elementType):
+                if elementType not in notokElements:
                     # rest of first line split with spaces
                     splitline = self._general._remove_blanks(element[0].split('*')[2].split(' '))
                     name = splitline[1].strip('"')

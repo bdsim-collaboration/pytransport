@@ -513,7 +513,7 @@ class pytransport(elements):
                         linedict['data'] = data
                         break
                     # stop if physical element or beam redef if splitting permitted
-                    elif physicalElements.__contains__(nextTypeNum):
+                    elif nextTypeNum in physicalElements:
                         if (nextTypeNum == 1.0) and self._dontSplit:
                             pass
                         elif (nextTypeNum == 6.0) and self._typeCode6IsTransUpdate:
