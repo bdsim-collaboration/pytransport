@@ -1,10 +1,9 @@
 import numpy as _np
-from scipy import constants as _con
 from pymadx import Builder as _mdBuilder
 from pybdsim import Builder as _pyBuilder
-import string as _string
 from _General import functions
-    
+
+
 class elements(functions):
     def define_beam(self,linedict):
         if linedict['isAddition']:
@@ -28,7 +27,7 @@ class elements(functions):
 
         self._beamdefined = True
        
-        #Convert momentum to energy and set distribution params.
+        # Convert momentum to energy and set distribution params.
         self._calculate_energy(momentum)
         self.beamprops.SigmaX  = _np.float(linedict['Sigmax'])
         self.beamprops.SigmaY  = _np.float(linedict['Sigmay'])
@@ -38,7 +37,7 @@ class elements(functions):
         self.beamprops.SigmaT  = self._bunch_length_convert(_np.float(linedict['SigmaT'])) ## Get bunch length in seconds.
 
         
-        #Calculate Initial Twiss params
+        # Calculate Initial Twiss params
         try:
             self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
         except ZeroDivisionError:
