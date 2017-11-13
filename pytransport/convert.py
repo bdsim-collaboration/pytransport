@@ -1,155 +1,6 @@
 import numpy as _np
-from scipy import constants as _con
-from pybdsim import Options as _Options
-from pybdsim import Builder as _pyBuilder
-from pymadx import Builder as _mdBuilder
 from elements import elements
 import os as _os
-
-class _beamprops():
-    """
-    A class containing the properties of the inital beam distribution.
-    """
-    def __init__(self,p_mass=938.272):
-        # beam properties that are updated along the lattice
-        self.momentum = 0
-        self.k_energy = 0
-        self.tot_energy_current = p_mass
-        self.gamma = 1
-        self.beta = 0
-        self.brho = 0
-        # beam properties that are from the initial beam and fixed
-        self.mass = p_mass
-        self.tot_energy = p_mass # initial energy
-        self.SigmaX = 0
-        self.SigmaY = 0
-        self.SigmaXP = 0
-        self.SigmaYP = 0
-        self.SigmaE = 0
-        self.SigmaT = 0
-        self.X0 = 0
-        self.Y0 = 0
-        self.Z0 = 0
-        self.T0 = 0
-        self.Xp0 = 0
-        self.Yp0 = 0
-        self.betx = 0
-        self.alfx = 0
-        self.bety = 0
-        self.alfy = 0
-        self.emitx = 0
-        self.emity = 0
-        self.distrType = 'gauss'
-
-
-class _machineprops():
-    """
-    A class containing the number of elements and angular properties (i.e bending direction)
-    """
-    def __init__(self):
-        self.benddef        = True  # True = dipole defined by 4. L B n. False = dipole defined by 4. L angle n.
-        self.bending        = 1     # +VE = bends to the right for positive particles
-        self.angle          = 0     # dipole rotation angle
-        self.drifts         = 0     # nr of drifts
-        self.dipoles        = 0
-        self.rf             = 0
-        self.quads          = 0
-        self.sextus         = 0
-        self.transforms     = 0
-        self.solenoids      = 0
-        self.collimators    = 0
-        self.beampiperadius = 20
-        self.fringeIntegral = 0
-        self.dipoleVertAper = 0
-        self.apertureType   = 'circular'
-
-
-class _Registry:
-    def __init__(self):
-        self.elements     = []
-        self.names        = []
-        self.lines        = []
-        self.length       = []
-        self._uniquenames = []
-        self._totalLength = 0
-
-    def AddToRegistry(self, linedict, line):
-        if not isinstance(linedict, dict):
-            raise TypeError("Added element is not a Dictionary")
-        self.elements.append(linedict)
-        self.names.append(linedict['name'])
-        if not linedict['name'] in self._uniquenames:
-            self._uniquenames.append(linedict['name'])
-        
-        self.lines.append(line)
-        # Cumulative length
-        length = round(linedict['length'], 5)
-        if len(self.length) > 0:
-            self.length.append(length + self._totalLength)
-        else:
-            self.length.append(length)
-        self._totalLength += length
-
-    def GetElementIndex(self, name):
-        elenums = []
-        if name not in self.names:
-            return elenums
-        else:
-            # Add all elements of the same name as a single element may be
-            # used multiple times.
-            for index, elename in enumerate(self.names):
-                if elename == name:
-                    elenums.append(index)
-            return elenums
-
-    def GetElement(self, name):
-        elenum = self.GetElementIndex(name)
-        if isinstance(elenum, list):
-            elementList = []
-            for num in elenum:
-                elementList.append(self.elements[num])
-            return elementList
-        else:
-            return self.elements[elenum]
-
-    def GetElementEndSPosition(self, name):
-        elenum = self.GetElementIndex(name)
-        if isinstance(elenum, list):
-            elementList = []
-            for num in elenum:
-                elementList.append(self.length[num])
-            return elementList
-        else:
-            return self.length[elenum]
-
-    def GetElementStartSPosition(self, name):
-        elenum = self.GetElementIndex(name)
-        endS = self.GetElementEndSPosition(name)
-
-        if isinstance(elenum, list):
-            elementList = []
-            for index, num in enumerate(elenum):
-                element = self.elements[num]
-                length = element['length']
-                startS = endS[index] - length
-                elementList.append(round(startS, 5))
-            return elementList
-        else:
-            element = self.elements[elenum]
-            length = element['length']
-            startS = endS - length
-            return round(startS, 5)
-
-    def UpdateLength(self,linedict):
-        """
-        Function to increases the machines length, but does not add element data.
-        This is so the S positions of named elements in the fitting registry can 
-        be calculated correctly.
-        """
-        if not isinstance(linedict,dict):
-            raise TypeError("Added element is not a Dictionary")
-        self._totalLength += linedict['length']
-
 
 class pytransport(elements):
     """
@@ -198,7 +49,7 @@ class pytransport(elements):
     outlog: boolean
         Output stream to a log file, default = True
     """
-    def __init__(self,inputfile,
+    def __init__(self, inputfile,
                  particle      = 'proton',
                  debug         = False,
                  distrType     = 'gauss',
@@ -211,82 +62,8 @@ class pytransport(elements):
                  keepName      = False,
                  combineDrifts = False,
                  outlog        = True):
-
-        if particle == 'proton':
-            p_mass = _con.proton_mass * (_con.c**2 / _con.e) / 1e9  # Particle masses in same unit as TRANSPORT (GeV)
-        elif particle == 'e-' or particle == 'e+':                          
-            p_mass = _con.electron_mass * (_con.c**2 / _con.e) / 1e9
-            
-        # initialise registries
-        self._elementReg = _Registry()
-        self._fitReg     = _Registry()
-        
-        # beam definition
-        self._particle         = particle
-        self._beamdefined      = False
-        self._correctedbeamdef = False
-        
-        # File input and output
-        self._fileloaded  = False
-        self._gmadoutput  = gmad
-        self._gmadDir     = gmadDir
-        self._madxoutput  = madx
-        self._madxDir     = madxDir
-        self._numberparts = -1
-        
-        # transport optics output is modified to be a single line
-        self._singleLineOptics = False
-        self._keepName         = keepName
-        self._combineDrifts    = combineDrifts
-        
-        self._accstart    = []  # An index of the start of acceleration elements.
-        self.data         = []  # A list that will contain arrays of the element data
-        self.filedata     = []  # A list that will contain the raw strings from the input file
-
-        self.units        = {   # Default TRANSPORT units
-        'x'               : 'cm',
-        'xp'              : 'mrad',
-        'y'               : 'cm',
-        'yp'              : 'mrad',
-        'bunch_length'    : 'cm',
-        'momentum_spread' : 'pc',
-        'element_length'  : 'm',
-        'magnetic_fields' : 'kG',
-        'p_egain'         : 'GeV',  # Momentum / energy gain during acceleration.
-        'bend_vert_gap'   : 'cm',   # Vertical half-gap in dipoles
-        'pipe_rad'        : 'cm',
-        'beta_func'       : 'm',
-        'emittance'       : 'mm mrad'
-            }
-        self.scale = {
-        'p': 1e-12,
-        'n': 1e-9,
-        'u': 1e-6,
-        'm': 1e-3,
-        'c': 1e-2,
-        'k': 1e+3,
-        'K': 1e+3,  # Included both cases of k just in case.
-        'M': 1e+6,
-        'G': 1e+9,
-        'T': 1e+12
-            }
-        self._debug = debug
-        self._outlog = outlog
-        self._typeCode6IsTransUpdate = True  # Definition of type code 6, true is transform update, false is collimator
-        self._isAccSequence = False  # Definition of type code 11 is not an accelerator sequence
- 
-        # pytransport conversion classes
-        self.beamprops = _beamprops(p_mass)
-        self.beamprops.distrType = distrType
-        self.machineprops = _machineprops()
-
-        # a machine for both gmad and madx. Both created by default, input booleans only decide writing.
-        self.gmadmachine = _pyBuilder.Machine()
-        self.madxmachine = _mdBuilder.Machine()
-
-        # Automatic writing and machine splitting
-        self._auto = auto
-        self._dontSplit = dontSplit
+        elements.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
+                          auto, dontSplit, keepName, combineDrifts, outlog)
 
         # load file automatically
         self._load_file(inputfile)
@@ -339,8 +116,7 @@ class pytransport(elements):
         Function that loops over the lattice, adds the elements to the element registry,
         and updates any elements that have fitted parameters.
         """
-        
-        for linenum,line in enumerate(self.data):
+        for linenum, line in enumerate(self.data):
             if self._debug:
                 self._printout('Processing tokenised line '+_np.str(linenum)+' :')
                 self._printout('\t' + str(line))
@@ -368,7 +144,7 @@ class pytransport(elements):
                         self._printout('\tType code is 0 or negative, ignoring line.')
             except ValueError:
                 if self._debug:
-                    errorline = '\tCannot process line '+_np.str(linenum)+', '
+                    errorline = '\tCannot process line '+_np.str(linenum) + ', '
                     if line[0][0] == '(' or line[0][0] == '/':
                         errorline += 'line is a comment.'
                     elif line[0][0] == 'S':  # S used as first character in SENTINEL command.
@@ -380,8 +156,7 @@ class pytransport(elements):
 
                     self._printout(errorline)
 
-
-    def _element_prepper(self,line,linenum,filetype='input'):
+    def _element_prepper(self, line, linenum, filetype='input'):
         """
         Function to extract the data and prepare it for processing by each element function.
         This has been written as the lattice lines from an input file and output file are different,
@@ -431,7 +206,7 @@ class pytransport(elements):
             # line = self._remove_label(line)
             if len(line) < 8:
                 raise IndexError("Incorrect number of beam parameters.")
-    
+            n = 1
             if filetype == 'input':
                 n = 0
             elif filetype == 'output':
@@ -601,7 +376,8 @@ class pytransport(elements):
         """
         Function to convert the registry elements into pybdsim format and add to the pybdsim builder.
         """
-        skipNextDrift = False # used for collimators
+        skipNextDrift = False  # used for collimators
+        lastElementWasADrift = True  # default value
         if self._combineDrifts:
             lastElementWasADrift = False
         for linenum, linedict in enumerate(self._elementReg.elements):
@@ -720,10 +496,6 @@ class pytransport(elements):
         """
         Function to prepare the beam for writing.
         """
-        #different beam objects depending on output type
-        self.madxbeam = self.madxmachine.beam
-        self.gmadbeam = self.gmadmachine.beam
-        
         # convert energy to GeV (madx only handles GeV)
         energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
         self.beamprops.tot_energy = energy_in_gev
@@ -812,7 +584,6 @@ class pytransport(elements):
         """
         Function to set the Options for the BDSIM machine.
         """
-        self.options = _Options.Options()
         self.options.SetPhysicsList(physicslist='em')
         self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius, unitsstring=self.units['pipe_rad'])
         self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
