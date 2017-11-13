@@ -425,7 +425,6 @@ class elements(functions):
 
     def printline(self, linedict):
         number = linedict['data'][0]
-        debugstring = ''
         self._debug_printout('\tTRANSPORT control line,')
         try:
             number = _np.float(number)
@@ -497,9 +496,7 @@ class elements(functions):
 
     def special_input(self, linedict):
         specialdata = linedict['data']
-        # default output
-        debugstring1 = '\tCode type not yet supported, or unknown code type.'
-        debugstring2 = ''
+
         if specialdata[0] == 5.0:  # beampiperadius (technically only vertical, but will apply a circle for now)
             debugstring1 = '\tType 5: Vertical half aperture,'
             # self.machineprops.beampiperadius = specialdata[1]
@@ -507,11 +504,11 @@ class elements(functions):
             if self.machineprops.fringeIntegral == 0:
                 self.machineprops.fringeIntegral = 0.5  # default if a vertical aperture is specified.
                 debugstring2 += 'K1 not set, setting K1 to default of 0.5.'
-        if specialdata[0] == 7.0:  # Fringe Field integral
+        elif specialdata[0] == 7.0:  # Fringe Field integral
             self.machineprops.fringeIntegral = specialdata[1]
             debugstring1 = '\tType 7: K1 Fringe field integral,'
             debugstring2 = '\tIntegral set to ' + _np.str(specialdata[1]) + '.'
-        if specialdata[0] == 14.0:  # Definition of element type code 6.
+        elif specialdata[0] == 14.0:  # Definition of element type code 6.
             if self._typeCode6IsTransUpdate:
                 self._typeCode6IsTransUpdate = False
                 typeCode6def = 'Collimator'
@@ -520,18 +517,21 @@ class elements(functions):
                 typeCode6def = 'Transform Update'
             debugstring1 = '\tType 14: Type code 6 definition,'
             debugstring2 = '\tDefinition set to ' + typeCode6def + '.'
-        if specialdata[0] == 16.0:  # X0 offset
+        elif specialdata[0] == 16.0:  # X0 offset
             self.beamprops.X0 = specialdata[1]
             debugstring1 = '\tType 16: X0 beam offset,'
             debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
-        if specialdata[0] == 17.0:  # Y0 offset
+        elif specialdata[0] == 17.0:  # Y0 offset
             self.beamprops.Y0 = specialdata[1]
             debugstring1 = '\tType 17: Y0 beam offset,'
             debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
-        if specialdata[0] == 18.0:  # Z0 offset
+        elif specialdata[0] == 18.0:  # Z0 offset
             self.beamprops.Z0 = specialdata[1]
             debugstring1 = '\tType 18: Z0 beam offset,'
             debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
+        else:
+            debugstring1 = '\tCode type not yet supported, or unknown code type.'
+            debugstring2 = ''
 
         self._debug_printout('\tSpecial Input line:')
         self._debug_printout(debugstring1)
@@ -557,9 +557,7 @@ class elements(functions):
         if label == 'TEV':
             label = 'TeV'
 
-        # default output
-        debugstring1 = '\tCode type not yet supported, or unknown code type.'
-        debugstring2 = ''
+        debugstring2 = '\tConverted to ' + label
 
         if _np.float(number) == 1:  # Horizontal and vertical beam size
             self.units['x'] = label
@@ -567,59 +565,54 @@ class elements(functions):
             self.units['bend_vert_gap'] = label
             # self.units['pipe_rad'] = label
             debugstring1 = '\tType 1: Horizontal and vertical beam extents, and magnet apertures,'
-            debugstring2 = '\tConverted to ' + label
-            
-        if _np.float(number) == 2:  # Horizontal and vertical divergence
+
+        elif _np.float(number) == 2:  # Horizontal and vertical divergence
             self.units['xp'] = label
             self.units['yp'] = label
             debugstring1 = '\tType 2: Horizontal and vertical angles,'
-            debugstring2 = '\tConverted to ' + label
 
-        if _np.float(number) == 3:  # Bending Magnet Gap
+        elif _np.float(number) == 3:  # Bending Magnet Gap
             self.units['y'] = label
             self.units['bend_vert_gap'] = label
             debugstring1 = '\tType 3: Vertical (only) beam extent and magnet aperture,'
-            debugstring2 = '\tConverted to ' + label
 
-        if _np.float(number) == 4:  # Vertical Divergence ONLY
+        elif _np.float(number) == 4:  # Vertical Divergence ONLY
             self.units['yp'] = label
             debugstring1 = '\tType 4: Vertical (only) beam angle,'
-            debugstring2 = '\tConverted to ' + label
 
-        if _np.float(number) == 5:  # Pulsed Beam Length
+        elif _np.float(number) == 5:  # Pulsed Beam Length
             self.units['bunch_length'] = label
             debugstring1 = '\tType 5: Bunch length,'
-            debugstring2 = '\tConverted to ' + label
 
-        if _np.float(number) == 6:  # Momentum Spread
+        elif _np.float(number) == 6:  # Momentum Spread
             self.units['momentum_spread'] = label  # Percent
             debugstring1 = '\tType 6: Momentum spread,'
-            debugstring2 = '\tConverted to ' + label
 
-        if _np.float(number) == 7:  # Bend/pole face rotation
+        elif _np.float(number) == 7:  # Bend/pole face rotation
             debugstring1 = '\tType 7: Bend and poleface rotation angles,'
             debugstring2 = '\tCONVERTION NOT IMPLEMENTED YET.'
             pass
 
-        if _np.float(number) == 8:  # Element Length
+        elif _np.float(number) == 8:  # Element Length
             self.units['element_length'] = label
             debugstring1 = '\tType 8: Element length,'
-            debugstring2 = '\tConverted to ' + label
 
-        if _np.float(number) == 9:  # Magnetic Field
+        elif _np.float(number) == 9:  # Magnetic Field
             self.units['magnetic_fields'] = label
             debugstring1 = '\tType 9: Magnetic Fields,'
-            debugstring2 = '\tConverted to ' + label
 
-        if _np.float(number) == 10:  # Mass
+        elif _np.float(number) == 10:  # Mass
             debugstring1 = '\tType 10: Mass,'
             debugstring2 = '\tCONVERTION NOT IMPLEMENTED YET.'
             pass
             
-        if _np.float(number) == 11:  # Momentum / energy gain during acc.
+        elif _np.float(number) == 11:  # Momentum / energy gain during acc.
             self.units['p_egain'] = label
             debugstring1 = '\tType 11: Momentum and accelerator energy gain,'
-            debugstring2 = '\tConverted to ' + label
+        else:
+            # default output
+            debugstring1 = '\tCode type not yet supported, or unknown code type.'
+            debugstring2 = ''
 
         self._debug_printout('\tUnit change line:')
         self._debug_printout(debugstring1)
