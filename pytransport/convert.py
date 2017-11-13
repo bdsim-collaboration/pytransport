@@ -831,3 +831,12 @@ class Transport:
         self.DebugPrintout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
         self.DebugPrintout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
         self.DebugPrintout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+
+    def _NewMachines(self):
+        """
+        Delete the pybdsim and madx machine and instantiate empty ones.
+        """
+        del self.gmadmachine
+        del self.madxmachine
+        self.gmadmachine = _pyBuilder.Machine()
+        self.madxmachine = _mdBuilder.Machine()

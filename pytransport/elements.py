@@ -1,8 +1,5 @@
 import numpy as _np
 
-from pymadx import Builder as _mdBuilder
-from pybdsim import Builder as _pyBuilder
-
 from _General import *
 from convert import Transport
 
@@ -21,6 +18,7 @@ class Elements:
                  keepName      = False,
                  combineDrifts = False,
                  outlog        = True):
+        # instantiate the main data container.
         self.Transport = Transport(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
                           auto, dontSplit, keepName, combineDrifts, outlog)
 
@@ -33,10 +31,7 @@ class Elements:
             self.Transport.convprops.numberparts += 1
             self.Transport._write()
             self.Transport.Printout('Writing...')
-            del self.Transport.gmadmachine
-            del self.Transport.madxmachine
-            self.Transport.gmadmachine = _pyBuilder.Machine()
-            self.Transport.madxmachine = _mdBuilder.Machine()
+            self.Transport._NewMachines()
             self.Transport.convprops.correctedbeamdef = False
 
             self.Transport.Printout('\tBeam redefinition found. Writing previous section to file.')
