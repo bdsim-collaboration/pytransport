@@ -269,7 +269,6 @@ class optics:
         # Quickly convert the lattice to gmad but do not write to disk. This is purely to find out if
         # the optics are single line or multiline.
         conv = _pyt.convert.pytransport(filename, madx=False, auto=False, debug=False, dontSplit=True)
-        conv.AddLatticeToRegistry()
         conv.ProcessAndBuild()
         if conv._singleLineOptics:
             optics = self._processStandardOpticsSingleLine(elementlist)

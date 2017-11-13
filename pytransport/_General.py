@@ -292,7 +292,7 @@ class Transport:
         """
         self.options.SetPhysicsList(physicslist='em')
         self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
-                                            unitsstring=self.units['pipe_rad'])
+                                       unitsstring=self.units['pipe_rad'])
         self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
         self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
         self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
@@ -381,33 +381,33 @@ class Transport:
             self._logfile.write('\n')
             self._logfile.close()
 
-    def _element_prep_debug(self, elementType, numElements):
+    def ElementPrepDebugPrintout(self, elementType, numElements):
         debugString = "\tEntry is a " + elementType + ", adding to the element registry as element "
         debugString += numElements + "."
-        self._debug_printout(debugString)
+        self.DebugPrintout(debugString)
 
-    def _debug_printout(self, line):
+    def DebugPrintout(self, line):
         if self._debug:
             self._printout(line)
 
     def _print_beam_debug(self):
-        self._debug_printout('\t Beam definition :')
-        self._debug_printout('\t distrType = ' + self.beamprops.distrType)
-        self._debug_printout('\t energy = '  + _np.str(self.beamprops.tot_energy) + ' GeV')
-        self._debug_printout('\t SigmaX = '  + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
-        self._debug_printout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
-        self._debug_printout('\t SigmaY = '  + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
-        self._debug_printout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
-        self._debug_printout('\t SigmaE = '  + _np.str(self.beamprops.SigmaE))
-        self._debug_printout('\t SigmaT = '  + _np.str(self.beamprops.SigmaT))
-        self._debug_printout('\t (Final brho = ' + _np.str(_np.round(self.beamprops.brho, 2)) + ' Tm)')
-        self._debug_printout('\t Twiss Params:')
-        self._debug_printout('\t BetaX = '  + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-        self._debug_printout('\t BetaY = '  + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-        self._debug_printout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
-        self._debug_printout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
-        self._debug_printout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-        self._debug_printout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+        self.DebugPrintout('\t Beam definition :')
+        self.DebugPrintout('\t distrType = ' + self.beamprops.distrType)
+        self.DebugPrintout('\t energy = '  + _np.str(self.beamprops.tot_energy) + ' GeV')
+        self.DebugPrintout('\t SigmaX = '  + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
+        self.DebugPrintout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
+        self.DebugPrintout('\t SigmaY = '  + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
+        self.DebugPrintout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
+        self.DebugPrintout('\t SigmaE = '  + _np.str(self.beamprops.SigmaE))
+        self.DebugPrintout('\t SigmaT = '  + _np.str(self.beamprops.SigmaT))
+        self.DebugPrintout('\t (Final brho = ' + _np.str(_np.round(self.beamprops.brho, 2)) + ' Tm)')
+        self.DebugPrintout('\t Twiss Params:')
+        self.DebugPrintout('\t BetaX = '  + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+        self.DebugPrintout('\t BetaY = '  + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+        self.DebugPrintout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
+        self.DebugPrintout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
+        self.DebugPrintout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+        self.DebugPrintout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
 
 
 def GetTypeNum(line):
@@ -423,6 +423,7 @@ def GetTypeNum(line):
         for characNum in range(len(eleNum[2:])):
             try:
                 converted = _np.float(eleNum[:characNum+2])
+                del converted
             except ValueError:
                 break
         typeNum = _np.float(eleNum[:characNum+2])
@@ -431,14 +432,14 @@ def GetTypeNum(line):
     return typeNum
 
 
-def CheckSingleLineOutputApplied(file):
+def CheckSingleLineOutputApplied(inputfile):
     """
     Function to check if the control element that print element output in
     a single line was successfully applied. Check needed as not all versions
     of TRANSPORT can run this type code.
     """
     reader = _reader.reader()
-    flist = _reader._LoadFile(file)
+    flist = _reader._LoadFile(inputfile)
     optics = reader.optics._getOptics(flist)
     for element in optics:
         if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
@@ -696,6 +697,7 @@ def GetFaceRotationAngles(data, linenum):
         for line in linelist:
             try:
                 elecode = _np.float(line[0])
+                del elecode
             except ValueError:
                 angle = 0
                 break
@@ -733,7 +735,6 @@ def GetFaceRotationAngles(data, linenum):
     lineList.reverse()  # Search for input poleface in reverse line order
 
     anglein = searchForAngle(lineList)
-
     angleout = searchForAngle(data[linenum + 1:(linenum + 6)])
 
     return anglein, angleout
@@ -743,7 +744,7 @@ def _get_preamble(data):  # Redundant until pybdsim can handle comments.
     """
     Function to read any preamble at the start of the TRANSPORT file.
     """
-    indc, linenum = GetIndicator(data)
+    # indc, linenum = GetIndicator(data)
     gmadpreamble = []
     # for line in self.Transport.data[:linenum-1]:
     for line in data:
@@ -805,9 +806,9 @@ def OutputFitsToRegistry(transport, outputdata):
         # (Element has to be named to be varied in the fitting routine).
         # Otherwise update the total length of the machine.
         if append and (label is not None) and (label != ''):
-            transport._fitReg.AddToRegistry(linedict, line)
+            transport.FitRegistry.AddToRegistry(linedict, line)
         else:
-            transport._fitReg.UpdateLength(linedict)
+            transport.FitRegistry.UpdateLength(linedict)
     return transport
 
 

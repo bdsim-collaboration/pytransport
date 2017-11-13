@@ -68,16 +68,6 @@ class pytransport(elements):
                           auto, dontSplit, keepName, combineDrifts, outlog)
 
         # load file automatically
-        self._load_file(inputfile)
-        # convert automatically
-        if auto:
-            self.transport2gmad()
-
-    def _load_file(self, inputfile):
-        """
-        Load file to be converted into gmad format.
-        Some processing here too (removal of blank spaces etc)
-        """
         temp = _reader.reader()
 
         if not isinstance(inputfile, _np.str):
@@ -92,7 +82,7 @@ class pytransport(elements):
             lattice, output = temp._getLatticeAndOptics(inputfile)
             fits, fitres = temp._getFits(inputfile)
             self.Transport = _General.OutputFitsToRegistry(self.Transport, fitres)
-            self.Transport._debug_printout('\tAdding any fitting output to the fitting registry (self.FitRegistry)')
+            self.Transport.DebugPrintout('\tAdding any fitting output to the fitting registry (self.FitRegistry)')
             for linenum, latticeline in enumerate(lattice):
                 latticeline = latticeline.replace(';', '')
                 line = _np.array(latticeline.split(' '), dtype=_np.str)
@@ -136,6 +126,10 @@ class pytransport(elements):
             f.close()
         self.Transport._fileloaded = True
 
+        # convert automatically
+        if auto:
+            self.transport2gmad()
+
     def Write(self):
         """
         Write the converted TRANSPORT file to disk.
@@ -173,7 +167,7 @@ class pytransport(elements):
             if filetype == 'input':
                 linedict['label'] = label
             linedict['number'] = line[1]
-            self.Transport._element_prep_debug("Unit Control", numElements)
+            self.Transport.ElementPrepDebugPrintout("Unit Control", numElements)
 
         if typeNum == 20.0:
             angle = 0  # Default
@@ -188,7 +182,7 @@ class pytransport(elements):
                     except ValueError:
                         pass
             linedict['angle'] = angle
-            self.Transport._element_prep_debug("coordinate rotation", numElements)
+            self.Transport.ElementPrepDebugPrintout("coordinate rotation", numElements)
 
         if typeNum == 1.0:
             linedict['name'] = _General.GetLabel(line)
@@ -216,19 +210,19 @@ class pytransport(elements):
             linedict['Sigmayp'] = line[4+n]
             linedict['SigmaT'] = line[5+n]
             linedict['SigmaE'] = line[6+n]
-            self.Transport._element_prep_debug("Beam definition or r.m.s addition", numElements)
+            self.Transport.ElementPrepDebugPrintout("Beam definition or r.m.s addition", numElements)
 
         if typeNum == 2.0:
             linedict['name'] = _General.GetLabel(line)
             linedict['data'] = _General.GetElementData(line)
-            self.Transport._element_prep_debug("poleface rotation", numElements)
+            self.Transport.ElementPrepDebugPrintout("poleface rotation", numElements)
 
         if typeNum == 3.0:
             linedict['name'] = _General.GetLabel(line)
             data = _General.GetElementData(line)
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            self.Transport._element_prep_debug("drift", numElements)
+            self.Transport.ElementPrepDebugPrintout("drift", numElements)
 
         if typeNum == 4.0:
             linedict['name'] = _General.GetLabel(line)
@@ -240,7 +234,7 @@ class pytransport(elements):
             e1, e2 = _General.GetFaceRotationAngles(self.Transport.data, linenum)
             linedict['e1'] = e1
             linedict['e2'] = e2
-            self.Transport._element_prep_debug("dipole", numElements)
+            self.Transport.ElementPrepDebugPrintout("dipole", numElements)
 
         if typeNum == 5.0:
             linedict['name'] = _General.GetLabel(line)
@@ -248,7 +242,7 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            self.Transport._element_prep_debug("quadrupole", numElements)
+            self.Transport.ElementPrepDebugPrintout("quadrupole", numElements)
 
         if typeNum == 6.0:
             # element is a collimator or transform update
@@ -287,10 +281,10 @@ class pytransport(elements):
                         pass
             # Can be either transform update or collimator, a 16. 14 entry changes the definition but is only
             # processed after ALL elements are added to the registry.
-            self.Transport._element_prep_debug("transform update or collimator", numElements)
+            self.Transport.ElementPrepDebugPrintout("transform update or collimator", numElements)
 
         if typeNum == 9.0:
-            self.Transport._element_prep_debug("repetition control", numElements)
+            self.Transport.ElementPrepDebugPrintout("repetition control", numElements)
 
         if typeNum == 11.0:
             linedict['name'] = _General.GetLabel(line)
@@ -302,7 +296,7 @@ class pytransport(elements):
             if len(data) == 4:  # Older case for single element
                 linedict['phase_lag'] = data[2]
                 linedict['wavel'] = data[3]
-            self.Transport._element_prep_debug("acceleration element", numElements)
+            self.Transport.ElementPrepDebugPrintout("acceleration element", numElements)
 
         if typeNum == 12.0:
             linedict['data'] = _General.GetElementData(line)
@@ -313,15 +307,15 @@ class pytransport(elements):
             linedict['isAddition'] = False
             if _General.CheckIsAddition(line):
                 linedict['isAddition'] = True
-            self.Transport._element_prep_debug("beam rotation", numElements)
+            self.Transport.ElementPrepDebugPrintout("beam rotation", numElements)
 
         if typeNum == 13.0:
             linedict['data'] = _General.GetElementData(line)
-            self.Transport._element_prep_debug("Input/Output control", numElements)
+            self.Transport.ElementPrepDebugPrintout("Input/Output control", numElements)
 
         if typeNum == 16.0:
             linedict['data'] = _General.GetElementData(line)
-            self.Transport._element_prep_debug("special input", numElements)
+            self.Transport.ElementPrepDebugPrintout("special input", numElements)
 
         if typeNum == 18.0:
             linedict['name'] = _General.GetLabel(line)
@@ -329,7 +323,7 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            self.Transport._element_prep_debug("sextupole", numElements)
+            self.Transport.ElementPrepDebugPrintout("sextupole", numElements)
 
         if typeNum == 19.0:
             linedict['name'] = _General.GetLabel(line)
@@ -337,13 +331,13 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            self.Transport._element_prep_debug("solenoid", numElements)
+            self.Transport.ElementPrepDebugPrintout("solenoid", numElements)
 
         if typeNum == 22.0:
-            self.Transport._element_prep_debug("space charge element", numElements)
+            self.Transport.ElementPrepDebugPrintout("space charge element", numElements)
 
         if typeNum == 23.0:
-            self.Transport._element_prep_debug("buncher", numElements)
+            self.Transport.ElementPrepDebugPrintout("buncher", numElements)
 
         rawline = self.Transport.filedata[linenum]
         self.Transport.ElementRegistry.AddToRegistry(linedict, rawline)
@@ -354,18 +348,18 @@ class pytransport(elements):
         and updates any elements that have fitted parameters.
         It then converts the registry elements into pybdsim format and add to the pybdsim builder.
         """
-        self.Transport._debug_printout('Converting registry elements to pybdsim compatible format and adding to machine builder.')
+        self.Transport.DebugPrintout('Converting registry elements to pybdsim compatible format and adding to machine builder.')
 
         for linenum, line in enumerate(self.Transport.data):
-            self.Transport._debug_printout('Processing tokenised line '+_np.str(linenum)+' :')
-            self.Transport._debug_printout('\t' + str(line))
-            self.Transport._debug_printout('Original :')
-            self.Transport._debug_printout('\t' + self.Transport.filedata[linenum])
+            self.Transport.DebugPrintout('Processing tokenised line '+_np.str(linenum)+' :')
+            self.Transport.DebugPrintout('\t' + str(line))
+            self.Transport.DebugPrintout('Original :')
+            self.Transport.DebugPrintout('\t' + self.Transport.filedata[linenum])
 
             # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT fitting routine and is only written
             # after the lattice definition, so there's no point reading lines beyond it.
             if _General.CheckIsSentinel(line):
-                self.Transport._debug_printout('Sentinel Found.')
+                self.Transport.DebugPrintout('Sentinel Found.')
                 break
             # Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
             try:
@@ -378,7 +372,7 @@ class pytransport(elements):
                         line = _General.RemoveIllegals(line)
                         self._element_prepper(line, linenum, 'input')
                 else:
-                    self.Transport._debug_printout('\tType code is 0 or negative, ignoring line.')
+                    self.Transport.DebugPrintout('\tType code is 0 or negative, ignoring line.')
             except ValueError:
                 errorline = '\tCannot process line '+_np.str(linenum) + ', '
                 if line[0][0] == '(' or line[0][0] == '/':
@@ -389,37 +383,35 @@ class pytransport(elements):
                     errorline = 'line is blank.'
                 else:
                     errorline = 'reason unknown.'
-                self.Transport._debug_printout(errorline)
+                self.Transport.DebugPrintout(errorline)
 
         skipNextDrift = False  # used for collimators
         lastElementWasADrift = True  # default value
         if self.Transport._combineDrifts:
             lastElementWasADrift = False
         for linenum, linedict in enumerate(self.Transport.ElementRegistry.elements):
-            if self._debug:
-                debugstring = 'Converting element number ' + _np.str(linenum) + ':'
-                self.Transport._printout(debugstring)
-                convertline = '\t'
-                for keynum, key in enumerate(linedict.keys()):
-                    if keynum != 0:
-                        convertline += ', '
-                    if key == 'data':
-                        convertline += 'element data:'
-                        for ele in linedict[key]:
-                            convertline += ('\t'+_np.str(ele))
-                    else:
-                        convertline += (key + ': '+_np.str(linedict[key]))
-                    if keynum == len(linedict.keys()):
-                        convertline += '.'
-                self.Transport._printout(convertline)
+            self.Transport.DebugPrintout('Converting element number ' + _np.str(linenum) + ':')
+            convertline = '\t'
+            for keynum, key in enumerate(linedict.keys()):
+                if keynum != 0:
+                    convertline += ', '
+                if key == 'data':
+                    convertline += 'element data:'
+                    for ele in linedict[key]:
+                        convertline += ('\t'+_np.str(ele))
+                else:
+                    convertline += (key + ': '+_np.str(linedict[key]))
+                if keynum == len(linedict.keys()):
+                    convertline += '.'
+            self.Transport.DebugPrintout(convertline)
 
             if self.Transport._combineDrifts:
                 if lastElementWasADrift and linedict['elementnum'] != 3.0 and linedict['elementnum'] < 20.0:
                     # write possibly combined drift
-                    self.Transport._debug_printout('\n\tConvert delayed drift(s)')
+                    self.Transport.DebugPrintout('\n\tConvert delayed drift(s)')
                     self.drift(linedictDrift)
                     lastElementWasADrift = False
-                    self.Transport._debug_printout('\n\tNow convert element number' + _np.str(linenum))
+                    self.Transport.DebugPrintout('\n\tNow convert element number' + _np.str(linenum))
 
             if linedict['elementnum'] == 15.0:
                 self.unit_change(linedict)
@@ -435,7 +427,7 @@ class pytransport(elements):
                     skipNextDrift = False
                     continue
                 if self.Transport._combineDrifts:
-                    self.Transport._debug_printout('\tDelay drift')
+                    self.Transport.DebugPrintout('\tDelay drift')
                     if lastElementWasADrift:
                         linedictDrift['length'] += linedict['length']  # update linedictDrift
                         if not linedictDrift['name']:
@@ -472,12 +464,12 @@ class pytransport(elements):
 
             # 9.  : 'Repetition' - for nesting elements
             if linedict['elementnum'] == 9.0:
-                self.Transport._debug_printout('\tWARNING Repetition Element not implemented in converter!')
+                self.Transport.DebugPrintout('\tWARNING Repetition Element not implemented in converter!')
             if linedict['elementnum'] == 2.0:
                 errorline = '\tLine is a poleface rotation which is handled by the previous or next dipole element.'
-                self.Transport._debug_printout(errorline)
+                self.Transport.DebugPrintout(errorline)
             
-            self.Transport._debug_printout('\n')
+            self.Transport.DebugPrintout('\n')
 
         # OTHER TYPES WHICH CAN BE IGNORED:
         # 6.0.X : Update RX matrix used in TRANSPORT
@@ -491,7 +483,7 @@ class pytransport(elements):
         # Write also last drift
         if self.Transport._combineDrifts:
             if lastElementWasADrift:
-                self.Transport._debug_printout('\tConvert delayed drift(s)')
+                self.Transport.DebugPrintout('\tConvert delayed drift(s)')
                 self.drift(linedictDrift)
 
     def UpdateElementsFromFits(self):
@@ -583,18 +575,18 @@ class pytransport(elements):
                             eledict = _updateQuad(eleindex[elenum], fitindex[fitnum], fitelement)
             
                         if eledict['updated']:
-                            self.Transport._debug_printout("\tElement " + _np.str(eleindex[elenum]) + " was updated from fitting.")
-                            self.Transport._debug_printout("\tOptics Output line:")
-                            self.Transport._debug_printout("\t\t'" + self.Transport.FitRegistry.lines[fitindex[fitnum]] + "'")
+                            self.Transport.DebugPrintout("\tElement " + _np.str(eleindex[elenum]) + " was updated from fitting.")
+                            self.Transport.DebugPrintout("\tOptics Output line:")
+                            self.Transport.DebugPrintout("\t\t'" + self.Transport.FitRegistry.lines[fitindex[fitnum]] + "'")
                             if eledict.has_key('length'):
                                 lenline = "\t"+eledict['element']+" length updated to "
                                 lenline += _np.str(eledict['length']['new'])
                                 lenline += " (from " + _np.str(eledict['length']['old']) + ")."
-                                self.Transport._debug_printout(lenline)
+                                self.Transport.DebugPrintout(lenline)
                             for param in eledict['params']:
                                 parline = "\t" + eledict['element'] + " " + param[0]
                                 parline += " updated to " + _np.str(param[2]) + " (from " + _np.str(param[1]) + ")."
-                                self.Transport._debug_printout(parline)
-                            self.Transport._debug_printout("\n")
+                                self.Transport.DebugPrintout(parline)
+                            self.Transport.DebugPrintout("\n")
                 
                         break
