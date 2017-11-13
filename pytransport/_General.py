@@ -157,7 +157,7 @@ class _Registry:
         self._totalLength += linedict['length']
 
 
-class functions:
+class _Functions:
     def __init__(self, inputfile,
                  particle      = 'proton',
                  debug         = False,

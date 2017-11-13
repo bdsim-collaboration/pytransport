@@ -1,10 +1,10 @@
 import numpy as _np
 from pymadx import Builder as _mdBuilder
 from pybdsim import Builder as _pyBuilder
-from _General import functions
+from _General import _Functions
 import _General
 
-class elements(functions):
+class elements(_Functions):
     def __init__(self, inputfile,
                  particle      = 'proton',
                  debug         = False,
@@ -18,7 +18,7 @@ class elements(functions):
                  keepName      = False,
                  combineDrifts = False,
                  outlog        = True):
-        functions.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
+        _Functions.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
                           auto, dontSplit, keepName, combineDrifts, outlog)
 
     def define_beam(self, linedict):
