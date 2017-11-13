@@ -28,7 +28,7 @@ class elements(functions):
             return
         if self._beamdefined and not self._dontSplit:
             self._numberparts += 1
-            self.write()
+            self.Write()
             self._printout('Writing...')
             del self.gmadmachine
             del self.madxmachine
@@ -64,30 +64,12 @@ class elements(functions):
         self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
         self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
 
-        if self._debug:
-            self._printout('\tBeam definition :')
-            self._printout('\t distrType = ' + self.beamprops.distrType)
-            self._printout('\t energy = ' + _np.str(self.beamprops.tot_energy) + ' ' + self.units['p_egain'])
-            self._printout('\t SigmaX = ' + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
-            self._printout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
-            self._printout('\t SigmaY = ' + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
-            self._printout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
-            self._printout('\t SigmaE = ' + _np.str(self.beamprops.SigmaE))
-            self._printout('\t SigmaT = ' + _np.str(self.beamprops.SigmaT))
-            self._printout('\t (Final brho = ' + _np.str(_np.round(self.beamprops.brho, 2))+' Tm)')
-            self._printout('\t Twiss Params:')
-            self._printout('\t BetaX = ' + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-            self._printout('\t BetaY = ' + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-            self._printout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
-            self._printout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
-            self._printout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-            self._printout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+        self._print_beam_debug()
 
     def drift(self, linedict):
         driftlen = linedict['length']
         if driftlen <= 0:
-            if self._debug:
-                self._printout('\tZero or negative length element, ignoring.')
+            self._debug_printout('\tZero or negative length element, ignoring.')
             return
     
         length_in_metres = driftlen * self._scale_to_meters('element_length')
@@ -102,10 +84,8 @@ class elements(functions):
         self.gmadmachine.AddDrift(name=elementid, length=length_in_metres)
         self.madxmachine.AddDrift(name=elementid, length=length_in_metres)
         
-        if self._debug:
-            self._printout('\tConverted to:')
-            debugstring = 'Drift ' + elementid + ', length ' + _np.str(length_in_metres) + ' m'
-            self._printout('\t' + debugstring)
+        self._debug_printout('\tConverted to:')
+        self._debug_printout('\t' + 'Drift ' + elementid + ', length ' + _np.str(length_in_metres) + ' m')
 
     def dipole(self, linedict):
         linenum = linedict['linenum']
@@ -118,11 +98,10 @@ class elements(functions):
         e1 = linedict['e1'] * ((_np.pi / 180.0)*self.machineprops.bending)  # Entrance pole face rotation.
         e2 = linedict['e2'] * ((_np.pi / 180.0)*self.machineprops.bending)  # Exit pole face rotation.
         
-        if self._debug:
-            if e1 != 0:
-                self._printout('\tPreceding element (' + _np.str(linenum-1) + ') provides an entrance poleface rotation of ' + _np.str(_np.round(e1, 4)) + ' rad.')
-            if e2 != 0:
-                self._printout('\tFollowing element (' + _np.str(linenum+1) + ') provides an exit poleface rotation of ' + _np.str(_np.round(e2, 4)) + ' rad.')
+        if e1 != 0:
+            self._debug_printout('\tPreceding element (' + _np.str(linenum-1) + ') provides an entrance poleface rotation of ' + _np.str(_np.round(e1, 4)) + ' rad.')
+        if e2 != 0:
+            self._debug_printout('\tFollowing element (' + _np.str(linenum+1) + ') provides an exit poleface rotation of ' + _np.str(_np.round(e2, 4)) + ' rad.')
     
         # Fringe Field Integrals
         fintval = 0
@@ -131,13 +110,12 @@ class elements(functions):
             fintval = self.machineprops.fringeIntegral
         if e2 != 0:
             fintxval = self.machineprops.fringeIntegral
-        if self._debug:
-            if (fintval != 0) or (fintxval != 0):
-                self._printout('\tA previous entry set the fringe field integral K1=' + _np.str(self.machineprops.fringeIntegral) + '.')
-            if (fintval != 0) and (e1 != 0):
-                self._printout('\tSetting fint=' + _np.str(fintval) + '.')
-            if (fintxval != 0) and (e2 != 0):
-                self._printout('\tSetting fintx=' + _np.str(fintxval) + '.')
+        if (fintval != 0) or (fintxval != 0):
+            self._debug_printout('\tA previous entry set the fringe field integral K1=' + _np.str(self.machineprops.fringeIntegral) + '.')
+        if (fintval != 0) and (e1 != 0):
+            self._debug_printout('\tSetting fint=' + _np.str(fintval) + '.')
+        if (fintxval != 0) and (e2 != 0):
+            self._debug_printout('\tSetting fintx=' + _np.str(fintxval) + '.')
 
         # Calculate bending angle
         if self.machineprops.benddef:
@@ -149,10 +127,9 @@ class elements(functions):
             else:
                 rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
                 angle = (_np.float(length) / rho) * self.machineprops.bending       # for direction of bend
-            if self._debug:
-                self._printout('\tbfield = ' + _np.str(field_in_Gauss) + ' kG')
-                self._printout('\tbfield = ' + _np.str(field_in_Tesla) + ' T')
-                self._printout('\tCorresponds to angle of ' + _np.str(_np.round(angle, 4)) + ' rad.')
+            self._debug_printout('\tbfield = ' + _np.str(field_in_Gauss) + ' kG')
+            self._debug_printout('\tbfield = ' + _np.str(field_in_Tesla) + ' T')
+            self._debug_printout('\tCorresponds to angle of ' + _np.str(_np.round(angle, 4)) + ' rad.')
         else:
             angle_in_deg = dipoledata[1]
             angle = angle_in_deg * (_np.pi/180.) * self.machineprops.bending
@@ -182,28 +159,28 @@ class elements(functions):
             self.madxmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4))
 
         # Debug output
-        if self._debug:
-            if (e1 != 0) and (e2 != 0):
-                polefacestr = ', e1= ' + _np.str(_np.round(e1, 4)) + ' rad, e2= ' + _np.str(_np.round(e2, 4)) + ' rad'
-            elif (e1 != 0) and (e2 == 0):
-                polefacestr = ', e1= ' + _np.str(_np.round(e1, 4)) + ' rad'
-            elif (e1 == 0) and (e2 != 0):
-                polefacestr = ', e2= ' + _np.str(_np.round(e2, 4)) + ' rad'
-            else:
-                polefacestr = ''
-            
-            if (fintval != 0) and (fintxval != 0):
-                fringestr = ' , fint= ' + _np.str(fintval) + ', fintx= ' + _np.str(fintxval)
-            elif (fintval != 0) and (fintxval == 0):
-                fringestr = ' , fint= ' + _np.str(fintval)
-            elif (fintval == 0) and (fintxval != 0):
-                fringestr = ' , fintx= ' + _np.str(fintxval)
-            else:
-                fringestr = ''
+        if (e1 != 0) and (e2 != 0):
+            polefacestr = ', e1= ' + _np.str(_np.round(e1, 4)) + ' rad, e2= ' + _np.str(_np.round(e2, 4)) + ' rad'
+        elif (e1 != 0) and (e2 == 0):
+            polefacestr = ', e1= ' + _np.str(_np.round(e1, 4)) + ' rad'
+        elif (e1 == 0) and (e2 != 0):
+            polefacestr = ', e2= ' + _np.str(_np.round(e2, 4)) + ' rad'
+        else:
+            polefacestr = ''
 
-            self._printout('\tConverted to:')
-            debugstring = 'Dipole ' + elementid + ', length= ' + _np.str(length_in_metres) + ' m, angle= ' + _np.str(_np.round(angle, 4)) + ' rad' + polefacestr + fringestr
-            self._printout('\t' + debugstring)
+        if (fintval != 0) and (fintxval != 0):
+            fringestr = ' , fint= ' + _np.str(fintval) + ', fintx= ' + _np.str(fintxval)
+        elif (fintval != 0) and (fintxval == 0):
+            fringestr = ' , fint= ' + _np.str(fintval)
+        elif (fintval == 0) and (fintxval != 0):
+            fringestr = ' , fintx= ' + _np.str(fintxval)
+        else:
+            fringestr = ''
+
+        self._debug_printout('\tConverted to:')
+        debugstring = 'Dipole ' + elementid + ', length= ' + _np.str(length_in_metres) + ' m, angle= ' + \
+                      _np.str(_np.round(angle, 4)) + ' rad' + polefacestr + fringestr
+        self._debug_printout('\t' + debugstring)
 
     def change_bend(self, linedict):
         """
@@ -236,20 +213,18 @@ class elements(functions):
             # MadX Builder does not have transform 3d
             # Comment out and print warning
             # self.madxmachine.AddTransform3D(name=elementid, psi=anginrad)
-            if self._debug:
-                print 'Warning, MadX Builder does not have Transform 3D!'
+            self._debug_printout('\tWarning, MadX Builder does not have Transform 3D!')
             
             rotation = True
         
-        if self._debug:
-            if rotation:
-                self._printout('\tConverted to:')
-                debugstring = '\tTransform3D ' + elementid + ', angle ' + _np.str(_np.round(self.machineprops.angle, 4)) + ' rad'
-                self._printout('\t'+debugstring)
-            elif self.machineprops.angle == 180:
-                self._printout('\tBending direction set to Right')
-            elif self.machineprops.angle == -180:
-                self._printout('\tBending direction set to Left')
+        if rotation:
+            self._debug_printout('\tConverted to:')
+            debugstring = '\tTransform3D ' + elementid + ', angle ' + _np.str(_np.round(self.machineprops.angle, 4)) + ' rad'
+            self._debug_printout('\t'+debugstring)
+        elif self.machineprops.angle == 180:
+            self._debug_printout('\tBending direction set to Right')
+        elif self.machineprops.angle == -180:
+            self._debug_printout('\tBending direction set to Left')
 
     def quadrupole(self, linedict):
         quaddata = linedict['data']
@@ -281,16 +256,15 @@ class elements(functions):
         self.gmadmachine.AddQuadrupole(name=elementid, length=length_in_metres, k1=_np.round(field_gradient, 4))
         self.madxmachine.AddQuadrupole(name=elementid, length=length_in_metres, k1=_np.round(field_gradient, 4))
         
-        if self._debug:
-            string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' G, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
-            string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
-            string3 = '\tBrho = ' + _np.str(_np.round(self.beamprops.brho, 4)) + ' Tm. K1 = ' +_np.str(_np.round(field_gradient, 4)) + ' m^-2'
-            self._printout(string1)
-            self._printout(string2)
-            self._printout(string3)
-            self._printout('\tConverted to:')
-            debugstring = 'Quadrupole '+elementid+', length= '+_np.str(length_in_metres)+' m, k1= '+_np.str(_np.round(field_gradient,4))+' T/m'
-            self._printout('\t' + debugstring)
+        string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' G, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
+        string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
+        string3 = '\tBrho = ' + _np.str(_np.round(self.beamprops.brho, 4)) + ' Tm. K1 = ' +_np.str(_np.round(field_gradient, 4)) + ' m^-2'
+        self._debug_printout(string1)
+        self._debug_printout(string2)
+        self._debug_printout(string3)
+        self._debug_printout('\tConverted to:')
+        debugstring = 'Quadrupole '+elementid+', length= '+_np.str(length_in_metres)+' m, k1= '+_np.str(_np.round(field_gradient,4))+' T/m'
+        self._debug_printout('\t' + debugstring)
 
     def collimator(self, linedict):
         """
@@ -298,8 +272,7 @@ class elements(functions):
         Only added for gmad, not for madx!
         """
         if linedict['length'] <= 0:
-            if self._debug:
-                self._printout('\tZero or negative length element, ignoring.')
+            self._debug_printout('\tZero or negative length element, ignoring.')
             return
         colldata = linedict['data']
         
@@ -333,15 +306,14 @@ class elements(functions):
         collimatorMaterial = 'copper'  # Default in BDSIM, added to prevent warnings
         self.gmadmachine.AddRCol(name=elementid, length=length_in_metres, xsize=aperx_in_metres, ysize=apery_in_metres, material=collimatorMaterial)
 
-        if self._debug:
-            debugstring = '\tCollimator, x aperture = ' + _np.str(aperx_in_metres) \
-                          + ' m, y aperture = ' + _np.str(apery_in_metres) + ' m.'
-            self._printout(debugstring)
-            self._printout('\tConverted to:')
-            debugstring = 'Collimator ' + elementid + ', length= ' + _np.str(length_in_metres)\
-                          + ' m, xsize= ' + _np.str(_np.round(aperx_in_metres, 4))
-            debugstring += ' m, ysize= ' + _np.str(_np.round(apery_in_metres, 4)) + ' m.'
-            self._printout('\t' + debugstring)
+        debugstring = '\tCollimator, x aperture = ' + _np.str(aperx_in_metres) \
+                      + ' m, y aperture = ' + _np.str(apery_in_metres) + ' m.'
+        self._debug_printout(debugstring)
+        self._debug_printout('\tConverted to:')
+        debugstring = 'Collimator ' + elementid + ', length= ' + _np.str(length_in_metres)\
+                      + ' m, xsize= ' + _np.str(_np.round(aperx_in_metres, 4))
+        debugstring += ' m, ysize= ' + _np.str(_np.round(apery_in_metres, 4)) + ' m.'
+        self._debug_printout('\t' + debugstring)
 
     def acceleration(self, linedict):
         """
@@ -421,11 +393,10 @@ class elements(functions):
         self.gmadmachine.AddSextupole(name=elementid, length=length_in_metres, k2=_np.round(field_gradient, 4))
         self.madxmachine.AddSextupole(name=elementid, length=length_in_metres, k2=_np.round(field_gradient, 4))
 
-        if self._debug:
-            self._printout('\tConverted to:')
-            debugstring = 'Sextupole ' + elementid + ', length ' + _np.str(length_in_metres) + \
+        self._debug_printout('\tConverted to:')
+        debugstring = 'Sextupole ' + elementid + ', length ' + _np.str(length_in_metres) + \
                           ' m, k2 ' + _np.str(_np.round(field_gradient, 4)) + ' T/m^2'
-            self._printout('\t' + debugstring)
+        self._debug_printout('\t' + debugstring)
 
     def solenoid(self, linedict):
         soledata = linedict['data']
@@ -447,34 +418,31 @@ class elements(functions):
         self.gmadmachine.AddSolenoid(name=elementid, length=length_in_metres, ks=_np.round(field_in_Tesla, 4))
         self.madxmachine.AddSolenoid(name=elementid, length=length_in_metres, ks=_np.round(field_in_Tesla, 4))
 
-        if self._debug:
-            self._printout('\tConverted to:')
-            debugstring = 'Solenoid ' + elementid + ', length ' + _np.str(length_in_metres) + \
+        self._debug_printout('\tConverted to:')
+        debugstring = 'Solenoid ' + elementid + ', length ' + _np.str(length_in_metres) + \
                           ' m, ks ' + _np.str(_np.round(field_in_Tesla, 4)) + ' T'
-            self._printout('\t' + debugstring)
+        self._debug_printout('\t' + debugstring)
 
     def printline(self, linedict):
         number = linedict['data'][0]
         debugstring = ''
+        self._debug_printout('\tTRANSPORT control line,')
         try:
             number = _np.float(number)
             if number == 48:
                 self.machineprops.benddef = False
-                debugstring = '\t48. Switched Dipoles to Angle definition.'
+                self._debug_printout('\t48. Switched Dipoles to Angle definition.')
             elif number == 47:
                 self.machineprops.benddef = True
-                debugstring = '\t47. Switched Dipoles to field definition.'
+                self._debug_printout('\t47. Switched Dipoles to field definition.')
             elif number == 19:
                 if self._checkSingleLineOutputApplied(self._filename):
                     self._singleLineOptics = True
-                    debugstring = '\t19. Optics output switched to single line per element.'
+                self._debug_printout('\t19. Optics output switched to single line per element.')
             else:
-                debugstring = '\tCode 13. ' + _np.str(number) + ' handling not implemented.'
+                self._debug_printout('\tCode 13. ' + _np.str(number) + ' handling not implemented.')
         except ValueError:
             pass
-        if self._debug:
-            self._printout('\tTRANSPORT control line,')
-            self._printout(debugstring)
 
     def correction(self, linedict):
         if self._correctedbeamdef:
@@ -516,17 +484,16 @@ class elements(functions):
 
         self.beamprops.distrType = 'gausstwiss'
 
-        if self._debug:
-            self._printout('\tConverted to:')
-            self._printout('\t Beam Correction. Sigma21 = ' + _np.str(sigma21) + ', Sigma43 = ' + _np.str(sigma43) + '.')
-            self._printout('\t Beam distribution type now switched to "gausstwiss":')
-            self._printout('\t Twiss Params:')
-            self._printout('\t BetaX = ' + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-            self._printout('\t BetaY = ' + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-            self._printout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
-            self._printout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
-            self._printout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-            self._printout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+        self._debug_printout('\tConverted to:')
+        self._debug_printout('\t Beam Correction. Sigma21 = ' + _np.str(sigma21) + ', Sigma43 = ' + _np.str(sigma43) + '.')
+        self._debug_printout('\t Beam distribution type now switched to "gausstwiss":')
+        self._debug_printout('\t Twiss Params:')
+        self._debug_printout('\t BetaX = ' + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+        self._debug_printout('\t BetaY = ' + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+        self._debug_printout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
+        self._debug_printout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
+        self._debug_printout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+        self._debug_printout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
 
     def special_input(self, linedict):
         specialdata = linedict['data']
@@ -566,10 +533,9 @@ class elements(functions):
             debugstring1 = '\tType 18: Z0 beam offset,'
             debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
 
-        if self._debug:
-            self._printout('\tSpecial Input line:')
-            self._printout(debugstring1)
-            self._printout(debugstring2)
+        self._debug_printout('\tSpecial Input line:')
+        self._debug_printout(debugstring1)
+        self._debug_printout(debugstring2)
 
     def unit_change(self, linedict):
         """
@@ -655,7 +621,6 @@ class elements(functions):
             debugstring1 = '\tType 11: Momentum and accelerator energy gain,'
             debugstring2 = '\tConverted to ' + label
 
-        if self._debug:
-            self._printout('\tUnit change line:')
-            self._printout(debugstring1)
-            self._printout(debugstring2)
+        self._debug_printout('\tUnit change line:')
+        self._debug_printout(debugstring1)
+        self._debug_printout(debugstring2)

@@ -409,8 +409,7 @@ class functions:
             lattice, output = temp._getLatticeAndOptics(input)
             fits, fitres = temp._getFits(input)
             self._outputfits_to_registry(fitres)
-            if self._debug:
-                self._printout('\tAdding any fitting output to the fitting registry (self._fitReg)')
+            self._debug_printout('\tAdding any fitting output to the fitting registry (self._fitReg)')
             for linenum, latticeline in enumerate(lattice):
                 latticeline = latticeline.replace(';', '')
                 line = _np.array(latticeline.split(' '), dtype=_np.str)
@@ -688,6 +687,29 @@ class functions:
             self._logfile.write('\n')
             self._logfile.close()
 
+    def _debug_printout(self, line):
+        if self._debug:
+            self._printout(line)
+
+    def _print_beam_debug(self):
+        self._debug_printout('\t Beam definition :')
+        self._debug_printout('\t distrType = ' + self.beamprops.distrType)
+        self._debug_printout('\t energy = '  + _np.str(self.beamprops.tot_energy) + ' GeV')
+        self._debug_printout('\t SigmaX = '  + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
+        self._debug_printout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
+        self._debug_printout('\t SigmaY = '  + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
+        self._debug_printout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
+        self._debug_printout('\t SigmaE = '  + _np.str(self.beamprops.SigmaE))
+        self._debug_printout('\t SigmaT = '  + _np.str(self.beamprops.SigmaT))
+        self._debug_printout('\t (Final brho = '+_np.str(_np.round(self.beamprops.brho, 2))+' Tm)')
+        self._debug_printout('\t Twiss Params:')
+        self._debug_printout('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+        self._debug_printout('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+        self._debug_printout('\t AlphaX = '+_np.str(self.beamprops.alfx))
+        self._debug_printout('\t AlphaY = '+_np.str(self.beamprops.alfy))
+        self._debug_printout('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+        self._debug_printout('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+
     def _bunch_length_convert(self, bunch_length):
         """
         Function to convert bunch length unit in TRANSPORT into seconds.
@@ -889,8 +911,8 @@ class functions:
         return typeNum
 
     def _transformUpdate(self, linedict):
-        if self._debug and (linedict['elementnum'] == 6.0):
+        if linedict['elementnum'] == 6.0:
             errorline = '\tElement is either a transform update or a collimator. The type code 6 definition'
             errorline2 = '\thas not been switched to collimators, therefore nothing will be done for this element.'
-            self._printout(errorline)
-            self._printout(errorline2)
+            self._debug_printout(errorline)
+            self._debug_printout(errorline2)

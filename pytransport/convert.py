@@ -65,12 +65,14 @@ class pytransport(elements):
         elements.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
                           auto, dontSplit, keepName, combineDrifts, outlog)
 
-        # load file automatically
-        self._load_file(inputfile)
+        self._load_file(inputfile)  # load file automatically
         if self._auto:
             self.transport2gmad()
 
-    def write(self):
+    def Write(self):
+        """
+        Write the converted TRANSPORT file to disk.
+        """
         if self._numberparts < 0:
             self._filename = self._file
         else:
@@ -102,59 +104,8 @@ class pytransport(elements):
         if not self._fileloaded:
             self._printout('No file loaded.')
             return
-
-        self.AddLatticeToRegistry()
-
-        if self._debug:
-            self._printout('Converting registry elements to pybdsim compatible format and adding to machine builder.')
-
         self.ProcessAndBuild()
-        self.write()
-
-    def AddLatticeToRegistry(self):
-        """
-        Function that loops over the lattice, adds the elements to the element registry,
-        and updates any elements that have fitted parameters.
-        """
-        for linenum, line in enumerate(self.data):
-            if self._debug:
-                self._printout('Processing tokenised line '+_np.str(linenum)+' :')
-                self._printout('\t' + str(line))
-                self._printout('Original :')
-                self._printout('\t' + self.filedata[linenum])
-
-            self._line = line
-            self._linenum = linenum
-            if self._is_sentinel(self._line):   # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT
-                if self._debug:                 # fitting routine and is only written after the lattice definition,
-                    self._printout('Sentinel Found.')    # so there's no point reading lines beyond it.
-                break
-            # Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
-            try:
-                typeNum = self._getTypeNum(self._line)
-                if typeNum > 0:
-                    if self.data[0][0] == 'OUTPUT':
-                        self._element_prepper(self._line, linenum, 'output')
-                        self.UpdateElementsFromFits()
-                    else:
-                        self._line = self._remove_illegals(self._line)
-                        self._element_prepper(self._line, linenum, 'input')
-                else:
-                    if self._debug:
-                        self._printout('\tType code is 0 or negative, ignoring line.')
-            except ValueError:
-                if self._debug:
-                    errorline = '\tCannot process line '+_np.str(linenum) + ', '
-                    if line[0][0] == '(' or line[0][0] == '/':
-                        errorline += 'line is a comment.'
-                    elif line[0][0] == 'S':  # S used as first character in SENTINEL command.
-                        errorline = 'line is for TRANSPORT fitting routine.'
-                    elif line[0] == '\n':
-                        errorline = 'line is blank.'
-                    else:
-                        errorline = 'reason unknown.'
-
-                    self._printout(errorline)
+        self.Write()
 
     def _element_prepper(self, line, linenum, filetype='input'):
         """
@@ -177,9 +128,7 @@ class pytransport(elements):
             if filetype == 'input':
                 linedict['label'] = label
             linedict['number'] = line[1]
-            if self._debug:
-                self._printout("\tEntry is a Unit Control, adding to the element registry as element " +
-                               numElements + ".")
+            self._debug_printout("\tEntry is a Unit Control, adding to the element registry as element " + numElements + ".")
         
         if typeNum == 20.0:
             angle = 0  # Default
@@ -194,8 +143,7 @@ class pytransport(elements):
                     except ValueError:
                         pass
             linedict['angle'] = angle
-            if self._debug:
-                self._printout("\tEntry is a coordinate rotation, adding to the element registry as element " +
+            self._debug_printout("\tEntry is a coordinate rotation, adding to the element registry as element " +
                                numElements + ".")
 
         if typeNum == 1.0:
@@ -224,22 +172,19 @@ class pytransport(elements):
             linedict['Sigmayp'] = line[4+n]
             linedict['SigmaT'] = line[5+n]
             linedict['SigmaE'] = line[6+n]
-            if self._debug:
-                self._printout("\tEntry is a Beam definition or r.m.s addition, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a Beam definition or r.m.s addition, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 2.0:
             linedict['name'] = self._get_label(line)
             linedict['data'] = self._get_elementdata(line)
-            if self._debug:
-                self._printout("\tEntry is a poleface rotation, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a poleface rotation, adding to the element registry as element " + numElements + ".")
         
         if typeNum == 3.0:
             linedict['name'] = self._get_label(line)
             data = self._get_elementdata(line)
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            if self._debug:
-                self._printout("\tEntry is a drift tube, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a drift tube, adding to the element registry as element " + numElements + ".")
             
         if typeNum == 4.0:
             linedict['name'] = self._get_label(line)
@@ -251,8 +196,7 @@ class pytransport(elements):
             e1, e2 = self._facerotation(line, linenum)
             linedict['e1'] = e1
             linedict['e2'] = e2
-            if self._debug:
-                self._printout("\tEntry is a dipole, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a dipole, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 5.0:
             linedict['name'] = self._get_label(line)
@@ -260,8 +204,7 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            if self._debug:
-                self._printout("\tEntry is a quadrupole, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a quadrupole, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 6.0:
             # element is a collimator or transform update
@@ -299,14 +242,12 @@ class pytransport(elements):
                     else:
                         pass
                 
-            if self._debug:
-                # Can be either transform update or collimator, a 16. 14 entry changes the definition but is only
-                # processed after ALL elements are added to the registry.
-                self._printout("\tEntry is either a Transform update or collimator, adding to the element registry as element " + numElements + ".")
+            # Can be either transform update or collimator, a 16. 14 entry changes the definition but is only
+            # processed after ALL elements are added to the registry.
+            self._debug_printout("\tEntry is either a Transform update or collimator, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 9.0:
-            if self._debug:
-                self._printout("\tEntry is a repetition control, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a repetition control, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 11.0:
             linedict['name'] = self._get_label(line)
@@ -318,8 +259,7 @@ class pytransport(elements):
             if len(data) == 4:  # Older case for single element
                 linedict['phase_lag'] = data[2]
                 linedict['wavel'] = data[3]
-            if self._debug:
-                self._printout("\tEntry is an acceleration element, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is an acceleration element, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 12.0:
             linedict['data'] = self._get_elementdata(line)
@@ -330,18 +270,15 @@ class pytransport(elements):
             linedict['isAddition'] = False
             if self._is_addition(line):
                 linedict['isAddition'] = True
-            if self._debug:
-                self._printout("\tEntry is a beam rotation, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a beam rotation, adding to the element registry as element " + numElements + ".")
                 
         if typeNum == 13.0:
             linedict['data'] = self._get_elementdata(line)
-            if self._debug:
-                self._printout("\tEntry is a Input/Output control, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a Input/Output control, adding to the element registry as element " + numElements + ".")
         
         if typeNum == 16.0:
             linedict['data'] = self._get_elementdata(line)
-            if self._debug:
-                self._printout("\tEntry is a special input, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a special input, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 18.0:
             linedict['name'] = self._get_label(line)
@@ -349,8 +286,7 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            if self._debug:
-                self._printout("\tEntry is a sextupole, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a sextupole, adding to the element registry as element " + numElements + ".")
         
         if typeNum == 19.0:
             linedict['name'] = self._get_label(line)
@@ -358,24 +294,60 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            if self._debug:
-                self._printout("\tEntry is a solenoid, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a solenoid, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 22.0:
-            if self._debug:
-                self._printout("\tEntry is a space charge element, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a space charge element, adding to the element registry as element " + numElements + ".")
 
         if typeNum == 23.0:
-            if self._debug:
-                self._printout("\tEntry is a buncher, adding to the element registry as element " + numElements + ".")
+            self._debug_printout("\tEntry is a buncher, adding to the element registry as element " + numElements + ".")
 
         rawline = self.filedata[linenum]
         self._elementReg.AddToRegistry(linedict, rawline)
 
     def ProcessAndBuild(self):
         """
-        Function to convert the registry elements into pybdsim format and add to the pybdsim builder.
+        Function that loops over the lattice, adds the elements to the element registry,
+        and updates any elements that have fitted parameters.
+        It then converts the registry elements into pybdsim format and add to the pybdsim builder.
         """
+        self._debug_printout('Converting registry elements to pybdsim compatible format and adding to machine builder.')
+
+        for linenum, line in enumerate(self.data):
+            self._debug_printout('Processing tokenised line '+_np.str(linenum)+' :')
+            self._debug_printout('\t' + str(line))
+            self._debug_printout('Original :')
+            self._debug_printout('\t' + self.filedata[linenum])
+
+            # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT fitting routine and is only written
+            # after the lattice definition, so there's no point reading lines beyond it.
+            if self._is_sentinel(line):
+                self._debug_printout('Sentinel Found.')
+                break
+            # Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
+            try:
+                typeNum = self._getTypeNum(line)
+                if typeNum > 0:
+                    if self.data[0][0] == 'OUTPUT':
+                        self._element_prepper(line, linenum, 'output')
+                        self.UpdateElementsFromFits()
+                    else:
+                        line = self._remove_illegals(line)
+                        self._element_prepper(line, linenum, 'input')
+                else:
+                    self._debug_printout('\tType code is 0 or negative, ignoring line.')
+            except ValueError:
+                errorline = '\tCannot process line '+_np.str(linenum) + ', '
+                if line[0][0] == '(' or line[0][0] == '/':
+                    errorline += 'line is a comment.'
+                elif line[0][0] == 'S':  # S used as first character in SENTINEL command.
+                    errorline = 'line is for TRANSPORT fitting routine.'
+                elif line[0] == '\n':
+                    errorline = 'line is blank.'
+                else:
+                    errorline = 'reason unknown.'
+                self._debug_printout(errorline)
+
         skipNextDrift = False  # used for collimators
         lastElementWasADrift = True  # default value
         if self._combineDrifts:
@@ -401,40 +373,32 @@ class pytransport(elements):
             if self._combineDrifts:
                 if lastElementWasADrift and linedict['elementnum'] != 3.0 and linedict['elementnum'] < 20.0:
                     # write possibly combined drift
-                    if self._debug:
-                        self._printout('\n\tConvert delayed drift(s)')
+                    self._debug_printout('\n\tConvert delayed drift(s)')
                     self.drift(linedictDrift)
                     lastElementWasADrift = False
-                    if self._debug:
-                        self._printout('\n\tNow convert element number' + _np.str(linenum))
+                    self._debug_printout('\n\tNow convert element number' + _np.str(linenum))
 
             if linedict['elementnum'] == 15.0:
                 self.unit_change(linedict)
             if linedict['elementnum'] == 20.0:
                 self.change_bend(linedict)
-            if linedict['elementnum'] == 1.0:
-                # Add beam on first definition
+            if linedict['elementnum'] == 1.0:  # Add beam on first definition
                 if not self._beamdefined:
                     self.define_beam(linedict)
-                # Only update beyond first definition if splitting is permitted
-                elif not self._dontSplit:
+                elif not self._dontSplit:  # Only update beyond first definition if splitting is permitted
                     self.define_beam(linedict)
             if linedict['elementnum'] == 3.0:
                 if skipNextDrift:
                     skipNextDrift = False
                     continue
                 if self._combineDrifts:
-                    if self._debug:
-                        self._printout('\tDelay drift')
+                    self._debug_printout('\tDelay drift')
                     if lastElementWasADrift:
-                        # update linedictDrift
-                        linedictDrift['length'] += linedict['length']
-                        # keep first non-empty name
+                        linedictDrift['length'] += linedict['length']  # update linedictDrift
                         if not linedictDrift['name']:
-                            linedictDrift['name'] = linedict['name']
+                            linedictDrift['name'] = linedict['name']  # keep first non-empty name
                     else:
-                        # new linedictDrift
-                        linedictDrift = linedict
+                        linedictDrift = linedict   # new linedictDrift
                         lastElementWasADrift = True
                 else:
                     self.drift(linedict)
@@ -465,16 +429,12 @@ class pytransport(elements):
 
             # 9.  : 'Repetition' - for nesting elements
             if linedict['elementnum'] == 9.0:
-                if self._debug:
-                    errorline = '\tWARNING Repetition Element not implemented in converter!' + _np.str(linenum) + '\n'
-                    self._printout(errorline)
+                self._debug_printout('\tWARNING Repetition Element not implemented in converter!')
             if linedict['elementnum'] == 2.0:
-                if self._debug:
-                    errorline = '\tLine is a poleface rotation which is handled by the previous or next dipole element.'
-                    self._printout(errorline)
+                errorline = '\tLine is a poleface rotation which is handled by the previous or next dipole element.'
+                self._debug_printout(errorline)
             
-            if self._debug:
-                self._printout('\n')
+            self._debug_printout('\n')
 
         # OTHER TYPES WHICH CAN BE IGNORED:
         # 6.0.X : Update RX matrix used in TRANSPORT
@@ -488,8 +448,7 @@ class pytransport(elements):
         # Write also last drift
         if self._combineDrifts:
             if lastElementWasADrift:
-                if self._debug:
-                    self._printout('\tConvert delayed drift(s)')
+                self._debug_printout('\tConvert delayed drift(s)')
                 self.drift(linedictDrift)
        
     def create_beam(self):
@@ -558,24 +517,7 @@ class pytransport(elements):
         if self.beamprops.Z0 != 0:
             self.gmadbeam.SetZ0(self.beamprops.Z0, unitsstring=self.units['z'])
 
-        if self._debug:
-            self._printout('\t Beam definition :')
-            self._printout('\t distrType = ' + self.beamprops.distrType)
-            self._printout('\t energy = '  + _np.str(self.beamprops.tot_energy) + ' GeV')
-            self._printout('\t SigmaX = '  + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
-            self._printout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
-            self._printout('\t SigmaY = '  + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
-            self._printout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
-            self._printout('\t SigmaE = '  + _np.str(self.beamprops.SigmaE))
-            self._printout('\t SigmaT = '  + _np.str(self.beamprops.SigmaT))
-            self._printout('\t (Final brho = '+_np.str(_np.round(self.beamprops.brho,2))+' Tm)')
-            self._printout('\t Twiss Params:')
-            self._printout('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-            self._printout('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-            self._printout('\t AlphaX = '+_np.str(self.beamprops.alfx))
-            self._printout('\t AlphaY = '+_np.str(self.beamprops.alfy))
-            self._printout('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-            self._printout('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+        self._print_beam_debug()
 
         self.gmadmachine.AddBeam(self.gmadbeam)
         self.madxmachine.AddBeam(self.madxbeam)
@@ -684,19 +626,19 @@ class pytransport(elements):
                         elif fitelement['elementnum'] == 5:
                             eledict = _updateQuad(eleindex[elenum], fitindex[fitnum], fitelement)
             
-                        if self._debug and eledict['updated']:
-                            self._printout("\tElement " + _np.str(eleindex[elenum]) + " was updated from fitting.")
-                            self._printout("\tOptics Output line:")
-                            self._printout("\t\t'" + self._fitReg.lines[fitindex[fitnum]] + "'")
+                        if eledict['updated']:
+                            self._debug_printout("\tElement " + _np.str(eleindex[elenum]) + " was updated from fitting.")
+                            self._debug_printout("\tOptics Output line:")
+                            self._debug_printout("\t\t'" + self._fitReg.lines[fitindex[fitnum]] + "'")
                             if eledict.has_key('length'):
                                 lenline = "\t"+eledict['element']+" length updated to "
                                 lenline += _np.str(eledict['length']['new'])
                                 lenline += " (from " + _np.str(eledict['length']['old']) + ")."
-                                self._printout(lenline)
+                                self._debug_printout(lenline)
                             for param in eledict['params']:
                                 parline = "\t" + eledict['element'] + " " + param[0]
                                 parline += " updated to " + _np.str(param[2]) + " (from " + _np.str(param[1]) + ")."
-                                self._printout(parline)
-                            self._printout("\n")
+                                self._debug_printout(parline)
+                            self._debug_printout("\n")
                 
                         break
