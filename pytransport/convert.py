@@ -67,15 +67,10 @@ class pytransport(elements):
         elements.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
                           auto, dontSplit, keepName, combineDrifts, outlog)
 
-        # Automatic writing and machine splitting
-        self._auto = auto
-        self._dontSplit = dontSplit
-
         # load file automatically
         self._load_file(inputfile)
-        self._filename = inputfile
-
-        if self._auto:
+        # convert automatically
+        if auto:
             self.transport2gmad()
 
     def _load_file(self, inputfile):
@@ -97,7 +92,7 @@ class pytransport(elements):
             lattice, output = temp._getLatticeAndOptics(inputfile)
             fits, fitres = temp._getFits(inputfile)
             self.Transport = _General.OutputFitsToRegistry(self.Transport, fitres)
-            self.Transport._debug_printout('\tAdding any fitting output to the fitting registry (self._fitReg)')
+            self.Transport._debug_printout('\tAdding any fitting output to the fitting registry (self.FitRegistry)')
             for linenum, latticeline in enumerate(lattice):
                 latticeline = latticeline.replace(';', '')
                 line = _np.array(latticeline.split(' '), dtype=_np.str)
@@ -139,7 +134,7 @@ class pytransport(elements):
                 self.Transport.data.append(line)
                 self.Transport.filedata.append(inputline)
             f.close()
-        self._fileloaded = True
+        self.Transport._fileloaded = True
 
     def Write(self):
         """
@@ -151,7 +146,7 @@ class pytransport(elements):
         """
         Function to convert TRANSPORT file on a line by line basis.
         """
-        if not self._fileloaded:
+        if not self.Transport._fileloaded:
             self.Transport._printout('No file loaded.')
             return
         self.ProcessAndBuild()
@@ -167,7 +162,7 @@ class pytransport(elements):
                     'name'         : '',
                     'length'       : 0.0,
                     'isZeroLength' : True}
-        numElements = _np.str(len(self.Transport._elementReg.elements))
+        numElements = _np.str(len(self.Transport.ElementRegistry.elements))
         typeNum = _General.GetTypeNum(line)
         linedict['elementnum'] = typeNum
         
@@ -281,7 +276,7 @@ class pytransport(elements):
                         break
                     # stop if physical element or beam redef if splitting permitted
                     elif nextTypeNum in physicalElements:
-                        if (nextTypeNum == 1.0) and self._dontSplit:
+                        if (nextTypeNum == 1.0) and self.Transport._dontSplit:
                             pass
                         elif (nextTypeNum == 6.0) and self._typeCode6IsTransUpdate:
                             pass
@@ -351,7 +346,7 @@ class pytransport(elements):
             self.Transport._element_prep_debug("buncher", numElements)
 
         rawline = self.Transport.filedata[linenum]
-        self.Transport._elementReg.AddToRegistry(linedict, rawline)
+        self.Transport.ElementRegistry.AddToRegistry(linedict, rawline)
 
     def ProcessAndBuild(self):
         """
@@ -400,7 +395,7 @@ class pytransport(elements):
         lastElementWasADrift = True  # default value
         if self.Transport._combineDrifts:
             lastElementWasADrift = False
-        for linenum, linedict in enumerate(self.Transport._elementReg.elements):
+        for linenum, linedict in enumerate(self.Transport.ElementRegistry.elements):
             if self._debug:
                 debugstring = 'Converting element number ' + _np.str(linenum) + ':'
                 self.Transport._printout(debugstring)
@@ -433,7 +428,7 @@ class pytransport(elements):
             if linedict['elementnum'] == 1.0:  # Add beam on first definition
                 if not self._beamdefined:
                     self.define_beam(linedict)
-                elif not self._dontSplit:  # Only update beyond first definition if splitting is permitted
+                elif not self.Transport._dontSplit:  # Only update beyond first definition if splitting is permitted
                     self.define_beam(linedict)
             if linedict['elementnum'] == 3.0:
                 if skipNextDrift:
@@ -507,11 +502,11 @@ class pytransport(elements):
         
         # Length update common to nearly all elements, seperate function to prevent duplication
         def _updateLength(index, fitindex, element):
-            oldlength = self._elementReg.elements[index]['length']
-            lengthDiff = self._elementReg.elements[index]['length'] - element['length']
-            self._elementReg.elements[index]['length'] = element['length']  # Update length
-            self._elementReg.length[index:] += lengthDiff                   # Update running length of subsequent elements.
-            self._elementReg._totalLength += lengthDiff                     # Update total length
+            oldlength = self.Transport.ElementRegistry.elements[index]['length']
+            lengthDiff = self.Transport.ElementRegistry.elements[index]['length'] - element['length']
+            self.Transport.ElementRegistry.elements[index]['length'] = element['length']  # Update length
+            self.Transport.ElementRegistry.length[index:] += lengthDiff                   # Update running length of subsequent elements.
+            self.Transport.ElementRegistry._totalLength += lengthDiff                     # Update total length
             lendict = {'old': _np.round(oldlength, 5),
                        'new': _np.round(element['length'], 5)}
             return lendict
@@ -522,7 +517,7 @@ class pytransport(elements):
                        'params': []}
 
             # Only length can be varied
-            if self._elementReg.elements[index]['length'] != element['length']:
+            if self.Transport.ElementRegistry.elements[index]['length'] != element['length']:
                 lendict = _updateLength(index, fitindex, element)
                 eledict['updated'] = True
                 eledict['length'] = lendict
@@ -533,15 +528,15 @@ class pytransport(elements):
                        'element': 'Quadrupole',
                        'params': []}
             
-            if self._elementReg.elements[index]['data'][1] != element['data'][1]:  # Field
-                oldvalue = self._elementReg.elements[index]['data'][1]
-                self._elementReg.elements[index]['data'][1] = element['data'][1]
+            if self.Transport.ElementRegistry.elements[index]['data'][1] != element['data'][1]:  # Field
+                oldvalue = self.Transport.ElementRegistry.elements[index]['data'][1]
+                self.Transport.ElementRegistry.elements[index]['data'][1] = element['data'][1]
                 eledict['updated'] = True
                 data = ['field', oldvalue, element['data'][1]]
                 eledict['params'].append(data)
 
-            if self._elementReg.elements[index]['length'] != element['length']:
-                self._elementReg.elements[index]['data'][0] = element['data'][0]  # Length in data
+            if self.Transport.ElementRegistry.elements[index]['length'] != element['length']:
+                self.Transport.ElementRegistry.elements[index]['data'][0] = element['data'][0]  # Length in data
                 lendict = _updateLength(index, fitindex, element)
                 eledict['updated'] = True
                 eledict['length'] = lendict
@@ -553,33 +548,33 @@ class pytransport(elements):
                        'params': []}
             
             # TODO: Need code in here to handle variation in poleface rotation. Not urgent for now.
-            if self._elementReg.elements[index]['data'][1] != element['data'][1]:  # Field
-                oldvalue = self._elementReg.elements[index]['data'][1]
-                self._elementReg.elements[index]['data'][1] = element['data'][1]
+            if self.Transport.ElementRegistry.elements[index]['data'][1] != element['data'][1]:  # Field
+                oldvalue = self.Transport.ElementRegistry.elements[index]['data'][1]
+                self.Transport.ElementRegistry.elements[index]['data'][1] = element['data'][1]
                 eledict['updated'] = True
-                if self.machineprops.benddef:  # Transport can switch dipole input definition
+                if self.Transport.machineprops.benddef:  # Transport can switch dipole input definition
                     par = 'field'
                 else:
                     par = 'angle'
                 data = [par, oldvalue, element['data'][3]]
                 eledict['params'].append(data)
-            if self._elementReg.elements[index]['length'] != element['length']:
-                self._elementReg.elements[index]['data'][0] = element['data'][0]  # Length in data
+            if self.Transport.ElementRegistry.elements[index]['length'] != element['length']:
+                self.Transport.ElementRegistry.elements[index]['data'][0] = element['data'][0]  # Length in data
                 lendict = _updateLength(index, fitindex, element)
                 eledict['updated'] = True
                 eledict['length'] = lendict
             return eledict
 
-        for index, name in enumerate(self._fitReg._uniquenames):
-            fitstart = self._fitReg.GetElementStartSPosition(name)
-            elestart = self._elementReg.GetElementStartSPosition(name)
-            fitindex = self._fitReg.GetElementIndex(name)
-            eleindex = self._elementReg.GetElementIndex(name)
+        for index, name in enumerate(self.Transport.FitRegistry._uniquenames):
+            fitstart = self.Transport.FitRegistry.GetElementStartSPosition(name)
+            elestart = self.Transport.ElementRegistry.GetElementStartSPosition(name)
+            fitindex = self.Transport.FitRegistry.GetElementIndex(name)
+            eleindex = self.Transport.ElementRegistry.GetElementIndex(name)
             for fitnum, fit in enumerate(fitstart):
                 for elenum, ele in enumerate(elestart):
                     if (_np.round(ele, 5) == _np.round(fit, 5)) and \
-                            (not self._elementReg.elements[eleindex[elenum]]['isZeroLength']):
-                        fitelement = self._fitReg.elements[fitindex[fitnum]]
+                            (not self.Transport.ElementRegistry.elements[eleindex[elenum]]['isZeroLength']):
+                        fitelement = self.Transport.FitRegistry.elements[fitindex[fitnum]]
                         if fitelement['elementnum'] == 3:
                             eledict = _updateDrift(eleindex[elenum], fitindex[fitnum], fitelement)
                         elif fitelement['elementnum'] == 4:
@@ -588,18 +583,18 @@ class pytransport(elements):
                             eledict = _updateQuad(eleindex[elenum], fitindex[fitnum], fitelement)
             
                         if eledict['updated']:
-                            self._debug_printout("\tElement " + _np.str(eleindex[elenum]) + " was updated from fitting.")
-                            self._debug_printout("\tOptics Output line:")
-                            self._debug_printout("\t\t'" + self._fitReg.lines[fitindex[fitnum]] + "'")
+                            self.Transport._debug_printout("\tElement " + _np.str(eleindex[elenum]) + " was updated from fitting.")
+                            self.Transport._debug_printout("\tOptics Output line:")
+                            self.Transport._debug_printout("\t\t'" + self.Transport.FitRegistry.lines[fitindex[fitnum]] + "'")
                             if eledict.has_key('length'):
                                 lenline = "\t"+eledict['element']+" length updated to "
                                 lenline += _np.str(eledict['length']['new'])
                                 lenline += " (from " + _np.str(eledict['length']['old']) + ")."
-                                self._debug_printout(lenline)
+                                self.Transport._debug_printout(lenline)
                             for param in eledict['params']:
                                 parline = "\t" + eledict['element'] + " " + param[0]
                                 parline += " updated to " + _np.str(param[2]) + " (from " + _np.str(param[1]) + ")."
-                                self._debug_printout(parline)
-                            self._debug_printout("\n")
+                                self.Transport._debug_printout(parline)
+                            self.Transport._debug_printout("\n")
                 
                         break

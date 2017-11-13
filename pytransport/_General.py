@@ -14,7 +14,7 @@ class _beamprops:
     """
     A class containing the properties of the inital beam distribution.
     """
-    def __init__(self,p_mass=938.272):
+    def __init__(self, p_mass=938.272):
         # beam properties that are updated along the lattice
         self.momentum = 0
         self.k_energy = 0
@@ -179,8 +179,8 @@ class Transport:
             p_mass = 1
 
         # initialise registries
-        self._elementReg = _Registry()
-        self._fitReg = _Registry()
+        self.ElementRegistry = _Registry()
+        self.FitRegistry = _Registry()
 
         # beam definition
         self._particle = particle
@@ -250,6 +250,10 @@ class Transport:
         # different beam objects depending on output type
         self.madxbeam = self.madxmachine.beam
         self.gmadbeam = self.gmadmachine.beam
+
+        # Automatic writing and machine splitting
+        self._auto = auto
+        self._dontSplit = dontSplit
 
     def _write(self):
         """

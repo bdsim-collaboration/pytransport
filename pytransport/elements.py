@@ -4,6 +4,7 @@ from pybdsim import Builder as _pyBuilder
 from _General import Transport
 import _General
 
+
 class elements:
     def __init__(self, inputfile,
                  particle      = 'proton',
