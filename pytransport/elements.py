@@ -1,26 +1,11 @@
 import numpy as _np
 
 from _General import *
-from convert import Transport
 
 
 class Elements:
-    def __init__(self, inputfile,
-                 particle      = 'proton',
-                 debug         = False,
-                 distrType     = 'gauss',
-                 gmad          = True,
-                 gmadDir       = 'gmad',
-                 madx          = False,
-                 madxDir       = 'madx',
-                 auto          = True,
-                 dontSplit     = False,
-                 keepName      = False,
-                 combineDrifts = False,
-                 outlog        = True):
-        # instantiate the main data container.
-        self.Transport = Transport(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
-                          auto, dontSplit, keepName, combineDrifts, outlog)
+    def __init__(self, transportData):
+        self.Transport = transportData
 
     def DefineBeam(self, linedict):
         if linedict['isAddition']:

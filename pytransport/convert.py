@@ -76,8 +76,10 @@ class pytransport(Elements):
                  keepName      = False,
                  combineDrifts = False,
                  outlog        = True):
-        Elements.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
-                          auto, dontSplit, keepName, combineDrifts, outlog)
+        # instantiate the main data container and pass in to element class.
+        transportData = Transport(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
+                                  auto, dontSplit, keepName, combineDrifts, outlog)
+        Elements.__init__(self, transportData)
 
         # load file automatically
         temp = _reader.reader()
