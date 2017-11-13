@@ -157,7 +157,7 @@ class _Registry:
         self._totalLength += linedict['length']
 
 
-class _Functions:
+class Transport:
     def __init__(self, inputfile,
                  particle      = 'proton',
                  debug         = False,
@@ -188,6 +188,7 @@ class _Functions:
         self._correctedbeamdef = False
 
         # File input and output
+        self._file = inputfile
         self._fileloaded = False
         self._gmadoutput = gmad
         self._gmadDir = gmadDir
@@ -250,128 +251,53 @@ class _Functions:
         self.madxbeam = self.madxmachine.beam
         self.gmadbeam = self.gmadmachine.beam
 
-        # Automatic writing and machine splitting
-        self._auto = auto
-        self._dontSplit = dontSplit
 
-        # load file automatically
-        self._load_file(inputfile)
-        self._filename = inputfile
-
-    def create_beam(self):
-        """
-        Function to prepare the beam for writing.
-        """
-        # convert energy to GeV (madx only handles GeV)
-        energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
-        self.beamprops.tot_energy = energy_in_gev
-
-        self.madxbeam.SetParticleType(self._particle)
-        self.madxbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
-
-        self.gmadbeam.SetParticleType(self._particle)
-        self.gmadbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
-
-        # set gmad parameters depending on distribution
-        if self.beamprops.distrType == 'gausstwiss':
-            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
-            self.gmadbeam.SetBetaX(self.beamprops.betx)
-            self.gmadbeam.SetBetaY(self.beamprops.bety)
-            self.gmadbeam.SetAlphaX(self.beamprops.alfx)
-            self.gmadbeam.SetAlphaY(self.beamprops.alfy)
-            self.gmadbeam.SetEmittanceX(self.beamprops.emitx, unitsstring='mm')
-            self.gmadbeam.SetEmittanceY(self.beamprops.emity, unitsstring='mm')
-            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
-            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
-
-        else:
-            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
-            self.gmadbeam.SetSigmaX(self.beamprops.SigmaX, unitsstring=self.units['x'])
-            self.gmadbeam.SetSigmaY(self.beamprops.SigmaY, unitsstring=self.units['y'])
-            self.gmadbeam.SetSigmaXP(self.beamprops.SigmaXP, unitsstring=self.units['xp'])
-            self.gmadbeam.SetSigmaYP(self.beamprops.SigmaYP, unitsstring=self.units['yp'])
-            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
-            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
-
-            # calculate betas and emittances regardless for madx beam
-            try:
-                self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
-            except ZeroDivisionError:
-                self.beamprops.betx = 0
-            try:
-                self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
-            except ZeroDivisionError:
-                self.beamprops.bety = 0
-            self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
-            self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
-
-        # set madx beam
-        self.madxbeam.SetDistributionType('madx')
-        self.madxbeam.SetBetaX(self.beamprops.betx)
-        self.madxbeam.SetBetaY(self.beamprops.bety)
-        self.madxbeam.SetAlphaX(self.beamprops.alfx)
-        self.madxbeam.SetAlphaY(self.beamprops.alfy)
-        self.madxbeam.SetEmittanceX(self.beamprops.emitx / 1000)
-        self.madxbeam.SetEmittanceY(self.beamprops.emity / 1000)
-        self.madxbeam.SetSigmaE(self.beamprops.SigmaE)
-        self.madxbeam.SetSigmaT(self.beamprops.SigmaT)
-
-        # set beam offsets in gmad if non zero
-        if self.beamprops.X0 != 0:
-            self.gmadbeam.SetX0(self.beamprops.X0, unitsstring=self.units['x'])
-        if self.beamprops.Y0 != 0:
-            self.gmadbeam.SetY0(self.beamprops.Y0, unitsstring=self.units['y'])
-        if self.beamprops.Z0 != 0:
-            self.gmadbeam.SetZ0(self.beamprops.Z0, unitsstring=self.units['z'])
-
-        self._print_beam_debug()
-
-        self.gmadmachine.AddBeam(self.gmadbeam)
-        self.madxmachine.AddBeam(self.madxbeam)
-
-    def create_options(self):
-        """
-        Function to set the Options for the BDSIM machine.
-        """
-        self.options.SetPhysicsList(physicslist='em')
-        self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
-                                       unitsstring=self.units['pipe_rad'])
-        self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
-        self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
-        self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
-        self.options.SetSamplerDiameter(radius=1, unitsstring='m')
-        self.options.SetStopTracks(stop=True)
-        self.options.SetIncludeFringeFields(on=True)
-
-        self.gmadmachine.AddOptions(self.options)
-        self.madxmachine.AddOptions(self.options)  # redundant
+class _Functions:
+    def __init__(self, inputfile,
+                 particle      = 'proton',
+                 debug         = False,
+                 distrType     = 'gauss',
+                 gmad          = True,
+                 gmadDir       = 'gmad',
+                 madx          = False,
+                 madxDir       = 'madx',
+                 auto          = True,
+                 dontSplit     = False,
+                 keepName      = False,
+                 combineDrifts = False,
+                 outlog        = True):
+        self.Transport = Transport(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
+                          auto, dontSplit, keepName, combineDrifts, outlog)
+        self._debug = debug
 
     def _write(self):
         """
         Write the converted TRANSPORT file to disk.
         """
-        if self._numberparts < 0:
+        if self.Transport._numberparts < 0:
             self._filename = self._file
         else:
-            self._numberparts += 1
-            self._filename = self._file+'_part'+_np.str(self._numberparts)
-        self.create_beam()
-        self.create_options()
-        self.gmadmachine.AddSampler('all')
-        self.madxmachine.AddSampler('all')
-        if self._gmadoutput:
-            if not CheckDirExists(self._gmadDir):
-                _os.mkdir(self._gmadDir)
-            _os.chdir(self._gmadDir)
+            self.Transport._numberparts += 1
+            self._filename = self._file+'_part'+_np.str(self.Transport._numberparts)
+        self.Transport = AddBeam(self.Transport)
+        self._print_beam_debug(self.Transport)
+
+        self.Transport = AddOptions(self.Transport)
+        self.Transport.gmadmachine.AddSampler('all')
+        self.Transport.madxmachine.AddSampler('all')
+        if self.Transport._gmadoutput:
+            if not CheckDirExists(self.Transport._gmadDir):
+                _os.mkdir(self.Transport._gmadDir)
+            _os.chdir(self.Transport._gmadDir)
             filename = self._filename + '.gmad'
-            self.gmadmachine.Write(filename)
+            self.Transport.gmadmachine.Write(filename)
             _os.chdir('../')
-        if self._madxoutput:
-            if not CheckDirExists(self._madxDir):
-                _os.mkdir(self._madxDir)
-            _os.chdir(self._madxDir)
+        if self.Transport._madxoutput:
+            if not CheckDirExists(self.Transport._madxDir):
+                _os.mkdir(self.Transport._madxDir)
+            _os.chdir(self.Transport._madxDir)
             filename = self._filename + '.madx'
-            self.madxmachine.Write(filename)
+            self.Transport.madxmachine.Write(filename)
             _os.chdir('../')
                     
     def _load_file(self, input):
@@ -387,12 +313,12 @@ class _Functions:
         infile = input.split('/')[-1]       # Remove filepath, leave just filename
         self._file = infile[:-4]            # Remove extension
         self._filename = input
-        isOutput = self._is_Output(input)   # Is a TRANSPORT standard output file.
+        isOutput = CheckIsOutput(input)        # Is a TRANSPORT standard output file.
 
         if isOutput:
             lattice, output = temp._getLatticeAndOptics(input)
             fits, fitres = temp._getFits(input)
-            self._outputfits_to_registry(fitres)
+            self.Transport = OutputFitsToRegistry(self.Transport, fitres)
             self._debug_printout('\tAdding any fitting output to the fitting registry (self._fitReg)')
             for linenum, latticeline in enumerate(lattice):
                 latticeline = latticeline.replace(';', '')
@@ -413,11 +339,11 @@ class _Functions:
                     if (linenum > 1) and _np.abs(_np.float(prevline[0])) == 12.0:
                         pass
                     else:
-                        self.data.append(line)
-                        self.filedata.append(latticeline)
+                        self.Transport.data.append(line)
+                        self.Transport.filedata.append(latticeline)
                 except ValueError:
-                    self.data.append(line)
-                    self.filedata.append(latticeline)
+                    self.Transport.data.append(line)
+                    self.Transport.filedata.append(latticeline)
                 except IndexError:
                     pass
                     
@@ -432,29 +358,15 @@ class _Functions:
                 # do not change comment lines
                 if not line[0][0] == '(':
                     line = RemoveIllegals(line)
-                self.data.append(line)
-                self.filedata.append(inputline)
+                self.Transport.data.append(line)
+                self.Transport.filedata.append(inputline)
             f.close()
         self._fileloaded = True
-
-    def _get_preamble(self):  # Redundant until pybdsim can handle comments.
-        """
-        Function to read any preamble at the start of the TRANSPORT file.
-        """
-        indc, linenum = GetIndicator(self.data)
-        gmadpreamble = []
-        for line in self.data[:linenum-1]:
-            if line == '\r\n':
-                pass
-            else:
-                gmadline = '!' + line
-                gmadpreamble.append(gmadline)
-        return gmadpreamble
 
     def _printout(self, line):
         sys.stdout.write(line+'\n')
         logfile = self._file + '_conversion.log'
-        if self._outlog:
+        if self.Transport._outlog:
             self._logfile = open(logfile, 'a')
             self._logfile.write(line)
             self._logfile.write('\n')
@@ -469,197 +381,24 @@ class _Functions:
         if self._debug:
             self._printout(line)
 
-    def _print_beam_debug(self):
+    def _print_beam_debug(self, transport):
         self._debug_printout('\t Beam definition :')
-        self._debug_printout('\t distrType = ' + self.beamprops.distrType)
-        self._debug_printout('\t energy = '  + _np.str(self.beamprops.tot_energy) + ' GeV')
-        self._debug_printout('\t SigmaX = '  + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
-        self._debug_printout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
-        self._debug_printout('\t SigmaY = '  + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
-        self._debug_printout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
-        self._debug_printout('\t SigmaE = '  + _np.str(self.beamprops.SigmaE))
-        self._debug_printout('\t SigmaT = '  + _np.str(self.beamprops.SigmaT))
-        self._debug_printout('\t (Final brho = '+_np.str(_np.round(self.beamprops.brho, 2))+' Tm)')
+        self._debug_printout('\t distrType = ' + transport.beamprops.distrType)
+        self._debug_printout('\t energy = '  + _np.str(transport.beamprops.tot_energy) + ' GeV')
+        self._debug_printout('\t SigmaX = '  + _np.str(transport.beamprops.SigmaX) + ' ' + transport.units['x'])
+        self._debug_printout('\t SigmaXP = ' + _np.str(transport.beamprops.SigmaXP) + ' ' + transport.units['xp'])
+        self._debug_printout('\t SigmaY = '  + _np.str(transport.beamprops.SigmaY) + ' ' + transport.units['y'])
+        self._debug_printout('\t SigmaYP = ' + _np.str(transport.beamprops.SigmaYP) + ' ' + transport.units['yp'])
+        self._debug_printout('\t SigmaE = '  + _np.str(transport.beamprops.SigmaE))
+        self._debug_printout('\t SigmaT = '  + _np.str(transport.beamprops.SigmaT))
+        self._debug_printout('\t (Final brho = ' + _np.str(_np.round(transport.beamprops.brho, 2)) + ' Tm)')
         self._debug_printout('\t Twiss Params:')
-        self._debug_printout('\t BetaX = ' +_np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-        self._debug_printout('\t BetaY = ' +_np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-        self._debug_printout('\t AlphaX = '+_np.str(self.beamprops.alfx))
-        self._debug_printout('\t AlphaY = '+_np.str(self.beamprops.alfy))
-        self._debug_printout('\t Emittx = '+_np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-        self._debug_printout('\t EmittY = '+_np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
-
-    def _bunch_length_convert(self, bunch_length):
-        """
-        Function to convert bunch length unit in TRANSPORT into seconds.
-        """
-        scale = self.scale[self.units['bunch_length'][0]]   
-        blmeters = bunch_length * scale  # Bunch length scaled to metres
-        blseconds = blmeters / (self.beamprops.beta*_con.c)  # Length converted to seconds
-        return blseconds
-
-    def _scale_to_meters(self, quantity):
-        """
-        Function to scale quantity (string) to meters, returns conversion factor.
-        """
-        if self.units[quantity] != 'm':
-            conversionFactor = self.scale[self.units[quantity][0]]
-        else:
-            conversionFactor = 1
-        return conversionFactor
-
-    def _calculate_energy(self, momentum):
-        """
-        Function to calculate:
-            Total Energy
-            Kinetic Energy
-            Momentum
-            Lorentz factor (gamma)
-            Velocity (beta)
-            Magnetic rigidity (brho)
-        """
-        momentum = _np.float(momentum)
-        self.beamprops.momentum = momentum
-        p_mass = self.beamprops.mass  # Particle rest mass (in GeV)
-        scaling = 1
-        mom_in_ev = momentum
-
-        mom_unit = self.units['p_egain']
-        if mom_unit != 'eV':
-            scaling = 1e9 / self.scale[mom_unit[0]]     # Scaling relative to mom. unit
-            mom_in_ev = momentum * self.scale[mom_unit[0]]
-        elif mom_unit == 'eV':
-            scaling = 1e9                               # Scaling relative to 1 eV
-            mom_in_ev = momentum
-        p_mass *= scaling                               # Scale particle rest mass
-        energy = _np.sqrt((p_mass**2) + (momentum**2))
-        self.beamprops.tot_energy = energy
-        self.beamprops.tot_energy_current = energy
-        self.beamprops.k_energy = energy - p_mass
-        self.beamprops.gamma = energy / p_mass
-        self.beamprops.beta = _np.sqrt((1.0 - (1.0 / self.beamprops.gamma**2)))
-        self.beamprops.brho = mom_in_ev / _con.c
-
-    def _calculate_momentum(self, k_energy):
-        """
-        Function to calculate:
-            Total Energy
-            Kinetic Energy
-            Momentum
-            Lorentz factor (gamma)
-            Velocity (beta)
-            Magnetic rigidity (brho)
-        """
-        scaling = 1  # defaults
-        mom_in_ev = 0
-        k_energy = _np.float(k_energy)
-
-        self.beamprops.k_energy = k_energy
-        p_mass = self.beamprops.mass  # Particle rest mass (in GeV)
-        
-        e_unit = self.units['p_egain']
-        if e_unit != 'eV':
-            scaling = 1e9 / self.scale[e_unit[0]]     # Scaling relative to mom. unit
-        elif e_unit == 'eV':
-            scaling = 1e9                             # Scaling relative to 1 eV
-        p_mass *= scaling                             # Scale particle rest mass
-
-        # energy = _np.sqrt((p_mass**2 * _con.c**2) + (momentum**2 * _con.c**2)) / _con.c
-
-        self.beamprops.tot_energy_current = k_energy + p_mass
-        self.beamprops.momentum = _np.sqrt((self.beamprops.tot_energy_current**2) - (p_mass**2))
-
-        self.beamprops.gamma = self.beamprops.tot_energy_current / p_mass
-        self.beamprops.beta = _np.sqrt((1.0 - (1.0 / self.beamprops.gamma**2)))
-
-        if e_unit != 'eV':
-            mom_in_ev = self.beamprops.momentum * self.scale[e_unit[0]]
-        elif e_unit == 'eV':
-            mom_in_ev = self.beamprops.momentum
-
-        self.beamprops.brho = mom_in_ev / _con.c
-
-    def _process_fits(self, fits):  # redundant
-        # First split the fitting output into its respective sections (input problem step).
-        fitsections = []
-        fitsstarts = []
-        # Start line of each section
-        for linenum, line in enumerate(fits):
-            if line.startswith('1'):
-                fitsstarts.append(linenum)
-            
-        for secnum in range(len(fitsstarts)):
-            if secnum+1 < len(fitsstarts):
-                section = fits[fitsstarts[secnum]:fitsstarts[secnum+1]]
-            else:
-                section = fits[fitsstarts[secnum]:]
-            lines = []
-            for line in section:
-                lines.append(RemoveIllegals(line.split(' ')))
-            fitsections.append(lines)
-            
-        magnetlines = []
-        for section in fitsections:
-            for line in section:
-                if (len(line) > 0) and (line[0][0] == '*' and line[0][-1] == '*') and line[0] != '*FIT*':
-                    magnetlines.append(line)
-
-    def _outputfits_to_registry(self, outputdata):
-        isLegal = {'*DRIFT*': 3.0,
-                   '*QUAD*': 5.0,
-                   '*BEND*': 4.0}
-                  
-        for line in outputdata:
-            append = False
-            linedict = {'elementnum': 0.0,
-                        'name': '',
-                        'length': 0.0}
-            data = RemoveIllegals(line.split(' '))
-            eledata = GetElementData(data)
-            label = GetLabel(data)
-            if data[0] in isLegal:
-                linedict['elementnum'] = isLegal[data[0]]
-                linedict['name'] = label
-                linedict['data'] = eledata[1:]  # first value is elementnum.
-                linedict['length'] = eledata[1]
-                append = True
-
-            # Only add an element with a name to the fitting registry.
-            # (Element has to be named to be varied in the fitting routine).
-            # Otherwise update the total length of the machine.
-            if append and (label is not None) and (label != ''):
-                self._fitReg.AddToRegistry(linedict, line)
-            else:
-                self._fitReg.UpdateLength(linedict)
-
-    def _is_Output(self, inputfile):
-        """
-        Function to check if a file is a standard TRANSPORT output file.
-        Based upon existence of the lines:
-            "0  XXX"
-        being present, which represents the TRANSPORT indicator card line.
-        X can be 0, 1, 2. Default is 0.
-        """
-        temp = _reader.reader()
-        isOutput = False
-        try:
-            f = open(inputfile)
-            for inputline in f:
-                inputline = inputline.replace("\r", '')
-                inputline = inputline.replace("\n", '')
-                if inputline in temp._allowedIndicatorLines:
-                    isOutput = True
-                    break
-            f.close()
-        except IOError:
-            self._printout('Cannot open file.')
-        return isOutput
-
-    def _transformUpdate(self, linedict):
-        if linedict['elementnum'] == 6.0:
-            errorline = '\tElement is either a transform update or a collimator. The type code 6 definition'
-            errorline2 = '\thas not been switched to collimators, therefore nothing will be done for this element.'
-            self._debug_printout(errorline)
-            self._debug_printout(errorline2)
+        self._debug_printout('\t BetaX = '  + _np.str(transport.beamprops.betx) + ' ' + transport.units['beta_func'])
+        self._debug_printout('\t BetaY = '  + _np.str(transport.beamprops.bety) + ' ' + transport.units['beta_func'])
+        self._debug_printout('\t AlphaX = ' + _np.str(transport.beamprops.alfx))
+        self._debug_printout('\t AlphaY = ' + _np.str(transport.beamprops.alfy))
+        self._debug_printout('\t Emittx = ' + _np.str(transport.beamprops.emitx) + ' ' + transport.units['emittance'])
+        self._debug_printout('\t EmittY = ' + _np.str(transport.beamprops.emity) + ' ' + transport.units['emittance'])
 
 
 def GetTypeNum(line):
@@ -989,3 +728,285 @@ def GetFaceRotationAngles(data, linenum):
     angleout = searchForAngle(data[linenum + 1:(linenum + 6)])
 
     return anglein, angleout
+
+
+def _get_preamble(data):  # Redundant until pybdsim can handle comments.
+    """
+    Function to read any preamble at the start of the TRANSPORT file.
+    """
+    indc, linenum = GetIndicator(data)
+    gmadpreamble = []
+    # for line in self.Transport.data[:linenum-1]:
+    for line in data:
+        if line == '\r\n':
+            pass
+        else:
+            gmadline = '!' + line
+            gmadpreamble.append(gmadline)
+    return gmadpreamble
+
+
+def _process_fits(fits):  # redundant
+    # First split the fitting output into its respective sections (input problem step).
+    fitsections = []
+    fitsstarts = []
+    # Start line of each section
+    for linenum, line in enumerate(fits):
+        if line.startswith('1'):
+            fitsstarts.append(linenum)
+
+    for secnum in range(len(fitsstarts)):
+        if secnum + 1 < len(fitsstarts):
+            section = fits[fitsstarts[secnum]:fitsstarts[secnum + 1]]
+        else:
+            section = fits[fitsstarts[secnum]:]
+        lines = []
+        for line in section:
+            lines.append(RemoveIllegals(line.split(' ')))
+        fitsections.append(lines)
+
+    magnetlines = []
+    for section in fitsections:
+        for line in section:
+            if (len(line) > 0) and (line[0][0] == '*' and line[0][-1] == '*') and line[0] != '*FIT*':
+                magnetlines.append(line)
+
+
+def OutputFitsToRegistry(transport, outputdata):
+    isLegal = {'*DRIFT*': 3.0,
+               '*QUAD*': 5.0,
+               '*BEND*': 4.0}
+
+    for line in outputdata:
+        append = False
+        linedict = {'elementnum': 0.0,
+                    'name': '',
+                    'length': 0.0}
+        data = RemoveIllegals(line.split(' '))
+        eledata = GetElementData(data)
+        label = GetLabel(data)
+        if data[0] in isLegal:
+            linedict['elementnum'] = isLegal[data[0]]
+            linedict['name'] = label
+            linedict['data'] = eledata[1:]  # first value is elementnum.
+            linedict['length'] = eledata[1]
+            append = True
+
+        # Only add an element with a name to the fitting registry.
+        # (Element has to be named to be varied in the fitting routine).
+        # Otherwise update the total length of the machine.
+        if append and (label is not None) and (label != ''):
+            transport._fitReg.AddToRegistry(linedict, line)
+        else:
+            transport._fitReg.UpdateLength(linedict)
+    return transport
+
+
+def ConvertBunchLength(transport, bunch_length):
+    """
+    Function to convert bunch length unit in TRANSPORT into seconds.
+    """
+    scale = transport.scale[transport.units['bunch_length'][0]]
+    blmeters = bunch_length * scale  # Bunch length scaled to metres
+    blseconds = blmeters / (transport.beamprops.beta*_con.c)  # Length converted to seconds
+    return blseconds
+
+
+def UpdateMomentumFromEnergy(transport, k_energy):
+    """
+    Function to calculate (from kinetic energy):
+        Total Energy
+        Kinetic Energy
+        Momentum
+        Lorentz factor (gamma)
+        Velocity (beta)
+        Magnetic rigidity (brho)
+    """
+    scaling = 1  # defaults
+    mom_in_ev = 0
+    k_energy = _np.float(k_energy)
+
+    transport.beamprops.k_energy = k_energy
+    p_mass = transport.beamprops.mass  # Particle rest mass (in GeV)
+
+    e_unit = transport.units['p_egain']
+    if e_unit != 'eV':
+        scaling = 1e9 / transport.scale[e_unit[0]]  # Scaling relative to mom. unit
+    elif e_unit == 'eV':
+        scaling = 1e9  # Scaling relative to 1 eV
+    p_mass *= scaling  # Scale particle rest mass
+
+    # energy = _np.sqrt((p_mass**2 * _con.c**2) + (momentum**2 * _con.c**2)) / _con.c
+
+    transport.beamprops.tot_energy_current = k_energy + p_mass
+    transport.beamprops.momentum = _np.sqrt((transport.beamprops.tot_energy_current ** 2) - (p_mass ** 2))
+
+    transport.beamprops.gamma = transport.beamprops.tot_energy_current / p_mass
+    transport.beamprops.beta = _np.sqrt((1.0 - (1.0 / transport.beamprops.gamma ** 2)))
+
+    if e_unit != 'eV':
+        mom_in_ev = transport.beamprops.momentum * transport.scale[e_unit[0]]
+    elif e_unit == 'eV':
+        mom_in_ev = transport.beamprops.momentum
+
+    transport.beamprops.brho = mom_in_ev / _con.c
+    return transport
+
+
+def UpdateEnergyFromMomentum(transport, momentum):
+    """
+    Function to calculate (from momentum):
+        Total Energy
+        Kinetic Energy
+        Momentum
+        Lorentz factor (gamma)
+        Velocity (beta)
+        Magnetic rigidity (brho)
+    """
+    momentum = _np.float(momentum)
+    transport.beamprops.momentum = momentum
+    p_mass = transport.beamprops.mass  # Particle rest mass (in GeV)
+    scaling = 1
+    mom_in_ev = momentum
+
+    mom_unit = transport.units['p_egain']
+    if mom_unit != 'eV':
+        scaling = 1e9 / transport.scale[mom_unit[0]]     # Scaling relative to mom. unit
+        mom_in_ev = momentum * transport.scale[mom_unit[0]]
+    elif mom_unit == 'eV':
+        scaling = 1e9                               # Scaling relative to 1 eV
+        mom_in_ev = momentum
+    p_mass *= scaling                               # Scale particle rest mass
+    energy = _np.sqrt((p_mass**2) + (momentum**2))
+    transport.beamprops.tot_energy = energy
+    transport.beamprops.tot_energy_current = energy
+    transport.beamprops.k_energy = energy - p_mass
+    transport.beamprops.gamma = energy / p_mass
+    transport.beamprops.beta = _np.sqrt((1.0 - (1.0 / transport.beamprops.gamma**2)))
+    transport.beamprops.brho = mom_in_ev / _con.c
+    return transport
+
+
+def AddOptions(transport):
+    """
+    Function to set the Options for the BDSIM machine.
+    """
+    transport.options.SetPhysicsList(physicslist='em')
+    transport.options.SetBeamPipeRadius(beampiperadius=transport.machineprops.beampiperadius,
+                                   unitsstring=transport.units['pipe_rad'])
+    transport.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
+    transport.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
+    transport.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
+    transport.options.SetSamplerDiameter(radius=1, unitsstring='m')
+    transport.options.SetStopTracks(stop=True)
+    transport.options.SetIncludeFringeFields(on=True)
+
+    transport.gmadmachine.AddOptions(transport.options)
+    transport.madxmachine.AddOptions(transport.options)  # redundant
+    return transport
+
+
+def AddBeam(transport):
+    """
+    Function to prepare the beam for writing.
+    """
+    # convert energy to GeV (madx only handles GeV)
+    energy_in_gev = transport.beamprops.tot_energy * transport.scale[transport.units['p_egain'][0]] / 1e9
+    transport.beamprops.tot_energy = energy_in_gev
+
+    transport.madxbeam.SetParticleType(transport._particle)
+    transport.madxbeam.SetEnergy(energy=transport.beamprops.tot_energy, unitsstring='GeV')
+
+    transport.gmadbeam.SetParticleType(transport._particle)
+    transport.gmadbeam.SetEnergy(energy=transport.beamprops.tot_energy, unitsstring='GeV')
+
+    # set gmad parameters depending on distribution
+    if transport.beamprops.distrType == 'gausstwiss':
+        transport.gmadbeam.SetDistributionType(transport.beamprops.distrType)
+        transport.gmadbeam.SetBetaX(transport.beamprops.betx)
+        transport.gmadbeam.SetBetaY(transport.beamprops.bety)
+        transport.gmadbeam.SetAlphaX(transport.beamprops.alfx)
+        transport.gmadbeam.SetAlphaY(transport.beamprops.alfy)
+        transport.gmadbeam.SetEmittanceX(transport.beamprops.emitx, unitsstring='mm')
+        transport.gmadbeam.SetEmittanceY(transport.beamprops.emity, unitsstring='mm')
+        transport.gmadbeam.SetSigmaE(transport.beamprops.SigmaE)
+        transport.gmadbeam.SetSigmaT(transport.beamprops.SigmaT)
+
+    else:
+        transport.gmadbeam.SetDistributionType(transport.beamprops.distrType)
+        transport.gmadbeam.SetSigmaX(transport.beamprops.SigmaX, unitsstring=transport.units['x'])
+        transport.gmadbeam.SetSigmaY(transport.beamprops.SigmaY, unitsstring=transport.units['y'])
+        transport.gmadbeam.SetSigmaXP(transport.beamprops.SigmaXP, unitsstring=transport.units['xp'])
+        transport.gmadbeam.SetSigmaYP(transport.beamprops.SigmaYP, unitsstring=transport.units['yp'])
+        transport.gmadbeam.SetSigmaE(transport.beamprops.SigmaE)
+        transport.gmadbeam.SetSigmaT(transport.beamprops.SigmaT)
+
+        # calculate betas and emittances regardless for madx beam
+        try:
+            transport.beamprops.betx = transport.beamprops.SigmaX / transport.beamprops.SigmaXP
+        except ZeroDivisionError:
+            transport.beamprops.betx = 0
+        try:
+            transport.beamprops.bety = transport.beamprops.SigmaY / transport.beamprops.SigmaYP
+        except ZeroDivisionError:
+            transport.beamprops.bety = 0
+        transport.beamprops.emitx = transport.beamprops.SigmaX * transport.beamprops.SigmaXP / 1000.0
+        transport.beamprops.emity = transport.beamprops.SigmaY * transport.beamprops.SigmaYP / 1000.0
+
+    # set madx beam
+    transport.madxbeam.SetDistributionType('madx')
+    transport.madxbeam.SetBetaX(transport.beamprops.betx)
+    transport.madxbeam.SetBetaY(transport.beamprops.bety)
+    transport.madxbeam.SetAlphaX(transport.beamprops.alfx)
+    transport.madxbeam.SetAlphaY(transport.beamprops.alfy)
+    transport.madxbeam.SetEmittanceX(transport.beamprops.emitx / 1000)
+    transport.madxbeam.SetEmittanceY(transport.beamprops.emity / 1000)
+    transport.madxbeam.SetSigmaE(transport.beamprops.SigmaE)
+    transport.madxbeam.SetSigmaT(transport.beamprops.SigmaT)
+
+    # set beam offsets in gmad if non zero
+    if transport.beamprops.X0 != 0:
+        transport.gmadbeam.SetX0(transport.beamprops.X0, unitsstring=transport.units['x'])
+    if transport.beamprops.Y0 != 0:
+        transport.gmadbeam.SetY0(transport.beamprops.Y0, unitsstring=transport.units['y'])
+    if transport.beamprops.Z0 != 0:
+        transport.gmadbeam.SetZ0(transport.beamprops.Z0, unitsstring=transport.units['z'])
+
+    transport.gmadmachine.AddBeam(transport.gmadbeam)
+    transport.madxmachine.AddBeam(transport.madxbeam)
+    return transport
+
+
+def ScaleToMeters(transport, quantity):
+    """
+    Function to scale quantity (string) to meters, returns conversion factor.
+    """
+    if transport.units[quantity] != 'm':
+        conversionFactor = transport.scale[transport.units[quantity][0]]
+    else:
+        conversionFactor = 1
+    return conversionFactor
+
+
+def CheckIsOutput(inputfile):
+    """
+    Function to check if a file is a standard TRANSPORT output file.
+    Based upon existence of the lines:
+        "0  XXX"
+    being present, which represents the TRANSPORT indicator card line.
+    X can be 0, 1, 2. Default is 0.
+    """
+    temp = _reader.reader()
+    isOutput = False
+    try:
+        f = open(inputfile)
+        for inputline in f:
+            inputline = inputline.replace("\r", '')
+            inputline = inputline.replace("\n", '')
+            if inputline in temp._allowedIndicatorLines:
+                isOutput = True
+                break
+        f.close()
+    except IOError:
+        raise IOError('Cannot open file.')
+    return isOutput

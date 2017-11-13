@@ -26,8 +26,8 @@ class elements(_Functions):
             if self._debug:
                 self._printout('\tIgnoring beam rms addition.')
             return
-        if self._beamdefined and not self._dontSplit:
-            self._numberparts += 1
+        if self._beamdefined and not self.Transport._dontSplit:
+            self.Transport._numberparts += 1
             self._write()
             self._printout('Writing...')
             del self.gmadmachine
@@ -44,27 +44,27 @@ class elements(_Functions):
         self._beamdefined = True
        
         # Convert momentum to energy and set distribution params.
-        self._calculate_energy(momentum)
-        self.beamprops.SigmaX  = _np.float(linedict['Sigmax'])
-        self.beamprops.SigmaY  = _np.float(linedict['Sigmay'])
-        self.beamprops.SigmaXP = _np.float(linedict['Sigmaxp'])
-        self.beamprops.SigmaYP = _np.float(linedict['Sigmayp'])
-        self.beamprops.SigmaE  = _np.float(linedict['SigmaE']) * 0.01 * (self.beamprops.beta**2)  # Convert from percentage mom spread to absolute espread
-        self.beamprops.SigmaT  = self._bunch_length_convert(_np.float(linedict['SigmaT']))  # Get bunch length in seconds.
+        self.Transport = _General.UpdateEnergyFromMomentum(self.Transport, momentum)
+        self.Transport.beamprops.SigmaX  = _np.float(linedict['Sigmax'])
+        self.Transport.beamprops.SigmaY  = _np.float(linedict['Sigmay'])
+        self.Transport.beamprops.SigmaXP = _np.float(linedict['Sigmaxp'])
+        self.Transport.beamprops.SigmaYP = _np.float(linedict['Sigmayp'])
+        self.Transport.beamprops.SigmaE  = _np.float(linedict['SigmaE']) * 0.01 * (self.Transport.beamprops.beta**2)  # Convert from percentage mom spread to absolute espread
+        self.Transport.beamprops.SigmaT  = _General.ConvertBunchLength(self.Transport, _np.float(linedict['SigmaT']))  # Get bunch length in seconds.
 
         # Calculate Initial Twiss params
         try:
-            self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
+            self.Transport.beamprops.betx = self.Transport.beamprops.SigmaX / self.Transport.beamprops.SigmaXP
         except ZeroDivisionError:
-            self.beamprops.betx = 0
+            self.Transport.beamprops.betx = 0
         try:
-            self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
+            self.Transport.beamprops.bety = self.Transport.beamprops.SigmaY / self.Transport.beamprops.SigmaYP
         except ZeroDivisionError:
-            self.beamprops.bety = 0
-        self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
-        self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
+            self.Transport.beamprops.bety = 0
+        self.Transport.beamprops.emitx = self.Transport.beamprops.SigmaX * self.Transport.beamprops.SigmaXP / 1000.0
+        self.Transport.beamprops.emity = self.Transport.beamprops.SigmaY * self.Transport.beamprops.SigmaYP / 1000.0
 
-        self._print_beam_debug()
+        self._print_beam_debug(self.Transport)
 
     def drift(self, linedict):
         driftlen = linedict['length']
@@ -72,14 +72,14 @@ class elements(_Functions):
             self._debug_printout('\tZero or negative length element, ignoring.')
             return
     
-        lenInM = driftlen * self._scale_to_meters('element_length')  # length in metres
+        lenInM = driftlen * _General.ScaleToMeters(self.Transport, 'element_length')  # length in metres
 
-        self.machineprops.drifts += 1
+        self.Transport.machineprops.drifts += 1
         elementid = ''
-        if self._keepName:
+        if self.Transport._keepName:
             elementid = linedict['name']
         if not elementid:  # check on empty string
-            elementid = 'DR'+_np.str(self.machineprops.drifts)
+            elementid = 'DR'+_np.str(self.Transport.machineprops.drifts)
 
         self.gmadmachine.AddDrift(name=elementid, length=lenInM)
         self.madxmachine.AddDrift(name=elementid, length=lenInM)
@@ -93,10 +93,8 @@ class elements(_Functions):
         length = dipoledata[0]  # First two non-blanks must be the entries in a specific order.
         
         # Get poleface rotation
-        # e1 = self._facerotation(line,linenum-1) * (_np.pi / 180.0) * self.machineprops.bending
-        # e2 = self._facerotation(line,linenum+1) * (_np.pi / 180.0) * self.machineprops.bending
-        e1 = linedict['e1'] * ((_np.pi / 180.0)*self.machineprops.bending)  # Entrance pole face rotation.
-        e2 = linedict['e2'] * ((_np.pi / 180.0)*self.machineprops.bending)  # Exit pole face rotation.
+        e1 = linedict['e1'] * ((_np.pi / 180.0)*self.Transport.machineprops.bending)  # Entrance pole face rotation.
+        e2 = linedict['e2'] * ((_np.pi / 180.0)*self.Transport.machineprops.bending)  # Exit pole face rotation.
         
         if e1 != 0:
             self._debug_printout('\tPreceding element (' + _np.str(linenum-1) + ') provides an entrance poleface rotation of ' + _np.str(_np.round(e1, 4)) + ' rad.')
@@ -107,53 +105,53 @@ class elements(_Functions):
         fintval = 0
         fintxval = 0
         if e1 != 0:
-            fintval = self.machineprops.fringeIntegral
+            fintval = self.Transport.machineprops.fringeIntegral
         if e2 != 0:
-            fintxval = self.machineprops.fringeIntegral
+            fintxval = self.Transport.machineprops.fringeIntegral
         if (fintval != 0) or (fintxval != 0):
-            self._debug_printout('\tA previous entry set the fringe field integral K1=' + _np.str(self.machineprops.fringeIntegral) + '.')
+            self._debug_printout('\tA previous entry set the fringe field integral K1=' + _np.str(self.Transport.machineprops.fringeIntegral) + '.')
         if (fintval != 0) and (e1 != 0):
             self._debug_printout('\tSetting fint=' + _np.str(fintval) + '.')
         if (fintxval != 0) and (e2 != 0):
             self._debug_printout('\tSetting fintx=' + _np.str(fintxval) + '.')
 
         # Calculate bending angle
-        if self.machineprops.benddef:
+        if self.Transport.machineprops.benddef:
             bfield = dipoledata[1]
-            field_in_Gauss = bfield * self.scale[self.units['magnetic_fields'][0]]  # Scale to Gauss
+            field_in_Gauss = bfield * self.Transport.scale[self.Transport.units['magnetic_fields'][0]]  # Scale to Gauss
             field_in_Tesla = field_in_Gauss * 1e-4                                  # Convert to Tesla
             if field_in_Tesla == 0:
                 angle = 0                                                           # zero field = zero angle
             else:
-                rho = self.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
-                angle = (_np.float(length) / rho) * self.machineprops.bending       # for direction of bend
+                rho = self.Transport.beamprops.brho / (_np.float(field_in_Tesla))             # Calculate bending radius.
+                angle = (_np.float(length) / rho) * self.Transport.machineprops.bending       # for direction of bend
             self._debug_printout('\tbfield = ' + _np.str(field_in_Gauss) + ' kG')
             self._debug_printout('\tbfield = ' + _np.str(field_in_Tesla) + ' T')
             self._debug_printout('\tCorresponds to angle of ' + _np.str(_np.round(angle, 4)) + ' rad.')
         else:
             angle_in_deg = dipoledata[1]
-            angle = angle_in_deg * (_np.pi/180.) * self.machineprops.bending
+            angle = angle_in_deg * (_np.pi/180.) * self.Transport.machineprops.bending
         
         # Convert element length
-        lenInM = length * self._scale_to_meters('element_length')
+        lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
         
-        self.machineprops.dipoles += 1
+        self.Transport.machineprops.dipoles += 1
         elementid = ''
-        if self._keepName:
+        if self.Transport._keepName:
             elementid = linedict['name']
         if not elementid:  # check on empty string
-            elementid = 'BM' + _np.str(self.machineprops.dipoles)
+            elementid = 'BM' + _np.str(self.Transport.machineprops.dipoles)
         
         # Check for non zero pole face rotation
         if (e1 != 0) and (e2 != 0):
-            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1,4), e2=_np.round(e2,4), fint=fintval, fintx=fintxval)
-            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1,4), e2=_np.round(e2,4), fint=fintval, fintx=fintxval)
+            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4), fint=fintval, fintx=fintxval)
+            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4), fint=fintval, fintx=fintxval)
         elif (e1 != 0) and (e2 == 0):
-            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1,4), fint=fintval)
-            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1,4), fint=fintval)
+            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintval)
+            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintval)
         elif (e1 == 0) and (e2 != 0):
-            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2,4), fintx=fintxval)
-            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2,4), fintx=fintxval)
+            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2, 4), fintx=fintxval)
+            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2, 4), fintx=fintxval)
         else:
             self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
             self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
@@ -191,24 +189,24 @@ class elements(_Functions):
         rotation = False
         elementid = ''
 
-        self.machineprops.angle = _np.float(angle)
-        if self.machineprops.angle >= 360:
-            self.machineprops.angle = _np.mod(self.machineprops.angle, 360)
-        if self.machineprops.angle <= -360:
-            self.machineprops.angle = _np.mod(self.machineprops.angle, -360)
+        self.Transport.machineprops.angle = _np.float(angle)
+        if self.Transport.machineprops.angle >= 360:
+            self.Transport.machineprops.angle = _np.mod(self.Transport.machineprops.angle, 360)
+        if self.Transport.machineprops.angle <= -360:
+            self.Transport.machineprops.angle = _np.mod(self.Transport.machineprops.angle, -360)
 
-        if self.machineprops.angle == 180 or self.machineprops.angle == -180:  # If 180 degrees, switch bending angle
-            self.machineprops.bending *= -1
+        if self.Transport.machineprops.angle == 180 or self.Transport.machineprops.angle == -180:  # If 180 degrees, switch bending angle
+            self.Transport.machineprops.bending *= -1
 
-        elif self.machineprops.angle != 0:  # If not 180 degrees, use transform3d.
+        elif self.Transport.machineprops.angle != 0:  # If not 180 degrees, use transform3d.
             # self.machineprops.angle *= -1
             # For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.
-            anginrad = self.machineprops.angle * (_np.pi / 180)
-            self.machineprops.transforms += 1
-            if self._keepName:
+            anginrad = self.Transport.machineprops.angle * (_np.pi / 180)
+            self.Transport.machineprops.transforms += 1
+            if self.Transport._keepName:
                 elementid = linedict['name']
             if not elementid:  # check on empty string
-                elementid = 't' + _np.str(self.machineprops.transforms)
+                elementid = 't' + _np.str(self.Transport.machineprops.transforms)
             self.gmadmachine.AddTransform3D(name=elementid, psi=anginrad)
             # MadX Builder does not have transform 3d
             # Comment out and print warning
@@ -219,11 +217,11 @@ class elements(_Functions):
         
         if rotation:
             self._debug_printout('\tConverted to:')
-            debugstring = '\tTransform3D ' + elementid + ', angle ' + _np.str(_np.round(self.machineprops.angle, 4)) + ' rad'
+            debugstring = '\tTransform3D ' + elementid + ', angle ' + _np.str(_np.round(self.Transport.machineprops.angle, 4)) + ' rad'
             self._debug_printout('\t'+debugstring)
-        elif self.machineprops.angle == 180:
+        elif self.Transport.machineprops.angle == 180:
             self._debug_printout('\tBending direction set to Right')
-        elif self.machineprops.angle == -180:
+        elif self.Transport.machineprops.angle == -180:
             self._debug_printout('\tBending direction set to Left')
 
     def quadrupole(self, linedict):
@@ -232,33 +230,33 @@ class elements(_Functions):
         field_at_tip = quaddata[1]  # Field in TRANSPORT units 
         pipe_rad = quaddata[2]      # Pipe Radius In TRANSPORT units
         
-        field_in_Gauss = field_at_tip * self.scale[self.units['magnetic_fields'][0]]  # Convert to Gauss
+        field_in_Gauss = field_at_tip * self.Transport.scale[self.Transport.units['magnetic_fields'][0]]  # Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
         
-        pipe_in_metres = pipe_rad * self._scale_to_meters('bend_vert_gap')
-        lenInM = length * self._scale_to_meters('element_length')
+        pipe_in_metres = pipe_rad * _General.ScaleToMeters(self.Transport, 'bend_vert_gap')
+        lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
         
-        field_gradient = (field_in_Tesla / pipe_in_metres) / self.beamprops.brho  # K1 in correct units
+        field_gradient = (field_in_Tesla / pipe_in_metres) / self.Transport.beamprops.brho  # K1 in correct units
         
-        self.machineprops.quads += 1
+        self.Transport.machineprops.quads += 1
 
         elementid = ''
-        if self._keepName:
+        if self.Transport._keepName:
             elementid = linedict['name']
         if not elementid:  # check on empty string
             if field_gradient > 0:
-                elementid = 'QF' + _np.str(self.machineprops.quads)
+                elementid = 'QF' + _np.str(self.Transport.machineprops.quads)
             elif field_gradient < 0:
-                elementid = 'QD' + _np.str(self.machineprops.quads)
+                elementid = 'QD' + _np.str(self.Transport.machineprops.quads)
             else:
-                elementid = 'NULLQUAD' + _np.str(self.machineprops.quads)  # For K1 = 0.
+                elementid = 'NULLQUAD' + _np.str(self.Transport.machineprops.quads)  # For K1 = 0.
 
         self.gmadmachine.AddQuadrupole(name=elementid, length=lenInM, k1=_np.round(field_gradient, 4))
         self.madxmachine.AddQuadrupole(name=elementid, length=lenInM, k1=_np.round(field_gradient, 4))
         
         string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' G, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
         string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
-        string3 = '\tBrho = ' + _np.str(_np.round(self.beamprops.brho, 4)) + ' Tm. K1 = ' +_np.str(_np.round(field_gradient, 4)) + ' m^-2'
+        string3 = '\tBrho = ' + _np.str(_np.round(self.Transport.beamprops.brho, 4)) + ' Tm. K1 = ' +_np.str(_np.round(field_gradient, 4)) + ' m^-2'
         self._debug_printout(string1)
         self._debug_printout(string2)
         self._debug_printout(string3)
@@ -277,8 +275,8 @@ class elements(_Functions):
         colldata = linedict['data']
         
         # Determine which entry is for horiz. and vert.
-        aperx = self.machineprops.beampiperadius
-        apery = self.machineprops.beampiperadius
+        aperx = self.Transport.machineprops.beampiperadius
+        apery = self.Transport.machineprops.beampiperadius
         if _np.float(colldata[0]) == 1.0:
             aperx = colldata[1]
         elif _np.float(colldata[0]) == 3.0:
@@ -292,16 +290,16 @@ class elements(_Functions):
         aperx = _np.float(aperx)
         apery = _np.float(apery)
 
-        lenInM = linedict['length'] * self._scale_to_meters('element_length')
-        aperx_in_metres = aperx * self._scale_to_meters('x')
-        apery_in_metres = apery * self._scale_to_meters('y')
+        lenInM = linedict['length'] * _General.ScaleToMeters(self.Transport, 'element_length')
+        aperx_in_metres = aperx * _General.ScaleToMeters(self.Transport, 'x')
+        apery_in_metres = apery * _General.ScaleToMeters(self.Transport, 'y')
 
-        self.machineprops.collimators += 1
+        self.Transport.machineprops.collimators += 1
         elementid = ''
-        if self._keepName:
+        if self.Transport._keepName:
             elementid = linedict['name']
         if not elementid:  # check on empty string
-            elementid = 'COL'+_np.str(self.machineprops.collimators)
+            elementid = 'COL'+_np.str(self.Transport.machineprops.collimators)
 
         collimatorMaterial = 'copper'  # Default in BDSIM, added to prevent warnings
         self.gmadmachine.AddRCol(name=elementid, length=lenInM, xsize=aperx_in_metres, ysize=apery_in_metres, material=collimatorMaterial)
@@ -331,29 +329,29 @@ class elements(_Functions):
         # If zero length then start of a sequence, save total accelerating voltage
         if acclen == 0.0:
             self._isAccSequence = True
-            self.machineprops._totalAccVoltage = e_gain
-            self.machineprops._e_gain_prev = 0.0  # start at 0
+            self.Transport.machineprops._totalAccVoltage = e_gain
+            self.Transport.machineprops._e_gain_prev = 0.0  # start at 0
             return
 
         if self._isAccSequence:
             # voltage means voltage relative to the end of this segment
-            e_rel_gain = e_gain - self.machineprops._e_gain_prev
-            self.machineprops._e_gain_prev = e_gain  # store for next segment
+            e_rel_gain = e_gain - self.Transport.machineprops._e_gain_prev
+            self.Transport.machineprops._e_gain_prev = e_gain  # store for next segment
             if e_gain == 1.0:  # end of sequence
                 self._isAccSequence = False
 
-            e_gain = e_rel_gain * self.machineprops._totalAccVoltage
+            e_gain = e_rel_gain * self.Transport.machineprops._totalAccVoltage
             
-        gradient = e_gain * (self.scale[self.units['p_egain'][0]] / 1e6)
-        gradient /= (acclen * self.scale[self.units['element_length'][0]])  # gradient in MV/m
+        gradient = e_gain * (self.Transport.scale[self.Transport.units['p_egain'][0]] / 1e6)
+        gradient /= (acclen * self.Transport.scale[self.Transport.units['element_length'][0]])  # gradient in MV/m
 
-        self.machineprops.rf += 1
-        elname = "ACC" + _np.str(self.machineprops.rf)
+        self.Transport.machineprops.rf += 1
+        elname = "ACC" + _np.str(self.Transport.machineprops.rf)
 
         self.gmadmachine.AddRFCavity(name=elname, length=acclen, gradient=gradient)
 
         # Update beam parameters
-        self._calculate_momentum(self.beamprops.k_energy + e_gain)
+        self.Transport = _General.UpdateMomentumFromEnergy(self.Transport, self.Transport.beamprops.k_energy + e_gain)
 
         # Commented out untested code
         # if len(accdata) == 2:  # Newer case with multiple elements
@@ -364,10 +362,10 @@ class elements(_Functions):
             
             # Write to file
             accline = '! An accelerator element goes here of length ' + \
-                      _np.str(acclen) + ' ' + self.units['element_length'] + ', \n'
+                      _np.str(acclen) + ' ' + self.Transport.units['element_length'] + ', \n'
             accline2 = '! with an energy gain of ' + _np.str(e_gain) + ' ' + \
-                       self.units['p_egain'] + ', phase lag of ' + _np.str(phase_lag) + ' degrees, \n'
-            accline3 = '! and a wavelength of ' + _np.str(wavel) + ' ' + self.units['bunch_length'] + '. \n'
+                       self.Transport.units['p_egain'] + ', phase lag of ' + _np.str(phase_lag) + ' degrees, \n'
+            accline3 = '! and a wavelength of ' + _np.str(wavel) + ' ' + self.Transport.units['bunch_length'] + '. \n'
 
     def sextupole(self, linedict):
         sextudata = linedict['data']
@@ -375,20 +373,20 @@ class elements(_Functions):
         field_at_tip = sextudata[1]  # Field in TRANSPORT units
         pipe_rad = sextudata[2]      # Pipe Radius In TRANSPORT units
         
-        field_in_Gauss = field_at_tip * self.scale[self.units['magnetic_fields'][0]]  # Convert to Gauss
+        field_in_Gauss = field_at_tip * self.Transport.scale[self.Transport.units['magnetic_fields'][0]]  # Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
         
-        pipe_in_metres = pipe_rad * self._scale_to_meters('bend_vert_gap')
-        lenInM = length * self._scale_to_meters('element_length')
+        pipe_in_metres = pipe_rad * _General.ScaleToMeters(self.Transport, 'bend_vert_gap')
+        lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
 
-        field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.beamprops.brho  # K2 in correct units
+        field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.Transport.beamprops.brho  # K2 in correct units
         
-        self.machineprops.sextus += 1
+        self.Transport.machineprops.sextus += 1
         elementid = ''
-        if self._keepName:
+        if self.Transport._keepName:
             elementid = linedict['name']
         if not elementid:  # check on empty string
-            elementid = 'SEXT'+_np.str(self.machineprops.sextus)
+            elementid = 'SEXT'+_np.str(self.Transport.machineprops.sextus)
         
         self.gmadmachine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
         self.madxmachine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
@@ -403,17 +401,17 @@ class elements(_Functions):
         length = soledata[0]  # First three non-blanks must be the entries in a specific order.
         field = soledata[1]   # Field in TRANSPORT units
         
-        field_in_Gauss = field * self.scale[self.units['magnetic_fields'][0]]  # Convert to Gauss
+        field_in_Gauss = field * self.Transport.scale[self.Transport.units['magnetic_fields'][0]]  # Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
         
-        lenInM = length * self._scale_to_meters('element_length')
+        lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
                 
-        self.machineprops.solenoids += 1
+        self.Transport.machineprops.solenoids += 1
         elementid = ''
-        if self._keepName:
+        if self.Transport._keepName:
             elementid = linedict['name']
         if not elementid:  # check on empty string
-            elementid = 'SOLE'+_np.str(self.machineprops.solenoids)
+            elementid = 'SOLE'+_np.str(self.Transport.machineprops.solenoids)
         
         self.gmadmachine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
         self.madxmachine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
@@ -429,10 +427,10 @@ class elements(_Functions):
         try:
             number = _np.float(number)
             if number == 48:
-                self.machineprops.benddef = False
+                self.Transport.machineprops.benddef = False
                 self._debug_printout('\t48. Switched Dipoles to Angle definition.')
             elif number == 47:
-                self.machineprops.benddef = True
+                self.Transport.machineprops.benddef = True
                 self._debug_printout('\t47. Switched Dipoles to field definition.')
             elif number == 19:
                 if _General.CheckSingleLineOutputApplied(self._filename):
@@ -459,40 +457,40 @@ class elements(_Functions):
             self._printout('\tLength of correction line is incorrect')
             return
 
-        emittoverbeta = self.beamprops.SigmaXP**2 * (1 - sigma21**2)
-        emittbeta = self.beamprops.SigmaX**2
+        emittoverbeta = self.Transport.beamprops.SigmaXP**2 * (1 - sigma21**2)
+        emittbeta = self.Transport.beamprops.SigmaX**2
         betx = _np.sqrt(emittbeta / emittoverbeta)
         emitx = emittbeta / betx
-        slope = sigma21 * self.beamprops.SigmaXP / self.beamprops.SigmaX
+        slope = sigma21 * self.Transport.beamprops.SigmaXP / self.Transport.beamprops.SigmaX
         alfx = -1.0 * slope * betx
         
-        self.beamprops.betx = betx
-        self.beamprops.emitx = emitx / 1000.0
-        self.beamprops.alfx = alfx
+        self.Transport.beamprops.betx = betx
+        self.Transport.beamprops.emitx = emitx / 1000.0
+        self.Transport.beamprops.alfx = alfx
         
-        emittoverbeta = self.beamprops.SigmaYP**2 * (1 - sigma43**2)
-        emittbeta = self.beamprops.SigmaY**2
+        emittoverbeta = self.Transport.beamprops.SigmaYP**2 * (1 - sigma43**2)
+        emittbeta = self.Transport.beamprops.SigmaY**2
         bety = _np.sqrt(emittbeta / emittoverbeta)
         emity = emittbeta / bety
-        slope = sigma43 * self.beamprops.SigmaYP / self.beamprops.SigmaY
+        slope = sigma43 * self.Transport.beamprops.SigmaYP / self.Transport.beamprops.SigmaY
         alfy = -1.0 * slope * bety
 
-        self.beamprops.bety = bety
-        self.beamprops.emity = emity / 1000.0
-        self.beamprops.alfy = alfy
+        self.Transport.beamprops.bety = bety
+        self.Transport.beamprops.emity = emity / 1000.0
+        self.Transport.beamprops.alfy = alfy
 
-        self.beamprops.distrType = 'gausstwiss'
+        self.Transport.beamprops.distrType = 'gausstwiss'
 
         self._debug_printout('\tConverted to:')
         self._debug_printout('\t Beam Correction. Sigma21 = ' + _np.str(sigma21) + ', Sigma43 = ' + _np.str(sigma43) + '.')
         self._debug_printout('\t Beam distribution type now switched to "gausstwiss":')
         self._debug_printout('\t Twiss Params:')
-        self._debug_printout('\t BetaX = ' + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-        self._debug_printout('\t BetaY = ' + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-        self._debug_printout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
-        self._debug_printout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
-        self._debug_printout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-        self._debug_printout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
+        self._debug_printout('\t BetaX = ' + _np.str(self.Transport.beamprops.betx) + ' ' + self.Transport.units['beta_func'])
+        self._debug_printout('\t BetaY = ' + _np.str(self.Transport.beamprops.bety) + ' ' + self.Transport.units['beta_func'])
+        self._debug_printout('\t AlphaX = ' + _np.str(self.Transport.beamprops.alfx))
+        self._debug_printout('\t AlphaY = ' + _np.str(self.Transport.beamprops.alfy))
+        self._debug_printout('\t Emittx = ' + _np.str(self.Transport.beamprops.emitx) + ' ' + self.Transport.units['emittance'])
+        self._debug_printout('\t EmittY = ' + _np.str(self.Transport.beamprops.emity) + ' ' + self.Transport.units['emittance'])
 
     def special_input(self, linedict):
         specialdata = linedict['data']
@@ -501,12 +499,12 @@ class elements(_Functions):
         if specialdata[0] == 5.0:  # beampiperadius (technically only vertical, but will apply a circle for now)
             self._debug_printout('\tType 5: Vertical half aperture,')
             debugstring = '\tNot setting vertical aperture, feature not supported yet.'
-            if self.machineprops.fringeIntegral == 0:
-                self.machineprops.fringeIntegral = 0.5  # default if a vertical aperture is specified.
+            if self.Transport.machineprops.fringeIntegral == 0:
+                self.Transport.machineprops.fringeIntegral = 0.5  # default if a vertical aperture is specified.
                 debugstring += 'K1 not set, setting K1 to default of 0.5.'
                 self._debug_printout(debugstring)
         elif specialdata[0] == 7.0:  # Fringe Field integral
-            self.machineprops.fringeIntegral = specialdata[1]
+            self.Transport.machineprops.fringeIntegral = specialdata[1]
             self._debug_printout('\tType 7: K1 Fringe field integral,')
             self._debug_printout('\tIntegral set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 14.0:  # Definition of element type code 6.
@@ -519,15 +517,15 @@ class elements(_Functions):
             self._debug_printout('\tType 14: Type code 6 definition,')
             self._debug_printout('\tDefinition set to ' + typeCode6def + '.')
         elif specialdata[0] == 16.0:  # X0 offset
-            self.beamprops.X0 = specialdata[1]
+            self.Transport.beamprops.X0 = specialdata[1]
             self._debug_printout('\tType 16: X0 beam offset,')
             self._debug_printout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 17.0:  # Y0 offset
-            self.beamprops.Y0 = specialdata[1]
+            self.Transport.beamprops.Y0 = specialdata[1]
             self._debug_printout('\tType 17: Y0 beam offset,')
             self._debug_printout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 18.0:  # Z0 offset
-            self.beamprops.Z0 = specialdata[1]
+            self.Transport.beamprops.Z0 = specialdata[1]
             self._debug_printout('\tType 18: Z0 beam offset,')
             self._debug_printout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         else:
@@ -556,32 +554,32 @@ class elements(_Functions):
         debugstring2 = '\tConverted to ' + label
 
         if _np.float(number) == 1:  # Horizontal and vertical beam size
-            self.units['x'] = label
-            self.units['y'] = label
-            self.units['bend_vert_gap'] = label
+            self.Transport.units['x'] = label
+            self.Transport.units['y'] = label
+            self.Transport.units['bend_vert_gap'] = label
             # self.units['pipe_rad'] = label
             debugstring1 = '\tType 1: Horizontal and vertical beam extents, and magnet apertures,'
 
         elif _np.float(number) == 2:  # Horizontal and vertical divergence
-            self.units['xp'] = label
-            self.units['yp'] = label
+            self.Transport.units['xp'] = label
+            self.Transport.units['yp'] = label
             debugstring1 = '\tType 2: Horizontal and vertical angles,'
 
         elif _np.float(number) == 3:  # Bending Magnet Gap
-            self.units['y'] = label
-            self.units['bend_vert_gap'] = label
+            self.Transport.units['y'] = label
+            self.Transport.units['bend_vert_gap'] = label
             debugstring1 = '\tType 3: Vertical (only) beam extent and magnet aperture,'
 
         elif _np.float(number) == 4:  # Vertical Divergence ONLY
-            self.units['yp'] = label
+            self.Transport.units['yp'] = label
             debugstring1 = '\tType 4: Vertical (only) beam angle,'
 
         elif _np.float(number) == 5:  # Pulsed Beam Length
-            self.units['bunch_length'] = label
+            self.Transport.units['bunch_length'] = label
             debugstring1 = '\tType 5: Bunch length,'
 
         elif _np.float(number) == 6:  # Momentum Spread
-            self.units['momentum_spread'] = label  # Percent
+            self.Transport.units['momentum_spread'] = label  # Percent
             debugstring1 = '\tType 6: Momentum spread,'
 
         elif _np.float(number) == 7:  # Bend/pole face rotation
@@ -590,11 +588,11 @@ class elements(_Functions):
             pass
 
         elif _np.float(number) == 8:  # Element Length
-            self.units['element_length'] = label
+            self.Transport.units['element_length'] = label
             debugstring1 = '\tType 8: Element length,'
 
         elif _np.float(number) == 9:  # Magnetic Field
-            self.units['magnetic_fields'] = label
+            self.Transport.units['magnetic_fields'] = label
             debugstring1 = '\tType 9: Magnetic Fields,'
 
         elif _np.float(number) == 10:  # Mass
@@ -603,7 +601,7 @@ class elements(_Functions):
             pass
             
         elif _np.float(number) == 11:  # Momentum / energy gain during acc.
-            self.units['p_egain'] = label
+            self.Transport.units['p_egain'] = label
             debugstring1 = '\tType 11: Momentum and accelerator energy gain,'
         else:
             # default output
@@ -613,4 +611,11 @@ class elements(_Functions):
         self._debug_printout('\tUnit change line:')
         self._debug_printout(debugstring1)
         self._debug_printout(debugstring2)
+
+    def TransformUpdate(self, linedict):
+        if linedict['elementnum'] == 6.0:
+            errorline = '\tElement is either a transform update or a collimator. The type code 6 definition'
+            errorline2 = '\thas not been switched to collimators, therefore nothing will be done for this element.'
+            self._debug_printout(errorline)
+            self._debug_printout(errorline2)
 

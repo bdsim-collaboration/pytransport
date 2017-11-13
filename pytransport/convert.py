@@ -66,6 +66,14 @@ class pytransport(elements):
         elements.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
                           auto, dontSplit, keepName, combineDrifts, outlog)
 
+        # Automatic writing and machine splitting
+        self._auto = auto
+        self._dontSplit = dontSplit
+
+        # load file automatically
+        self._load_file(inputfile)
+        self._filename = inputfile
+
         self._load_file(inputfile)  # load file automatically
         if self._auto:
             self.transport2gmad()
@@ -96,7 +104,7 @@ class pytransport(elements):
                     'name'         : '',
                     'length'       : 0.0,
                     'isZeroLength' : True}
-        numElements = _np.str(len(self._elementReg.elements))
+        numElements = _np.str(len(self.Transport._elementReg.elements))
         typeNum = _General.GetTypeNum(line)
         linedict['elementnum'] = typeNum
         
@@ -171,7 +179,7 @@ class pytransport(elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            e1, e2 = _General.GetFaceRotationAngles(self.data, linenum)
+            e1, e2 = _General.GetFaceRotationAngles(self.Transport.data, linenum)
             linedict['e1'] = e1
             linedict['e2'] = e2
             self._element_prep_debug("dipole", numElements)
@@ -191,14 +199,14 @@ class pytransport(elements):
             physicalElements = [1.0, 3.0, 4.0, 5.0, 11.0, 18.0, 19.0]
 
             # Only iterate if not the last element
-            if linenum == len(self.data):
+            if linenum == len(self.Transport.data):
                 pass
             else:
                 # Since collimators have zero length in TRANSPORT, chosen to use length of next drift instead if
                 # present. Check all remaining elements for the next drift, following element(s) may be non-physical
                 # element which can be ignored as it shouldnt affect the beamline. Ignore beam definition too in
                 # the case where machine splitting is not permitted.
-                for nextline in self.data[linenum+1:]:
+                for nextline in self.Transport.data[linenum+1:]:
                     nextTypeNum = _General.GetTypeNum(nextline)
                     if nextTypeNum == 3.0:
                         nextData = _General.GetElementData(nextline)
@@ -242,7 +250,7 @@ class pytransport(elements):
             linedict['data'] = _General.GetElementData(line)
             linedict['name'] = _General.GetLabel(line)
 
-            prevline = self.data[linenum-1]  # .split(' ')
+            prevline = self.Transport.data[linenum-1]  # .split(' ')
             linedict['prevlinenum'] = _np.float(prevline[0])
             linedict['isAddition'] = False
             if _General.CheckIsAddition(line):
@@ -279,8 +287,8 @@ class pytransport(elements):
         if typeNum == 23.0:
             self._element_prep_debug("buncher", numElements)
 
-        rawline = self.filedata[linenum]
-        self._elementReg.AddToRegistry(linedict, rawline)
+        rawline = self.Transport.filedata[linenum]
+        self.Transport._elementReg.AddToRegistry(linedict, rawline)
 
     def ProcessAndBuild(self):
         """
@@ -290,11 +298,11 @@ class pytransport(elements):
         """
         self._debug_printout('Converting registry elements to pybdsim compatible format and adding to machine builder.')
 
-        for linenum, line in enumerate(self.data):
+        for linenum, line in enumerate(self.Transport.data):
             self._debug_printout('Processing tokenised line '+_np.str(linenum)+' :')
             self._debug_printout('\t' + str(line))
             self._debug_printout('Original :')
-            self._debug_printout('\t' + self.filedata[linenum])
+            self._debug_printout('\t' + self.Transport.filedata[linenum])
 
             # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT fitting routine and is only written
             # after the lattice definition, so there's no point reading lines beyond it.
@@ -305,7 +313,7 @@ class pytransport(elements):
             try:
                 typeNum = _General.GetTypeNum(line)
                 if typeNum > 0:
-                    if self.data[0][0] == 'OUTPUT':
+                    if self.Transport.data[0][0] == 'OUTPUT':
                         self._element_prepper(line, linenum, 'output')
                         self.UpdateElementsFromFits()
                     else:
@@ -327,9 +335,9 @@ class pytransport(elements):
 
         skipNextDrift = False  # used for collimators
         lastElementWasADrift = True  # default value
-        if self._combineDrifts:
+        if self.Transport._combineDrifts:
             lastElementWasADrift = False
-        for linenum, linedict in enumerate(self._elementReg.elements):
+        for linenum, linedict in enumerate(self.Transport._elementReg.elements):
             if self._debug:
                 debugstring = 'Converting element number ' + _np.str(linenum) + ':'
                 self._printout(debugstring)
@@ -347,7 +355,7 @@ class pytransport(elements):
                         convertline += '.'
                 self._printout(convertline)
 
-            if self._combineDrifts:
+            if self.Transport._combineDrifts:
                 if lastElementWasADrift and linedict['elementnum'] != 3.0 and linedict['elementnum'] < 20.0:
                     # write possibly combined drift
                     self._debug_printout('\n\tConvert delayed drift(s)')
@@ -368,7 +376,7 @@ class pytransport(elements):
                 if skipNextDrift:
                     skipNextDrift = False
                     continue
-                if self._combineDrifts:
+                if self.Transport._combineDrifts:
                     self._debug_printout('\tDelay drift')
                     if lastElementWasADrift:
                         linedictDrift['length'] += linedict['length']  # update linedictDrift
@@ -390,7 +398,7 @@ class pytransport(elements):
                     if linedict['length'] > 0.0:
                         skipNextDrift = True
                 else:
-                    self._transformUpdate(linedict)
+                    self.TransformUpdate(linedict)
             if linedict['elementnum'] == 12.0:
                 self.correction(linedict)
             if linedict['elementnum'] == 11.0:
@@ -423,7 +431,7 @@ class pytransport(elements):
         # 23. : RF Cavity (Buncher), changes bunch energy spread
 
         # Write also last drift
-        if self._combineDrifts:
+        if self.Transport._combineDrifts:
             if lastElementWasADrift:
                 self._debug_printout('\tConvert delayed drift(s)')
                 self.drift(linedictDrift)
