@@ -1,10 +1,22 @@
 import numpy as _np
-from elements import elements
+from scipy import constants as _con
+import sys
+import os as _os
+
+from pybdsim import Options as _Options
+from pymadx import Builder as _mdBuilder
+from pybdsim import Builder as _pyBuilder
+
+from elements import Elements
 import reader as _reader
 import _General
+from _General import _beamprops
+from _General import _machineprops
+from _General import _conversionProps
+from _General import _Registry
 
 
-class pytransport(elements):
+class pytransport(Elements):
     """
     A module for converting a TRANSPORT file into gmad for use in BDSIM.
         
@@ -64,7 +76,7 @@ class pytransport(elements):
                  keepName      = False,
                  combineDrifts = False,
                  outlog        = True):
-        elements.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
+        Elements.__init__(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
                           auto, dontSplit, keepName, combineDrifts, outlog)
 
         # load file automatically
@@ -124,7 +136,7 @@ class pytransport(elements):
                 self.Transport.data.append(line)
                 self.Transport.filedata.append(inputline)
             f.close()
-        self.Transport._fileloaded = True
+        self.Transport.convprops.fileloaded = True
 
         # convert automatically
         if auto:
@@ -140,8 +152,8 @@ class pytransport(elements):
         """
         Function to convert TRANSPORT file on a line by line basis.
         """
-        if not self.Transport._fileloaded:
-            self.Transport._printout('No file loaded.')
+        if not self.Transport.convprops.fileloaded:
+            self.Transport.Printout('No file loaded.')
             return
         self.ProcessAndBuild()
         self.Write()
@@ -270,9 +282,9 @@ class pytransport(elements):
                         break
                     # stop if physical element or beam redef if splitting permitted
                     elif nextTypeNum in physicalElements:
-                        if (nextTypeNum == 1.0) and self.Transport._dontSplit:
+                        if (nextTypeNum == 1.0) and self.Transport.convprops.dontSplit:
                             pass
-                        elif (nextTypeNum == 6.0) and self._typeCode6IsTransUpdate:
+                        elif (nextTypeNum == 6.0) and self.Transport.convprops.typeCode6IsTransUpdate:
                             pass
                         else:
                             break
@@ -387,7 +399,7 @@ class pytransport(elements):
 
         skipNextDrift = False  # used for collimators
         lastElementWasADrift = True  # default value
-        if self.Transport._combineDrifts:
+        if self.Transport.convprops.combineDrifts:
             lastElementWasADrift = False
         for linenum, linedict in enumerate(self.Transport.ElementRegistry.elements):
             self.Transport.DebugPrintout('Converting element number ' + _np.str(linenum) + ':')
@@ -405,28 +417,28 @@ class pytransport(elements):
                     convertline += '.'
             self.Transport.DebugPrintout(convertline)
 
-            if self.Transport._combineDrifts:
+            if self.Transport.convprops.combineDrifts:
                 if lastElementWasADrift and linedict['elementnum'] != 3.0 and linedict['elementnum'] < 20.0:
                     # write possibly combined drift
                     self.Transport.DebugPrintout('\n\tConvert delayed drift(s)')
-                    self.drift(linedictDrift)
+                    self.Transport.drift(linedictDrift)
                     lastElementWasADrift = False
                     self.Transport.DebugPrintout('\n\tNow convert element number' + _np.str(linenum))
 
             if linedict['elementnum'] == 15.0:
-                self.unit_change(linedict)
+                self.Transport.UnitChange(linedict)
             if linedict['elementnum'] == 20.0:
-                self.change_bend(linedict)
+                self.Transport.ChangeBend(linedict)
             if linedict['elementnum'] == 1.0:  # Add beam on first definition
-                if not self._beamdefined:
-                    self.define_beam(linedict)
-                elif not self.Transport._dontSplit:  # Only update beyond first definition if splitting is permitted
-                    self.define_beam(linedict)
+                if not self.Transport.convprops.beamdefined:
+                    self.Transport.DefineBeam(linedict)
+                elif not self.Transport.convprops.dontSplit:  # Only update beyond first definition if splitting is permitted
+                    self.Transport.DefineBeam(linedict)
             if linedict['elementnum'] == 3.0:
                 if skipNextDrift:
                     skipNextDrift = False
                     continue
-                if self.Transport._combineDrifts:
+                if self.Transport.convprops.combineDrifts:
                     self.Transport.DebugPrintout('\tDelay drift')
                     if lastElementWasADrift:
                         linedictDrift['length'] += linedict['length']  # update linedictDrift
@@ -436,31 +448,31 @@ class pytransport(elements):
                         linedictDrift = linedict   # new linedictDrift
                         lastElementWasADrift = True
                 else:
-                    self.drift(linedict)
+                    self.Transport.Drift(linedict)
             if linedict['elementnum'] == 4.0:
-                self.dipole(linedict)
+                self.Transport.Dipole(linedict)
             if linedict['elementnum'] == 5.0:
-                self.quadrupole(linedict)
+                self.Transport.Quadrupole(linedict)
             if linedict['elementnum'] == 6.0:
-                if not self._typeCode6IsTransUpdate:
-                    self.collimator(linedict)
+                if not self.Transport.convprops.typeCode6IsTransUpdate:
+                    self.Transport.Collimator(linedict)
                     # Length gotten from next drift
                     if linedict['length'] > 0.0:
                         skipNextDrift = True
                 else:
-                    self.TransformUpdate(linedict)
+                    self.Transport.TransformUpdate(linedict)
             if linedict['elementnum'] == 12.0:
-                self.correction(linedict)
+                self.Transport.Correction(linedict)
             if linedict['elementnum'] == 11.0:
-                self.acceleration(linedict)
+                self.Transport.Acceleration(linedict)
             if linedict['elementnum'] == 13.0:
-                self.printline(linedict)
+                self.Transport.Printline(linedict)
             if linedict['elementnum'] == 16.0:
-                self.special_input(linedict)
+                self.Transport.SpecialInput(linedict)
             if linedict['elementnum'] == 18.0:
-                self.sextupole(linedict)
+                self.Transport.Sextupole(linedict)
             if linedict['elementnum'] == 19.0:
-                self.solenoid(linedict)
+                self.Transport.Solenoid(linedict)
 
             # 9.  : 'Repetition' - for nesting elements
             if linedict['elementnum'] == 9.0:
@@ -481,10 +493,10 @@ class pytransport(elements):
         # 23. : RF Cavity (Buncher), changes bunch energy spread
 
         # Write also last drift
-        if self.Transport._combineDrifts:
+        if self.Transport.convprops.combineDrifts:
             if lastElementWasADrift:
                 self.Transport.DebugPrintout('\tConvert delayed drift(s)')
-                self.drift(linedictDrift)
+                self.Transport.drift(linedictDrift)
 
     def UpdateElementsFromFits(self):
         # Functions that update the elements in the element registry.
@@ -590,3 +602,232 @@ class pytransport(elements):
                             self.Transport.DebugPrintout("\n")
                 
                         break
+
+
+class Transport:
+    def __init__(self, inputfile,
+                 particle      = 'proton',
+                 debug         = False,
+                 distrType     = 'gauss',
+                 gmad          = True,
+                 gmadDir       = 'gmad',
+                 madx          = False,
+                 madxDir       = 'madx',
+                 auto          = True,
+                 dontSplit     = False,
+                 keepName      = False,
+                 combineDrifts = False,
+                 outlog        = True):
+
+        if particle == 'proton':
+            p_mass = _con.proton_mass * (_con.c ** 2 / _con.e) / 1e9  # Particle masses in same unit as TRANSPORT (GeV)
+        elif particle == 'e-' or particle == 'e+':
+            p_mass = _con.electron_mass * (_con.c ** 2 / _con.e) / 1e9
+        else:
+            p_mass = 1
+
+        # pytransport data container classes
+        self.convprops = _conversionProps(inputfile, particle, debug, gmad, gmadDir, madx, madxDir,
+                                          auto, dontSplit, keepName, combineDrifts, outlog)
+        self.beamprops = _beamprops(p_mass)
+        self.beamprops.distrType = distrType
+        self.machineprops = _machineprops()
+
+        # different beam objects depending on output type
+        self.madxbeam = self.madxmachine.beam
+        self.gmadbeam = self.gmadmachine.beam
+
+        # initialise registries
+        self.ElementRegistry = _Registry()
+        self.FitRegistry = _Registry()
+
+        # a machine for both gmad and madx. Both created by default, input booleans only decide writing.
+        self.gmadmachine = _pyBuilder.Machine()
+        self.madxmachine = _mdBuilder.Machine()
+        self.options = _Options.Options()
+
+        self.units = {  # Default TRANSPORT units
+            'x': 'cm',
+            'xp': 'mrad',
+            'y': 'cm',
+            'yp': 'mrad',
+            'bunch_length': 'cm',
+            'momentum_spread': 'pc',
+            'element_length': 'm',
+            'magnetic_fields': 'kG',
+            'p_egain': 'GeV',  # Momentum / energy gain during acceleration.
+            'bend_vert_gap': 'cm',  # Vertical half-gap in dipoles
+            'pipe_rad': 'cm',
+            'beta_func': 'm',
+            'emittance': 'mm mrad'
+        }
+        self.scale = {
+            'p': 1e-12,
+            'n': 1e-9,
+            'u': 1e-6,
+            'm': 1e-3,
+            'c': 1e-2,
+            'k': 1e+3,
+            'K': 1e+3,  # Included both cases of k just in case.
+            'M': 1e+6,
+            'G': 1e+9,
+            'T': 1e+12
+        }
+
+        self.accstart = []  # An index of the start of acceleration elements.
+        self.data = []  # A list that will contain arrays of the element data
+        self.filedata = []  # A list that will contain the raw strings from the input file
+
+    def _write(self):
+        """
+        Write the converted TRANSPORT file to disk.
+        """
+        if self.convprops.numberparts < 0:
+            self._filename = self.convprops.file
+        else:
+            self.convprops.numberparts += 1
+            self._filename = self.convprops.file+'_part'+_np.str(self.convprops.numberparts)
+
+        self.AddBeam()
+        self.AddOptions()
+        self.gmadmachine.AddSampler('all')
+        self.madxmachine.AddSampler('all')
+        if self.convprops.gmadoutput:
+            if not _General.CheckDirExists(self.convprops.gmadDir):
+                _os.mkdir(self.convprops.gmadDir)
+            _os.chdir(self.convprops.gmadDir)
+            filename = self._filename + '.gmad'
+            self.gmadmachine.Write(filename)
+            _os.chdir('../')
+        if self.convprops.madxoutput:
+            if not _General.CheckDirExists(self.convprops.madxDir):
+                _os.mkdir(self.convprops.madxDir)
+            _os.chdir(self.convprops.madxDir)
+            filename = self._filename + '.madx'
+            self.madxmachine.Write(filename)
+            _os.chdir('../')
+
+    def AddOptions(self):
+        """
+        Function to set the Options for the BDSIM machine.
+        """
+        self.options.SetPhysicsList(physicslist='em')
+        self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
+                                       unitsstring=self.units['pipe_rad'])
+        self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
+        self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
+        self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
+        self.options.SetSamplerDiameter(radius=1, unitsstring='m')
+        self.options.SetStopTracks(stop=True)
+        self.options.SetIncludeFringeFields(on=True)
+
+        self.gmadmachine.AddOptions(self.options)
+        self.madxmachine.AddOptions(self.options)  # redundant
+
+    def AddBeam(self):
+        """
+        Function to prepare the beam for writing.
+        """
+        # convert energy to GeV (madx only handles GeV)
+        energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
+        self.beamprops.tot_energy = energy_in_gev
+
+        self.madxbeam.SetParticleType(self.convprops.particle)
+        self.madxbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
+
+        self.gmadbeam.SetParticleType(self.convprops.particle)
+        self.gmadbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
+
+        # set gmad parameters depending on distribution
+        if self.beamprops.distrType == 'gausstwiss':
+            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
+            self.gmadbeam.SetBetaX(self.beamprops.betx)
+            self.gmadbeam.SetBetaY(self.beamprops.bety)
+            self.gmadbeam.SetAlphaX(self.beamprops.alfx)
+            self.gmadbeam.SetAlphaY(self.beamprops.alfy)
+            self.gmadbeam.SetEmittanceX(self.beamprops.emitx, unitsstring='mm')
+            self.gmadbeam.SetEmittanceY(self.beamprops.emity, unitsstring='mm')
+            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
+            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
+
+        else:
+            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
+            self.gmadbeam.SetSigmaX(self.beamprops.SigmaX, unitsstring=self.units['x'])
+            self.gmadbeam.SetSigmaY(self.beamprops.SigmaY, unitsstring=self.units['y'])
+            self.gmadbeam.SetSigmaXP(self.beamprops.SigmaXP, unitsstring=self.units['xp'])
+            self.gmadbeam.SetSigmaYP(self.beamprops.SigmaYP, unitsstring=self.units['yp'])
+            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
+            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
+
+            # calculate betas and emittances regardless for madx beam
+            try:
+                self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
+            except ZeroDivisionError:
+                self.beamprops.betx = 0
+            try:
+                self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
+            except ZeroDivisionError:
+                self.beamprops.bety = 0
+                self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
+                self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
+
+        # set madx beam
+        self.madxbeam.SetDistributionType('madx')
+        self.madxbeam.SetBetaX(self.beamprops.betx)
+        self.madxbeam.SetBetaY(self.beamprops.bety)
+        self.madxbeam.SetAlphaX(self.beamprops.alfx)
+        self.madxbeam.SetAlphaY(self.beamprops.alfy)
+        self.madxbeam.SetEmittanceX(self.beamprops.emitx / 1000)
+        self.madxbeam.SetEmittanceY(self.beamprops.emity / 1000)
+        self.madxbeam.SetSigmaE(self.beamprops.SigmaE)
+        self.madxbeam.SetSigmaT(self.beamprops.SigmaT)
+
+        # set beam offsets in gmad if non zero
+        if self.beamprops.X0 != 0:
+            self.gmadbeam.SetX0(self.beamprops.X0, unitsstring=self.units['x'])
+        if self.beamprops.Y0 != 0:
+            self.gmadbeam.SetY0(self.beamprops.Y0, unitsstring=self.units['y'])
+        if self.beamprops.Z0 != 0:
+            self.gmadbeam.SetZ0(self.beamprops.Z0, unitsstring=self.units['z'])
+
+        self.BeamDebugPrintout()
+
+        self.gmadmachine.AddBeam(self.gmadbeam)
+        self.madxmachine.AddBeam(self.madxbeam)
+
+    def Printout(self, line):
+        sys.stdout.write(line+'\n')
+        logfile = self.convprops.file + '_conversion.log'
+        if self.convprops.outlog:
+            self.convprops.logfile = open(logfile, 'a')
+            self.convprops.logfile.write(line)
+            self.convprops.logfile.write('\n')
+            self.convprops.logfile.close()
+
+    def ElementPrepDebugPrintout(self, elementType, numElements):
+        debugString = "\tEntry is a " + elementType + ", adding to the element registry as element "
+        debugString += numElements + "."
+        self.DebugPrintout(debugString)
+
+    def DebugPrintout(self, line):
+        if self.convprops.debug:
+            self.Printout(line)
+
+    def BeamDebugPrintout(self):
+        self.DebugPrintout('\t Beam definition :')
+        self.DebugPrintout('\t distrType = ' + self.beamprops.distrType)
+        self.DebugPrintout('\t energy = '  + _np.str(self.beamprops.tot_energy) + ' GeV')
+        self.DebugPrintout('\t SigmaX = '  + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
+        self.DebugPrintout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
+        self.DebugPrintout('\t SigmaY = '  + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
+        self.DebugPrintout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
+        self.DebugPrintout('\t SigmaE = '  + _np.str(self.beamprops.SigmaE))
+        self.DebugPrintout('\t SigmaT = '  + _np.str(self.beamprops.SigmaT))
+        self.DebugPrintout('\t (Final brho = ' + _np.str(_np.round(self.beamprops.brho, 2)) + ' Tm)')
+        self.DebugPrintout('\t Twiss Params:')
+        self.DebugPrintout('\t BetaX = '  + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
+        self.DebugPrintout('\t BetaY = '  + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
+        self.DebugPrintout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
+        self.DebugPrintout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
+        self.DebugPrintout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
+        self.DebugPrintout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])

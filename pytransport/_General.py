@@ -1,13 +1,8 @@
 import numpy as _np
 from scipy import constants as _con
-from pybdsim import Builder as _pyBuilder
-from pymadx import Builder as _mdBuilder
-from pybdsim import Options as _Options
 import string as _string
 import glob as _glob
 import reader as _reader
-import sys
-import os as _os
 
 
 class _beamprops:
@@ -68,6 +63,52 @@ class _machineprops:
         self.apertureType   = 'circular'
         self._totalAccVoltage = 0
         self._e_gain_prev   = 0
+
+
+class _conversionProps:
+    """
+    A class containing the settings for the conversion.
+    """
+    def __init__(self, inputfile,
+                 particle      = 'proton',
+                 debug         = False,
+                 gmad          = True,
+                 gmadDir       = 'gmad',
+                 madx          = False,
+                 madxDir       = 'madx',
+                 auto          = True,
+                 dontSplit     = False,
+                 keepName      = False,
+                 combineDrifts = False,
+                 outlog        = True):
+
+        self.debug = debug
+        self.outlog = outlog
+        self.typeCode6IsTransUpdate = True  # Definition of type code 6, true is transform update, false is collimator
+        self.isAccSequence = False  # Definition of type code 11 is not an accelerator sequence
+
+        # Automatic writing and machine splitting
+        self.auto = auto
+        self.dontSplit = dontSplit
+
+        # beam definition
+        self.particle = particle
+        self.beamdefined = False
+        self.correctedbeamdef = False
+
+        # File input and output
+        self.file = inputfile
+        self.fileloaded = False
+        self.gmadoutput = gmad
+        self.gmadDir = gmadDir
+        self.madxoutput = madx
+        self.madxDir = madxDir
+        self.numberparts = -1
+
+        # transport optics output is modified to be a single line
+        self.singleLineOptics = False
+        self.keepName = keepName
+        self.combineDrifts = combineDrifts
 
 
 class _Registry:
@@ -155,259 +196,6 @@ class _Registry:
         if not isinstance(linedict, dict):
             raise TypeError("Added element is not a Dictionary")
         self._totalLength += linedict['length']
-
-
-class Transport:
-    def __init__(self, inputfile,
-                 particle      = 'proton',
-                 debug         = False,
-                 distrType     = 'gauss',
-                 gmad          = True,
-                 gmadDir       = 'gmad',
-                 madx          = False,
-                 madxDir       = 'madx',
-                 auto          = True,
-                 dontSplit     = False,
-                 keepName      = False,
-                 combineDrifts = False,
-                 outlog        = True):
-        if particle == 'proton':
-            p_mass = _con.proton_mass * (_con.c ** 2 / _con.e) / 1e9  # Particle masses in same unit as TRANSPORT (GeV)
-        elif particle == 'e-' or particle == 'e+':
-            p_mass = _con.electron_mass * (_con.c ** 2 / _con.e) / 1e9
-        else:
-            p_mass = 1
-
-        # initialise registries
-        self.ElementRegistry = _Registry()
-        self.FitRegistry = _Registry()
-
-        # beam definition
-        self._particle = particle
-        self._beamdefined = False
-        self._correctedbeamdef = False
-
-        # File input and output
-        self._file = inputfile
-        self._fileloaded = False
-        self._gmadoutput = gmad
-        self._gmadDir = gmadDir
-        self._madxoutput = madx
-        self._madxDir = madxDir
-        self._numberparts = -1
-
-        # transport optics output is modified to be a single line
-        self._singleLineOptics = False
-        self._keepName = keepName
-        self._combineDrifts = combineDrifts
-
-        self._accstart = []  # An index of the start of acceleration elements.
-        self.data = []  # A list that will contain arrays of the element data
-        self.filedata = []  # A list that will contain the raw strings from the input file
-
-        self.units = {  # Default TRANSPORT units
-            'x': 'cm',
-            'xp': 'mrad',
-            'y': 'cm',
-            'yp': 'mrad',
-            'bunch_length': 'cm',
-            'momentum_spread': 'pc',
-            'element_length': 'm',
-            'magnetic_fields': 'kG',
-            'p_egain': 'GeV',  # Momentum / energy gain during acceleration.
-            'bend_vert_gap': 'cm',  # Vertical half-gap in dipoles
-            'pipe_rad': 'cm',
-            'beta_func': 'm',
-            'emittance': 'mm mrad'
-        }
-        self.scale = {
-            'p': 1e-12,
-            'n': 1e-9,
-            'u': 1e-6,
-            'm': 1e-3,
-            'c': 1e-2,
-            'k': 1e+3,
-            'K': 1e+3,  # Included both cases of k just in case.
-            'M': 1e+6,
-            'G': 1e+9,
-            'T': 1e+12
-        }
-        self._debug = debug
-        self._outlog = outlog
-        self._typeCode6IsTransUpdate = True  # Definition of type code 6, true is transform update, false is collimator
-        self._isAccSequence = False  # Definition of type code 11 is not an accelerator sequence
-
-        # pytransport conversion classes
-        self.beamprops = _beamprops(p_mass)
-        self.beamprops.distrType = distrType
-        self.machineprops = _machineprops()
-
-        # a machine for both gmad and madx. Both created by default, input booleans only decide writing.
-        self.gmadmachine = _pyBuilder.Machine()
-        self.madxmachine = _mdBuilder.Machine()
-        self.options = _Options.Options()
-
-        # different beam objects depending on output type
-        self.madxbeam = self.madxmachine.beam
-        self.gmadbeam = self.gmadmachine.beam
-
-        # Automatic writing and machine splitting
-        self._auto = auto
-        self._dontSplit = dontSplit
-
-    def _write(self):
-        """
-        Write the converted TRANSPORT file to disk.
-        """
-        if self._numberparts < 0:
-            self._filename = self._file
-        else:
-            self._numberparts += 1
-            self._filename = self._file+'_part'+_np.str(self._numberparts)
-
-        self.AddBeam()
-        self._print_beam_debug()
-
-        self.AddOptions()
-        self.gmadmachine.AddSampler('all')
-        self.madxmachine.AddSampler('all')
-        if self._gmadoutput:
-            if not CheckDirExists(self._gmadDir):
-                _os.mkdir(self._gmadDir)
-            _os.chdir(self._gmadDir)
-            filename = self._filename + '.gmad'
-            self.gmadmachine.Write(filename)
-            _os.chdir('../')
-        if self._madxoutput:
-            if not CheckDirExists(self._madxDir):
-                _os.mkdir(self._madxDir)
-            _os.chdir(self._madxDir)
-            filename = self._filename + '.madx'
-            self.madxmachine.Write(filename)
-            _os.chdir('../')
-
-    def AddOptions(self):
-        """
-        Function to set the Options for the BDSIM machine.
-        """
-        self.options.SetPhysicsList(physicslist='em')
-        self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
-                                       unitsstring=self.units['pipe_rad'])
-        self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
-        self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
-        self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
-        self.options.SetSamplerDiameter(radius=1, unitsstring='m')
-        self.options.SetStopTracks(stop=True)
-        self.options.SetIncludeFringeFields(on=True)
-
-        self.gmadmachine.AddOptions(self.options)
-        self.madxmachine.AddOptions(self.options)  # redundant
-
-    def AddBeam(self):
-        """
-        Function to prepare the beam for writing.
-        """
-        # convert energy to GeV (madx only handles GeV)
-        energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
-        self.beamprops.tot_energy = energy_in_gev
-
-        self.madxbeam.SetParticleType(self._particle)
-        self.madxbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
-
-        self.gmadbeam.SetParticleType(self._particle)
-        self.gmadbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
-
-        # set gmad parameters depending on distribution
-        if self.beamprops.distrType == 'gausstwiss':
-            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
-            self.gmadbeam.SetBetaX(self.beamprops.betx)
-            self.gmadbeam.SetBetaY(self.beamprops.bety)
-            self.gmadbeam.SetAlphaX(self.beamprops.alfx)
-            self.gmadbeam.SetAlphaY(self.beamprops.alfy)
-            self.gmadbeam.SetEmittanceX(self.beamprops.emitx, unitsstring='mm')
-            self.gmadbeam.SetEmittanceY(self.beamprops.emity, unitsstring='mm')
-            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
-            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
-
-        else:
-            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
-            self.gmadbeam.SetSigmaX(self.beamprops.SigmaX, unitsstring=self.units['x'])
-            self.gmadbeam.SetSigmaY(self.beamprops.SigmaY, unitsstring=self.units['y'])
-            self.gmadbeam.SetSigmaXP(self.beamprops.SigmaXP, unitsstring=self.units['xp'])
-            self.gmadbeam.SetSigmaYP(self.beamprops.SigmaYP, unitsstring=self.units['yp'])
-            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
-            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
-
-            # calculate betas and emittances regardless for madx beam
-            try:
-                self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
-            except ZeroDivisionError:
-                self.beamprops.betx = 0
-            try:
-                self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
-            except ZeroDivisionError:
-                self.beamprops.bety = 0
-                self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
-                self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
-
-        # set madx beam
-        self.madxbeam.SetDistributionType('madx')
-        self.madxbeam.SetBetaX(self.beamprops.betx)
-        self.madxbeam.SetBetaY(self.beamprops.bety)
-        self.madxbeam.SetAlphaX(self.beamprops.alfx)
-        self.madxbeam.SetAlphaY(self.beamprops.alfy)
-        self.madxbeam.SetEmittanceX(self.beamprops.emitx / 1000)
-        self.madxbeam.SetEmittanceY(self.beamprops.emity / 1000)
-        self.madxbeam.SetSigmaE(self.beamprops.SigmaE)
-        self.madxbeam.SetSigmaT(self.beamprops.SigmaT)
-
-        # set beam offsets in gmad if non zero
-        if self.beamprops.X0 != 0:
-            self.gmadbeam.SetX0(self.beamprops.X0, unitsstring=self.units['x'])
-        if self.beamprops.Y0 != 0:
-            self.gmadbeam.SetY0(self.beamprops.Y0, unitsstring=self.units['y'])
-        if self.beamprops.Z0 != 0:
-            self.gmadbeam.SetZ0(self.beamprops.Z0, unitsstring=self.units['z'])
-
-        self.gmadmachine.AddBeam(self.gmadbeam)
-        self.madxmachine.AddBeam(self.madxbeam)
-
-    def _printout(self, line):
-        sys.stdout.write(line+'\n')
-        logfile = self._file + '_conversion.log'
-        if self._outlog:
-            self._logfile = open(logfile, 'a')
-            self._logfile.write(line)
-            self._logfile.write('\n')
-            self._logfile.close()
-
-    def ElementPrepDebugPrintout(self, elementType, numElements):
-        debugString = "\tEntry is a " + elementType + ", adding to the element registry as element "
-        debugString += numElements + "."
-        self.DebugPrintout(debugString)
-
-    def DebugPrintout(self, line):
-        if self._debug:
-            self._printout(line)
-
-    def _print_beam_debug(self):
-        self.DebugPrintout('\t Beam definition :')
-        self.DebugPrintout('\t distrType = ' + self.beamprops.distrType)
-        self.DebugPrintout('\t energy = '  + _np.str(self.beamprops.tot_energy) + ' GeV')
-        self.DebugPrintout('\t SigmaX = '  + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
-        self.DebugPrintout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
-        self.DebugPrintout('\t SigmaY = '  + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
-        self.DebugPrintout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
-        self.DebugPrintout('\t SigmaE = '  + _np.str(self.beamprops.SigmaE))
-        self.DebugPrintout('\t SigmaT = '  + _np.str(self.beamprops.SigmaT))
-        self.DebugPrintout('\t (Final brho = ' + _np.str(_np.round(self.beamprops.brho, 2)) + ' Tm)')
-        self.DebugPrintout('\t Twiss Params:')
-        self.DebugPrintout('\t BetaX = '  + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-        self.DebugPrintout('\t BetaY = '  + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-        self.DebugPrintout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
-        self.DebugPrintout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
-        self.DebugPrintout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-        self.DebugPrintout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
 
 
 def GetTypeNum(line):
