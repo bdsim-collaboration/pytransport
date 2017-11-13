@@ -687,6 +687,11 @@ class functions:
             self._logfile.write('\n')
             self._logfile.close()
 
+    def _element_prep_debug(self, elementType, numElements):
+        debugString = "\tEntry is a " + elementType + ", adding to the element registry as element "
+        debugString += numElements + "."
+        self._debug_printout(debugString)
+
     def _debug_printout(self, line):
         if self._debug:
             self._printout(line)
