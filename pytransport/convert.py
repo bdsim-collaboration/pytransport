@@ -1,6 +1,7 @@
 import numpy as _np
 from elements import elements
-import os as _os
+import _General
+
 
 class pytransport(elements):
     """
@@ -73,29 +74,7 @@ class pytransport(elements):
         """
         Write the converted TRANSPORT file to disk.
         """
-        if self._numberparts < 0:
-            self._filename = self._file
-        else:
-            self._numberparts += 1
-            self._filename = self._file+'_part'+_np.str(self._numberparts)
-        self.create_beam()
-        self.create_options()
-        self.gmadmachine.AddSampler('all')
-        self.madxmachine.AddSampler('all')
-        if self._gmadoutput:
-            if not self._dir_exists(self._gmadDir):
-                _os.mkdir(self._gmadDir)
-            _os.chdir(self._gmadDir)
-            filename = self._filename + '.gmad'
-            self.gmadmachine.Write(filename)
-            _os.chdir('../')
-        if self._madxoutput:
-            if not self._dir_exists(self._madxDir):
-                _os.mkdir(self._madxDir)
-            _os.chdir(self._madxDir)
-            filename = self._filename + '.madx'
-            self.madxmachine.Write(filename)
-            _os.chdir('../')
+        self._write()
 
     def transport2gmad(self):
         """
@@ -118,11 +97,11 @@ class pytransport(elements):
                     'length'       : 0.0,
                     'isZeroLength' : True}
         numElements = _np.str(len(self._elementReg.elements))
-        typeNum = self._getTypeNum(line)
+        typeNum = _General.GetTypeNum(line)
         linedict['elementnum'] = typeNum
         
         if typeNum == 15.0:
-            label = self._get_label(line)
+            label = _General.GetLabel(line)
             if filetype == 'output':
                 linedict['label'] = line[2].strip('"')
             if filetype == 'input':
@@ -133,7 +112,7 @@ class pytransport(elements):
         if typeNum == 20.0:
             angle = 0  # Default
             if len(line) == 2:  # i.e has a label
-                endofline = self._endofline(line[1])
+                endofline = _General.FindEndOfLine(line[1])
                 angle = line[1][:endofline]
             else:
                 for index in line[1:]:
@@ -146,9 +125,9 @@ class pytransport(elements):
             self._element_prep_debug("coordinate rotation", numElements)
 
         if typeNum == 1.0:
-            linedict['name'] = self._get_label(line)
+            linedict['name'] = _General.GetLabel(line)
             linedict['isAddition'] = False
-            if self._is_addition(line, filetype):
+            if _General.CheckIsAddition(line, filetype):
                 linedict['isAddition'] = True
             # line = self._remove_label(line)
             if len(line) < 8:
@@ -174,32 +153,32 @@ class pytransport(elements):
             self._element_prep_debug("Beam definition or r.m.s addition", numElements)
 
         if typeNum == 2.0:
-            linedict['name'] = self._get_label(line)
-            linedict['data'] = self._get_elementdata(line)
+            linedict['name'] = _General.GetLabel(line)
+            linedict['data'] = _General.GetElementData(line)
             self._element_prep_debug("poleface rotation", numElements)
 
         if typeNum == 3.0:
-            linedict['name'] = self._get_label(line)
-            data = self._get_elementdata(line)
+            linedict['name'] = _General.GetLabel(line)
+            data = _General.GetElementData(line)
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
             self._element_prep_debug("drift", numElements)
 
         if typeNum == 4.0:
-            linedict['name'] = self._get_label(line)
+            linedict['name'] = _General.GetLabel(line)
             linedict['linenum'] = linenum
-            data = self._get_elementdata(line)
+            data = _General.GetElementData(line)
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            e1, e2 = self._facerotation(line, linenum)
+            e1, e2 = _General.GetFaceRotationAngles(self.data, linenum)
             linedict['e1'] = e1
             linedict['e2'] = e2
             self._element_prep_debug("dipole", numElements)
 
         if typeNum == 5.0:
-            linedict['name'] = self._get_label(line)
-            data = self._get_elementdata(line)
+            linedict['name'] = _General.GetLabel(line)
+            data = _General.GetElementData(line)
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
@@ -220,13 +199,13 @@ class pytransport(elements):
                 # element which can be ignored as it shouldnt affect the beamline. Ignore beam definition too in
                 # the case where machine splitting is not permitted.
                 for nextline in self.data[linenum+1:]:
-                    nextTypeNum = self._getTypeNum(nextline)
+                    nextTypeNum = _General.GetTypeNum(nextline)
                     if nextTypeNum == 3.0:
-                        nextData = self._get_elementdata(nextline)
+                        nextData = _General.GetElementData(nextline)
                         linedict['length'] = nextData[0]
                         linedict['isZeroLength'] = False
-                        linedict['name'] = self._get_label(line)
-                        data = self._get_elementdata(line)
+                        linedict['name'] = _General.GetLabel(line)
+                        data = _General.GetElementData(line)
                         linedict['data'] = data
                         break
                     # stop if physical element or beam redef if splitting permitted
@@ -248,8 +227,8 @@ class pytransport(elements):
             self._element_prep_debug("repetition control", numElements)
 
         if typeNum == 11.0:
-            linedict['name'] = self._get_label(line)
-            data = self._get_elementdata(line)
+            linedict['name'] = _General.GetLabel(line)
+            data = _General.GetElementData(line)
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['voltage'] = data[1]
@@ -260,35 +239,35 @@ class pytransport(elements):
             self._element_prep_debug("acceleration element", numElements)
 
         if typeNum == 12.0:
-            linedict['data'] = self._get_elementdata(line)
-            linedict['name'] = self._get_label(line)
+            linedict['data'] = _General.GetElementData(line)
+            linedict['name'] = _General.GetLabel(line)
 
             prevline = self.data[linenum-1]  # .split(' ')
             linedict['prevlinenum'] = _np.float(prevline[0])
             linedict['isAddition'] = False
-            if self._is_addition(line):
+            if _General.CheckIsAddition(line):
                 linedict['isAddition'] = True
             self._element_prep_debug("beam rotation", numElements)
 
         if typeNum == 13.0:
-            linedict['data'] = self._get_elementdata(line)
+            linedict['data'] = _General.GetElementData(line)
             self._element_prep_debug("Input/Output control", numElements)
 
         if typeNum == 16.0:
-            linedict['data'] = self._get_elementdata(line)
+            linedict['data'] = _General.GetElementData(line)
             self._element_prep_debug("special input", numElements)
 
         if typeNum == 18.0:
-            linedict['name'] = self._get_label(line)
-            data = self._get_elementdata(line)
+            linedict['name'] = _General.GetLabel(line)
+            data = _General.GetElementData(line)
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
             self._element_prep_debug("sextupole", numElements)
 
         if typeNum == 19.0:
-            linedict['name'] = self._get_label(line)
-            data = self._get_elementdata(line)
+            linedict['name'] = _General.GetLabel(line)
+            data = _General.GetElementData(line)
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
@@ -319,18 +298,18 @@ class pytransport(elements):
 
             # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT fitting routine and is only written
             # after the lattice definition, so there's no point reading lines beyond it.
-            if self._is_sentinel(line):
+            if _General.CheckIsSentinel(line):
                 self._debug_printout('Sentinel Found.')
                 break
             # Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
             try:
-                typeNum = self._getTypeNum(line)
+                typeNum = _General.GetTypeNum(line)
                 if typeNum > 0:
                     if self.data[0][0] == 'OUTPUT':
                         self._element_prepper(line, linenum, 'output')
                         self.UpdateElementsFromFits()
                     else:
-                        line = self._remove_illegals(line)
+                        line = _General.RemoveIllegals(line)
                         self._element_prepper(line, linenum, 'input')
                 else:
                     self._debug_printout('\tType code is 0 or negative, ignoring line.')
@@ -448,93 +427,6 @@ class pytransport(elements):
             if lastElementWasADrift:
                 self._debug_printout('\tConvert delayed drift(s)')
                 self.drift(linedictDrift)
-       
-    def create_beam(self):
-        """
-        Function to prepare the beam for writing.
-        """
-        # convert energy to GeV (madx only handles GeV)
-        energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
-        self.beamprops.tot_energy = energy_in_gev
-        
-        self.madxbeam.SetParticleType(self._particle)
-        self.madxbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
-
-        self.gmadbeam.SetParticleType(self._particle)
-        self.gmadbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
-
-        # set gmad parameters depending on distribution
-        if self.beamprops.distrType == 'gausstwiss':
-            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
-            self.gmadbeam.SetBetaX(self.beamprops.betx)
-            self.gmadbeam.SetBetaY(self.beamprops.bety)
-            self.gmadbeam.SetAlphaX(self.beamprops.alfx)
-            self.gmadbeam.SetAlphaY(self.beamprops.alfy)
-            self.gmadbeam.SetEmittanceX(self.beamprops.emitx, unitsstring='mm')
-            self.gmadbeam.SetEmittanceY(self.beamprops.emity, unitsstring='mm')
-            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
-            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
-
-        else:
-            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
-            self.gmadbeam.SetSigmaX(self.beamprops.SigmaX, unitsstring=self.units['x'])
-            self.gmadbeam.SetSigmaY(self.beamprops.SigmaY, unitsstring=self.units['y'])
-            self.gmadbeam.SetSigmaXP(self.beamprops.SigmaXP, unitsstring=self.units['xp'])
-            self.gmadbeam.SetSigmaYP(self.beamprops.SigmaYP, unitsstring=self.units['yp'])
-            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
-            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
-            
-            # calculate betas and emittances regardless for madx beam
-            try:
-                self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
-            except ZeroDivisionError:
-                self.beamprops.betx = 0
-            try:
-                self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
-            except ZeroDivisionError:
-                self.beamprops.bety = 0
-            self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
-            self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
-        
-        # set madx beam
-        self.madxbeam.SetDistributionType('madx')
-        self.madxbeam.SetBetaX(self.beamprops.betx)
-        self.madxbeam.SetBetaY(self.beamprops.bety)
-        self.madxbeam.SetAlphaX(self.beamprops.alfx)
-        self.madxbeam.SetAlphaY(self.beamprops.alfy)
-        self.madxbeam.SetEmittanceX(self.beamprops.emitx/1000)
-        self.madxbeam.SetEmittanceY(self.beamprops.emity/1000)
-        self.madxbeam.SetSigmaE(self.beamprops.SigmaE)
-        self.madxbeam.SetSigmaT(self.beamprops.SigmaT)
-        
-        # set beam offsets in gmad if non zero
-        if self.beamprops.X0 != 0:
-            self.gmadbeam.SetX0(self.beamprops.X0, unitsstring=self.units['x'])
-        if self.beamprops.Y0 != 0:
-            self.gmadbeam.SetY0(self.beamprops.Y0, unitsstring=self.units['y'])
-        if self.beamprops.Z0 != 0:
-            self.gmadbeam.SetZ0(self.beamprops.Z0, unitsstring=self.units['z'])
-
-        self._print_beam_debug()
-
-        self.gmadmachine.AddBeam(self.gmadbeam)
-        self.madxmachine.AddBeam(self.madxbeam)
-
-    def create_options(self):
-        """
-        Function to set the Options for the BDSIM machine.
-        """
-        self.options.SetPhysicsList(physicslist='em')
-        self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius, unitsstring=self.units['pipe_rad'])
-        self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
-        self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
-        self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
-        self.options.SetSamplerDiameter(radius=1, unitsstring='m')
-        self.options.SetStopTracks(stop=True)
-        self.options.SetIncludeFringeFields(on=True)
-        
-        self.gmadmachine.AddOptions(self.options)
-        self.madxmachine.AddOptions(self.options)  # redundant
 
     def UpdateElementsFromFits(self):
         # Functions that update the elements in the element registry.

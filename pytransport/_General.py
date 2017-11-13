@@ -7,6 +7,7 @@ import string as _string
 import glob as _glob
 import reader as _reader
 import sys
+import os as _os
 
 
 class _beamprops:
@@ -257,138 +258,121 @@ class functions:
         self._load_file(inputfile)
         self._filename = inputfile
 
-    def _is_addition(self, line, type='input'):
+    def create_beam(self):
         """
-        Function to check if a BEAM line of TRANSPORT code is a beam definition or r.m.s addition.
+        Function to prepare the beam for writing.
         """
-        # Output file is a standard format, any RMS addition line should always be 10 long.
-        if type == 'output':
-            if len(line) == 10:
-                return True
-    
-        elif type == 'input':
-            if len(line) > 8:
-                if (line[8] == '0.') or (line[8] == '0'):
-                    return True
-                else:
-                    return False
+        # convert energy to GeV (madx only handles GeV)
+        energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
+        self.beamprops.tot_energy = energy_in_gev
+
+        self.madxbeam.SetParticleType(self._particle)
+        self.madxbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
+
+        self.gmadbeam.SetParticleType(self._particle)
+        self.gmadbeam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
+
+        # set gmad parameters depending on distribution
+        if self.beamprops.distrType == 'gausstwiss':
+            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
+            self.gmadbeam.SetBetaX(self.beamprops.betx)
+            self.gmadbeam.SetBetaY(self.beamprops.bety)
+            self.gmadbeam.SetAlphaX(self.beamprops.alfx)
+            self.gmadbeam.SetAlphaY(self.beamprops.alfy)
+            self.gmadbeam.SetEmittanceX(self.beamprops.emitx, unitsstring='mm')
+            self.gmadbeam.SetEmittanceY(self.beamprops.emity, unitsstring='mm')
+            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
+            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
+
         else:
-            raise ValueError("File type can only be input or output")
+            self.gmadbeam.SetDistributionType(self.beamprops.distrType)
+            self.gmadbeam.SetSigmaX(self.beamprops.SigmaX, unitsstring=self.units['x'])
+            self.gmadbeam.SetSigmaY(self.beamprops.SigmaY, unitsstring=self.units['y'])
+            self.gmadbeam.SetSigmaXP(self.beamprops.SigmaXP, unitsstring=self.units['xp'])
+            self.gmadbeam.SetSigmaYP(self.beamprops.SigmaYP, unitsstring=self.units['yp'])
+            self.gmadbeam.SetSigmaE(self.beamprops.SigmaE)
+            self.gmadbeam.SetSigmaT(self.beamprops.SigmaT)
 
-    def _is_sentinel(self, line):
-        for element in line:
-            if element[:8] == 'SENTINEL':
-                return True
-        return False
-
-    def _facerotation(self, line, linenum):
-        anglein = 0
-        angleout = 0
-        
-        linelist = []
-        for i in self.data[(linenum-5):linenum]:
-            linelist.append(i)
-        linelist.reverse()  # Search for poleface in reverse line order
-
-        for line in linelist:
-            elecode = 0
+            # calculate betas and emittances regardless for madx beam
             try:
-                elecode = _np.float(line[0])
-            except ValueError:
-                anglein = 0
-                break
-            
-            if _np.float(line[0]) == 4.0:
-                break
-            elif _np.float(line[0]) == 2.0:
-                endof = self._endofline(line[1])
-                if endof != -1:
-                    try:
-                        anglein = _np.round(_np.float(line[1][:endof]), 4)
-                    except ValueError:
-                        try:
-                            anglein = _np.round(_np.float(line[2][:endof]), 4)
-                        except ValueError:
-                            pass
-                    else:
-                        pass
-                else:
-                    try:
-                        anglein = _np.round(_np.float(line[1]), 4)
-                    except ValueError:
-                        try:
-                            anglein = _np.round(_np.float(line[2]), 4)
-                        except ValueError:
-                            pass
-                    else:
-                        pass
-                break
-            else:
-                pass
-
-        for line in self.data[linenum+1:(linenum+6)]:
-            elecode = 0
+                self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
+            except ZeroDivisionError:
+                self.beamprops.betx = 0
             try:
-                elecode = _np.float(line[0])
-            except ValueError:
-                angleout = 0
-                break
-            
-            if _np.float(line[0]) == 4.0:
-                break
-            elif _np.float(line[0]) == 2.0:
-                endof = self._endofline(line[1])
-                if endof != -1:
-                    try:
-                        angleout = _np.round(_np.float(line[1][:endof]), 4)
-                    except ValueError:
-                        try:
-                            angleout = _np.round(_np.float(line[2][:endof]), 4)
-                        except ValueError:
-                            pass
-                    else:
-                        pass
-                else:
-                    try:
-                        angleout = _np.round(_np.float(line[1]), 4)
-                    except ValueError:
-                        try:
-                            angleout = _np.round(_np.float(line[2]), 4)
-                        except ValueError:
-                            pass
-                    else:
-                        pass
-                break
-            else:
-                pass
-        return anglein, angleout
-    
-    def _remove_spaces(self, line):
-        elementlist = []
-        for i in line:
-            if (i != '') and (i != ' '):
-                elementlist.append(i)
-        line = _np.array(elementlist)
-        return line
+                self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
+            except ZeroDivisionError:
+                self.beamprops.bety = 0
+            self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
+            self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
 
-    def _endofline(self, line):  # Find the end of the line of code
-        endpos = -1
-        breakloop = False
-        if isinstance(line, _np.str):
-            for charnum, char in enumerate(line):
-                if char == ';':
-                    endpos = charnum
-                    break
-        elif isinstance(line, _np.ndarray):
-            for index, ele in enumerate(line):
-                for char in ele:
-                    if char == ';':
-                        endpos = index
-                        breakloop = True
-                        break
-                if breakloop:
-                    break
-        return endpos
+        # set madx beam
+        self.madxbeam.SetDistributionType('madx')
+        self.madxbeam.SetBetaX(self.beamprops.betx)
+        self.madxbeam.SetBetaY(self.beamprops.bety)
+        self.madxbeam.SetAlphaX(self.beamprops.alfx)
+        self.madxbeam.SetAlphaY(self.beamprops.alfy)
+        self.madxbeam.SetEmittanceX(self.beamprops.emitx / 1000)
+        self.madxbeam.SetEmittanceY(self.beamprops.emity / 1000)
+        self.madxbeam.SetSigmaE(self.beamprops.SigmaE)
+        self.madxbeam.SetSigmaT(self.beamprops.SigmaT)
+
+        # set beam offsets in gmad if non zero
+        if self.beamprops.X0 != 0:
+            self.gmadbeam.SetX0(self.beamprops.X0, unitsstring=self.units['x'])
+        if self.beamprops.Y0 != 0:
+            self.gmadbeam.SetY0(self.beamprops.Y0, unitsstring=self.units['y'])
+        if self.beamprops.Z0 != 0:
+            self.gmadbeam.SetZ0(self.beamprops.Z0, unitsstring=self.units['z'])
+
+        self._print_beam_debug()
+
+        self.gmadmachine.AddBeam(self.gmadbeam)
+        self.madxmachine.AddBeam(self.madxbeam)
+
+    def create_options(self):
+        """
+        Function to set the Options for the BDSIM machine.
+        """
+        self.options.SetPhysicsList(physicslist='em')
+        self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
+                                       unitsstring=self.units['pipe_rad'])
+        self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
+        self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
+        self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
+        self.options.SetSamplerDiameter(radius=1, unitsstring='m')
+        self.options.SetStopTracks(stop=True)
+        self.options.SetIncludeFringeFields(on=True)
+
+        self.gmadmachine.AddOptions(self.options)
+        self.madxmachine.AddOptions(self.options)  # redundant
+
+    def _write(self):
+        """
+        Write the converted TRANSPORT file to disk.
+        """
+        if self._numberparts < 0:
+            self._filename = self._file
+        else:
+            self._numberparts += 1
+            self._filename = self._file+'_part'+_np.str(self._numberparts)
+        self.create_beam()
+        self.create_options()
+        self.gmadmachine.AddSampler('all')
+        self.madxmachine.AddSampler('all')
+        if self._gmadoutput:
+            if not CheckDirExists(self._gmadDir):
+                _os.mkdir(self._gmadDir)
+            _os.chdir(self._gmadDir)
+            filename = self._filename + '.gmad'
+            self.gmadmachine.Write(filename)
+            _os.chdir('../')
+        if self._madxoutput:
+            if not CheckDirExists(self._madxDir):
+                _os.mkdir(self._madxDir)
+            _os.chdir(self._madxDir)
+            filename = self._filename + '.madx'
+            self.madxmachine.Write(filename)
+            _os.chdir('../')
                     
     def _load_file(self, input):
         """
@@ -413,18 +397,18 @@ class functions:
             for linenum, latticeline in enumerate(lattice):
                 latticeline = latticeline.replace(';', '')
                 line = _np.array(latticeline.split(' '), dtype=_np.str)
-                line = self._remove_illegals(line)
+                line = RemoveIllegals(line)
                 
                 # Method of dealing with split lines in the output
                 # Should only be applicable to type 12 entry (up to 15 variables)
                 # It is assumed that the line is always split, so be careful.
                 prevline = lattice[linenum-1].replace(';', '')
                 prevline = _np.array(prevline.split(' '), dtype=_np.str)
-                prevline = self._remove_illegals(prevline)
+                prevline = RemoveIllegals(prevline)
                 
                 try:
                     if (linenum > 0) and _np.abs(_np.float(line[0])) == 12.0:
-                        latticeline, line = self._joinsplitlines(linenum, lattice)
+                        latticeline, line = JoinSplitLines(linenum, lattice)
                     # Ignore line after type 12 entry (second part of split line)
                     if (linenum > 1) and _np.abs(_np.float(prevline[0])) == 12.0:
                         pass
@@ -440,98 +424,24 @@ class functions:
         else:
             f = open(input)
             for inputline in f:
-                endoflinepos = self._endofline(inputline)
+                endoflinepos = FindEndOfLine(inputline)
                 templine = inputline
                 if endoflinepos > 0:
                     templine = inputline[:endoflinepos]
                 line = _np.array(templine.split(' '), dtype=_np.str)
                 # do not change comment lines
                 if not line[0][0] == '(':
-                    line = self._remove_illegals(line)
+                    line = RemoveIllegals(line)
                 self.data.append(line)
                 self.filedata.append(inputline)
             f.close()
         self._fileloaded = True
 
-    def _joinsplitlines(self, linenum, lattice):
-        firstline = lattice[linenum].replace(';', '')
-        latticeline = firstline  # Copy for later
-        firstline = _np.array(firstline.split(' '), dtype=_np.str)
-        firstline = self._remove_illegals(firstline)
-        numericals = []
-        nonnumericals = []
-        # Keep entries that are strings of numbers
-        for i in firstline:
-            try:
-                number = _np.float(i)
-                numericals.append(_np.str(number))
-            except ValueError:
-                nonnumericals.append(i)
-    
-        # Number of numerical elements minus the first which should be the entry type number.
-        # This is bascially a way of extracting any label or comments.
-        numelements = len(numericals) - 1
-
-        secline = lattice[linenum+1].replace(';', '')
-        secline = _np.array(secline.split(' '), dtype=_np.str)
-        secline = self._remove_illegals(secline)
-        secnumericals = []
-
-        for i in secline:
-            try:
-                number = _np.float(i)
-                secnumericals.append("%.4f" % number)
-            except ValueError:
-                pass
-
-        # Second line should be 15 minus number of numerical elements from prev line.
-        # This is done to skip erroneous numbers in the line such as '000' which have
-        # appeared when lines have been split.
-        secline = secnumericals[-15 + numelements:]
-        numericals.extend(secline)
-
-        # Add to latticeline so as to appear like one single line in the file
-        seclinetxt = ""
-        for i in secline:
-            newline = "     " + i
-            seclinetxt += newline
-        latticeline += seclinetxt
-
-#        if line[0] == '000':
-#            prevline = data[-1]
-#            prevfileline = filedata[-1]
-#            data.pop()
-#            filedata.pop()
-#            templine = latticeline
-#            latticeline = prevfileline[:-1] + templine
-#            prevline = list(prevline)
-#            prevline.extend(list(line[1:]))
-#            line = _np.array(prevline)
-
-        # Add name to output
-        if len(nonnumericals) == 1:
-            numericals.append(nonnumericals[0])
-        line = _np.array(numericals)
-        return latticeline, line
-
-    def _remove_illegals(self, line):
-        """
-        Function to remove '' and stray characters from lines.
-        """
-        illegal = ['"', '', '(', ')']
-        
-        linelist = []
-        for element in line:
-            if element in illegal:
-                linelist.append(element)
-        line = _np.array(linelist)
-        return line
-
     def _get_preamble(self):  # Redundant until pybdsim can handle comments.
         """
         Function to read any preamble at the start of the TRANSPORT file.
         """
-        indc, linenum = self._get_indic()
+        indc, linenum = GetIndicator(self.data)
         gmadpreamble = []
         for line in self.data[:linenum-1]:
             if line == '\r\n':
@@ -540,143 +450,6 @@ class functions:
                 gmadline = '!' + line
                 gmadpreamble.append(gmadline)
         return gmadpreamble
-
-    def _get_label(self, line):
-        """
-        Function to get element label from code line.
-        """
-        label = None
-        for elenum, ele in enumerate(line):
-            startslash = _string.find(ele, "/")
-            startquote = _string.find(ele, "'")
-            startequal = _string.find(ele, "=")
-            startdbquote = _string.find(ele, '"')
-            if startslash != -1:
-                end = 1 + startslash + _string.find(ele[(startslash+1):], "/")
-                if end <= startslash:
-                    label = ele[startslash+1:]
-                else:
-                    label = ele[startslash+1:end]
-                break
-            elif startquote != -1:
-                end = 1 + startquote + _string.find(ele[(startslash+1):], "'")
-                if end <= startquote:
-                    label = ele[startquote+1:]
-                else:
-                    label = ele[startquote+1:end]
-                break
-            elif startequal != -1:
-                end = 1 + startequal + _string.find(ele[(startslash+1):], "=")
-                if end <= startequal:
-                    label = ele[startequal+1:]
-                else:
-                    label = ele[startequal+1:end]
-                break
-            elif startdbquote != -1:
-                end = 1 + startdbquote + _string.find(ele[(startdbquote+1):], '"')
-                if end <= startdbquote:
-                    label = ele[startdbquote+1:]
-                else:
-                    label = ele[startdbquote+1:end]
-                break
-            else:
-                label = None
-        return label
-    
-#        elif isinstance(line,_np.ndarray):
-#            label=''
-#            for element in line:
-#                if element[0] == '"':
-#                    label = element[1:-1]
-#                    break
-#                if element[0] == "/":
-#                    label = element[1:-1]
-#                    break
-#                if element[0] == "=":
-#                    label = element[1:-1]
-#                    break
-#                if element[0] == "'":
-#                    label = element[1:-1]
-#                    break
-#            return label
-
-    def _dir_exists(self, dir):
-        dirs = _glob.glob('*/')
-        if dir[-1] != '/':
-            dir += '/'
-        if dir in dirs:
-            return True
-        return False
-
-    def _remove_label(self, line):
-        """
-        Function to remove the label from a line.
-        """
-        label, elenum = self._get_label(line)
-        if label is not None:
-            element = line[elenum]
-            lablen = len(label)
-            newval = element
-            for index in range(len(element)):
-                if element[index:index+lablen] == label:
-                    prelabel = element[:index-1]
-                    postlabel = element[index+lablen+1:]
-                    newval = prelabel+' '+postlabel
-                    break
-            line[elenum] = newval 
-        return line 
-            
-    def _get_elementdata(self, line):
-        data = []
-        for index, ele in enumerate(line[1:]):
-            if ele != '':
-                try:
-                    data.append(_np.float(ele))
-                except ValueError:
-                    pass
-        return data
-
-    def _get_indic(self):
-        """
-        Function to read the indicator number. Must be 0, 1, or 2, where:
-            0 is a new lattice
-            1 is for fitting with the first lattice (from a 0 indicator file)
-            2 if for a second fitting which suppresses the first fitting.
-        """
-        indc = 0
-        linenum = 0
-        for linenum, line in enumerate(self.data):
-            if line[0] == '0':
-                if line[1] == '\r' or '\n':
-                    indc = 0
-                    break
-            if line[0] == '1':
-                if line[1] == '\r' or '\n':
-                    indc = 1    
-                    break
-            if line[0] == '2':
-                if line[1] == '\r' or '\n':
-                    indc = 2    
-                    break
-        return indc, linenum
-
-    def _get_comment(self, line):
-        """
-        Function to extract a comment from a line.
-        Will only find one comment per line.
-        """
-        concat = ''
-        for ele in line:
-            concat += ele
-            concat += ' '
-        commstart = _string.find(concat, '(')
-        commend = _string.find(concat, ')')
-        if commstart != -1 and commend != -1:
-            comment = concat[commstart+1: commend]
-            gmadcomment = '! '+comment
-        else:
-            gmadcomment = None
-        return gmadcomment
 
     def _printout(self, line):
         sys.stdout.write(line+'\n')
@@ -805,7 +578,7 @@ class functions:
 
         self.beamprops.brho = mom_in_ev / _con.c
 
-    def _process_fits(self, fits):
+    def _process_fits(self, fits):  # redundant
         # First split the fitting output into its respective sections (input problem step).
         fitsections = []
         fitsstarts = []
@@ -821,7 +594,7 @@ class functions:
                 section = fits[fitsstarts[secnum]:]
             lines = []
             for line in section:
-                lines.append(self._remove_illegals(line.split(' ')))
+                lines.append(RemoveIllegals(line.split(' ')))
             fitsections.append(lines)
             
         magnetlines = []
@@ -840,9 +613,9 @@ class functions:
             linedict = {'elementnum': 0.0,
                         'name': '',
                         'length': 0.0}
-            data = self._remove_illegals(line.split(' '))
-            eledata = self._get_elementdata(data)
-            label = self._get_label(data)
+            data = RemoveIllegals(line.split(' '))
+            eledata = GetElementData(data)
+            label = GetLabel(data)
             if data[0] in isLegal:
                 linedict['elementnum'] = isLegal[data[0]]
                 linedict['name'] = label
@@ -881,43 +654,338 @@ class functions:
             self._printout('Cannot open file.')
         return isOutput
 
-    def _checkSingleLineOutputApplied(self, file):
-        """
-        Function to check if the control element that print element output in
-        a single line was successfully applied. Check needed as not all versions
-        of TRANSPORT can run this type code.
-        """
-        reader = _reader.reader()
-        flist = _reader._LoadFile(file)
-        optics = reader.optics._getOptics(flist)
-        for element in optics:
-            if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
-                return False
-        return True
-
-    def _getTypeNum(self, line):
-        """
-        Function to extract the element type number (type code).
-        Written because element types can contain alphabetical
-        characters when fits are used, e.g: 5.0A. Only the number
-        is required, the use of fitting does not need to be known.
-        """
-        eleNum = line[0]
-        characNum = 0
-        if len(eleNum) > 2:
-            for characNum in range(len(eleNum[2:])):
-                try:
-                    converted = _np.float(eleNum[:characNum+2])
-                except ValueError:
-                    break
-            typeNum = _np.float(eleNum[:characNum+2])
-        else:
-            typeNum = _np.float(eleNum)
-        return typeNum
-
     def _transformUpdate(self, linedict):
         if linedict['elementnum'] == 6.0:
             errorline = '\tElement is either a transform update or a collimator. The type code 6 definition'
             errorline2 = '\thas not been switched to collimators, therefore nothing will be done for this element.'
             self._debug_printout(errorline)
             self._debug_printout(errorline2)
+
+
+def GetTypeNum(line):
+    """
+    Function to extract the element type number (type code).
+    Written because element types can contain alphabetical
+    characters when fits are used, e.g: 5.0A. Only the number
+    is required, the use of fitting does not need to be known.
+    """
+    eleNum = line[0]
+    characNum = 0
+    if len(eleNum) > 2:
+        for characNum in range(len(eleNum[2:])):
+            try:
+                converted = _np.float(eleNum[:characNum+2])
+            except ValueError:
+                break
+        typeNum = _np.float(eleNum[:characNum+2])
+    else:
+        typeNum = _np.float(eleNum)
+    return typeNum
+
+
+def CheckSingleLineOutputApplied(file):
+    """
+    Function to check if the control element that print element output in
+    a single line was successfully applied. Check needed as not all versions
+    of TRANSPORT can run this type code.
+    """
+    reader = _reader.reader()
+    flist = _reader._LoadFile(file)
+    optics = reader.optics._getOptics(flist)
+    for element in optics:
+        if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
+            return False
+    return True
+
+
+def RemoveSpaces(line):
+    elementlist = []
+    for i in line:
+        if (i != '') and (i != ' '):
+            elementlist.append(i)
+    line = _np.array(elementlist)
+    return line
+
+
+def FindEndOfLine(line):  # Find the end of the line of code
+    endpos = -1
+    breakloop = False
+    if isinstance(line, _np.str):
+        for charnum, char in enumerate(line):
+            if char == ';':
+                endpos = charnum
+                break
+    elif isinstance(line, _np.ndarray):
+        for index, ele in enumerate(line):
+            for char in ele:
+                if char == ';':
+                    endpos = index
+                    breakloop = True
+                    break
+            if breakloop:
+                break
+    return endpos
+
+
+def RemoveIllegals(line):
+    """
+    Function to remove '' and stray characters from lines.
+    """
+    illegal = ['"', '', '(', ')']
+
+    linelist = [element for element in line if element in illegal]
+    line = _np.array(linelist)
+    return line
+
+
+def CheckIsSentinel(line):
+    for element in line:
+        if element[:8] == 'SENTINEL':
+            return True
+    return False
+
+
+def CheckIsAddition(line, filetype='input'):
+    """
+    Function to check if a BEAM line of TRANSPORT code is a beam definition or r.m.s addition.
+    """
+    # Output file is a standard format, any RMS addition line should always be 10 long.
+    if filetype == 'output':
+        if len(line) == 10:
+            return True
+
+    elif filetype == 'input':
+        if len(line) > 8:
+            if (line[8] == '0.') or (line[8] == '0'):
+                return True
+            else:
+                return False
+    else:
+        raise ValueError("File type can only be input or output")
+
+
+def GetComment(line):
+    """
+    Function to extract a comment from a line.
+    Will only find one comment per line.
+    """
+    concat = ''
+    for ele in line:
+        concat += ele
+        concat += ' '
+    commstart = _string.find(concat, '(')
+    commend = _string.find(concat, ')')
+    if commstart != -1 and commend != -1:
+        comment = concat[commstart+1: commend]
+        gmadcomment = '! '+comment
+    else:
+        gmadcomment = None
+    return gmadcomment
+
+
+def GetLabel(line):
+    """
+    Function to get element label from code line.
+    """
+    label = None
+    for elenum, ele in enumerate(line):
+        startslash = _string.find(ele, "/")
+        startquote = _string.find(ele, "'")
+        startequal = _string.find(ele, "=")
+        startdbquote = _string.find(ele, '"')
+        if startslash != -1:
+            end = 1 + startslash + _string.find(ele[(startslash + 1):], "/")
+            if end <= startslash:
+                label = ele[startslash + 1:]
+            else:
+                label = ele[startslash + 1:end]
+            break
+        elif startquote != -1:
+            end = 1 + startquote + _string.find(ele[(startslash + 1):], "'")
+            if end <= startquote:
+                label = ele[startquote + 1:]
+            else:
+                label = ele[startquote + 1:end]
+            break
+        elif startequal != -1:
+            end = 1 + startequal + _string.find(ele[(startslash + 1):], "=")
+            if end <= startequal:
+                label = ele[startequal + 1:]
+            else:
+                label = ele[startequal + 1:end]
+            break
+        elif startdbquote != -1:
+            end = 1 + startdbquote + _string.find(ele[(startdbquote + 1):], '"')
+            if end <= startdbquote:
+                label = ele[startdbquote + 1:]
+            else:
+                label = ele[startdbquote + 1:end]
+            break
+        else:
+            label = None
+    return label
+
+
+def CheckDirExists(directory):
+    dirs = _glob.glob('*/')
+    if directory[-1] != '/':
+        directory += '/'
+    if dir in dirs:
+        return True
+    return False
+
+
+def RemoveLabel(line):
+    """
+    Function to remove the label from a line.
+    """
+    label, elenum = GetLabel(line)
+    if label is not None:
+        element = line[elenum]
+        lablen = len(label)
+        newval = element
+        for index in range(len(element)):
+            if element[index:index + lablen] == label:
+                prelabel = element[:index - 1]
+                postlabel = element[index + lablen + 1:]
+                newval = prelabel + ' ' + postlabel
+                break
+        line[elenum] = newval
+    return line
+
+
+def GetElementData(line):
+    data = []
+    for index, ele in enumerate(line[1:]):
+        if ele != '':
+            try:
+                data.append(_np.float(ele))
+            except ValueError:
+                pass
+    return data
+
+
+def GetIndicator(data):
+    """
+    Function to read the indicator number. Must be 0, 1, or 2, where:
+        0 is a new lattice
+        1 is for fitting with the first lattice (from a 0 indicator file)
+        2 if for a second fitting which suppresses the first fitting.
+    """
+    indc = 0
+    linenum = 0
+    for linenum, line in enumerate(data):
+        if line[0] == '0':
+            if line[1] == '\r' or '\n':
+                indc = 0
+                break
+        if line[0] == '1':
+            if line[1] == '\r' or '\n':
+                indc = 1
+                break
+        if line[0] == '2':
+            if line[1] == '\r' or '\n':
+                indc = 2
+                break
+    return indc, linenum
+
+
+def JoinSplitLines(linenum, lattice):
+    firstline = lattice[linenum].replace(';', '')
+    latticeline = firstline  # Copy for later
+    firstline = _np.array(firstline.split(' '), dtype=_np.str)
+    firstline = RemoveIllegals(firstline)
+    numericals = []
+    nonnumericals = []
+    # Keep entries that are strings of numbers
+    for i in firstline:
+        try:
+            number = _np.float(i)
+            numericals.append(_np.str(number))
+        except ValueError:
+            nonnumericals.append(i)
+
+    # Number of numerical elements minus the first which should be the entry type number.
+    # This is bascially a way of extracting any label or comments.
+    numelements = len(numericals) - 1
+
+    secline = lattice[linenum + 1].replace(';', '')
+    secline = _np.array(secline.split(' '), dtype=_np.str)
+    secline = RemoveIllegals(secline)
+    secnumericals = []
+
+    for i in secline:
+        try:
+            number = _np.float(i)
+            secnumericals.append("%.4f" % number)
+        except ValueError:
+            pass
+
+    # Second line should be 15 minus number of numerical elements from prev line.
+    # This is done to skip erroneous numbers in the line such as '000' which have
+    # appeared when lines have been split.
+    secline = secnumericals[-15 + numelements:]
+    numericals.extend(secline)
+
+    # Add to latticeline so as to appear like one single line in the file
+    seclinetxt = ""
+    for i in secline:
+        newline = "     " + i
+        seclinetxt += newline
+    latticeline += seclinetxt
+
+    # Add name to output
+    if len(nonnumericals) == 1:
+        numericals.append(nonnumericals[0])
+    line = _np.array(numericals)
+    return latticeline, line
+
+
+def GetFaceRotationAngles(data, linenum):
+
+    def searchForAngle(linelist):
+        angle = 0
+        for line in linelist:
+            try:
+                elecode = _np.float(line[0])
+            except ValueError:
+                angle = 0
+                break
+
+            if _np.float(line[0]) == 4.0:
+                break
+            elif _np.float(line[0]) == 2.0:
+                endof = FindEndOfLine(line[1])
+                if endof != -1:
+                    try:
+                        angle = _np.round(_np.float(line[1][:endof]), 4)
+                    except ValueError:
+                        try:
+                            angle = _np.round(_np.float(line[2][:endof]), 4)
+                        except ValueError:
+                            pass
+                    else:
+                        pass
+                else:
+                    try:
+                        angle = _np.round(_np.float(line[1]), 4)
+                    except ValueError:
+                        try:
+                            angle = _np.round(_np.float(line[2]), 4)
+                        except ValueError:
+                            pass
+                    else:
+                        pass
+                break
+            else:
+                pass
+        return angle
+
+    lineList = [i for i in data[(linenum - 5):linenum]]
+    lineList.reverse()  # Search for input poleface in reverse line order
+
+    anglein = searchForAngle(lineList)
+
+    angleout = searchForAngle(data[linenum + 1:(linenum + 6)])
+
+    return anglein, angleout

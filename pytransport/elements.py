@@ -2,7 +2,7 @@ import numpy as _np
 from pymadx import Builder as _mdBuilder
 from pybdsim import Builder as _pyBuilder
 from _General import functions
-
+import _General
 
 class elements(functions):
     def __init__(self, inputfile,
@@ -28,7 +28,7 @@ class elements(functions):
             return
         if self._beamdefined and not self._dontSplit:
             self._numberparts += 1
-            self.Write()
+            self._write()
             self._printout('Writing...')
             del self.gmadmachine
             del self.madxmachine
@@ -72,7 +72,7 @@ class elements(functions):
             self._debug_printout('\tZero or negative length element, ignoring.')
             return
     
-        length_in_metres = driftlen * self._scale_to_meters('element_length')
+        lenInM = driftlen * self._scale_to_meters('element_length')  # length in metres
 
         self.machineprops.drifts += 1
         elementid = ''
@@ -81,11 +81,11 @@ class elements(functions):
         if not elementid:  # check on empty string
             elementid = 'DR'+_np.str(self.machineprops.drifts)
 
-        self.gmadmachine.AddDrift(name=elementid, length=length_in_metres)
-        self.madxmachine.AddDrift(name=elementid, length=length_in_metres)
+        self.gmadmachine.AddDrift(name=elementid, length=lenInM)
+        self.madxmachine.AddDrift(name=elementid, length=lenInM)
         
         self._debug_printout('\tConverted to:')
-        self._debug_printout('\t' + 'Drift ' + elementid + ', length ' + _np.str(length_in_metres) + ' m')
+        self._debug_printout('\t' + 'Drift ' + elementid + ', length ' + _np.str(lenInM) + ' m')
 
     def dipole(self, linedict):
         linenum = linedict['linenum']
@@ -135,7 +135,7 @@ class elements(functions):
             angle = angle_in_deg * (_np.pi/180.) * self.machineprops.bending
         
         # Convert element length
-        length_in_metres = length * self._scale_to_meters('element_length')
+        lenInM = length * self._scale_to_meters('element_length')
         
         self.machineprops.dipoles += 1
         elementid = ''
@@ -146,17 +146,17 @@ class elements(functions):
         
         # Check for non zero pole face rotation
         if (e1 != 0) and (e2 != 0):
-            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4), e1=_np.round(e1,4), e2=_np.round(e2,4), fint=fintval, fintx=fintxval)
-            self.madxmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4), e1=_np.round(e1,4), e2=_np.round(e2,4), fint=fintval, fintx=fintxval)
+            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1,4), e2=_np.round(e2,4), fint=fintval, fintx=fintxval)
+            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1,4), e2=_np.round(e2,4), fint=fintval, fintx=fintxval)
         elif (e1 != 0) and (e2 == 0):
-            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4), e1=_np.round(e1,4), fint=fintval)
-            self.madxmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4), e1=_np.round(e1,4), fint=fintval)
+            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1,4), fint=fintval)
+            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1,4), fint=fintval)
         elif (e1 == 0) and (e2 != 0):
-            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4), e2=_np.round(e2,4), fintx=fintxval)
-            self.madxmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4), e2=_np.round(e2,4), fintx=fintxval)
+            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2,4), fintx=fintxval)
+            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2,4), fintx=fintxval)
         else:
-            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4))
-            self.madxmachine.AddDipole(name=elementid, category='sbend', length=length_in_metres, angle=_np.round(angle, 4))
+            self.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
+            self.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
 
         # Debug output
         if (e1 != 0) and (e2 != 0):
@@ -178,7 +178,7 @@ class elements(functions):
             fringestr = ''
 
         self._debug_printout('\tConverted to:')
-        debugstring = 'Dipole ' + elementid + ', length= ' + _np.str(length_in_metres) + ' m, angle= ' + \
+        debugstring = 'Dipole ' + elementid + ', length= ' + _np.str(lenInM) + ' m, angle= ' + \
                       _np.str(_np.round(angle, 4)) + ' rad' + polefacestr + fringestr
         self._debug_printout('\t' + debugstring)
 
@@ -236,7 +236,7 @@ class elements(functions):
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
         
         pipe_in_metres = pipe_rad * self._scale_to_meters('bend_vert_gap')
-        length_in_metres = length * self._scale_to_meters('element_length')
+        lenInM = length * self._scale_to_meters('element_length')
         
         field_gradient = (field_in_Tesla / pipe_in_metres) / self.beamprops.brho  # K1 in correct units
         
@@ -253,8 +253,8 @@ class elements(functions):
             else:
                 elementid = 'NULLQUAD' + _np.str(self.machineprops.quads)  # For K1 = 0.
 
-        self.gmadmachine.AddQuadrupole(name=elementid, length=length_in_metres, k1=_np.round(field_gradient, 4))
-        self.madxmachine.AddQuadrupole(name=elementid, length=length_in_metres, k1=_np.round(field_gradient, 4))
+        self.gmadmachine.AddQuadrupole(name=elementid, length=lenInM, k1=_np.round(field_gradient, 4))
+        self.madxmachine.AddQuadrupole(name=elementid, length=lenInM, k1=_np.round(field_gradient, 4))
         
         string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' G, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
         string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
@@ -263,7 +263,7 @@ class elements(functions):
         self._debug_printout(string2)
         self._debug_printout(string3)
         self._debug_printout('\tConverted to:')
-        debugstring = 'Quadrupole '+elementid+', length= '+_np.str(length_in_metres)+' m, k1= '+_np.str(_np.round(field_gradient,4))+' T/m'
+        debugstring = 'Quadrupole '+elementid+', length= '+_np.str(lenInM)+' m, k1= '+_np.str(_np.round(field_gradient,4))+' T/m'
         self._debug_printout('\t' + debugstring)
 
     def collimator(self, linedict):
@@ -292,7 +292,7 @@ class elements(functions):
         aperx = _np.float(aperx)
         apery = _np.float(apery)
 
-        length_in_metres = linedict['length'] * self._scale_to_meters('element_length')
+        lenInM = linedict['length'] * self._scale_to_meters('element_length')
         aperx_in_metres = aperx * self._scale_to_meters('x')
         apery_in_metres = apery * self._scale_to_meters('y')
 
@@ -304,13 +304,13 @@ class elements(functions):
             elementid = 'COL'+_np.str(self.machineprops.collimators)
 
         collimatorMaterial = 'copper'  # Default in BDSIM, added to prevent warnings
-        self.gmadmachine.AddRCol(name=elementid, length=length_in_metres, xsize=aperx_in_metres, ysize=apery_in_metres, material=collimatorMaterial)
+        self.gmadmachine.AddRCol(name=elementid, length=lenInM, xsize=aperx_in_metres, ysize=apery_in_metres, material=collimatorMaterial)
 
         debugstring = '\tCollimator, x aperture = ' + _np.str(aperx_in_metres) \
                       + ' m, y aperture = ' + _np.str(apery_in_metres) + ' m.'
         self._debug_printout(debugstring)
         self._debug_printout('\tConverted to:')
-        debugstring = 'Collimator ' + elementid + ', length= ' + _np.str(length_in_metres)\
+        debugstring = 'Collimator ' + elementid + ', length= ' + _np.str(lenInM)\
                       + ' m, xsize= ' + _np.str(_np.round(aperx_in_metres, 4))
         debugstring += ' m, ysize= ' + _np.str(_np.round(apery_in_metres, 4)) + ' m.'
         self._debug_printout('\t' + debugstring)
@@ -379,7 +379,7 @@ class elements(functions):
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
         
         pipe_in_metres = pipe_rad * self._scale_to_meters('bend_vert_gap')
-        length_in_metres = length * self._scale_to_meters('element_length')
+        lenInM = length * self._scale_to_meters('element_length')
 
         field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.beamprops.brho  # K2 in correct units
         
@@ -390,11 +390,11 @@ class elements(functions):
         if not elementid:  # check on empty string
             elementid = 'SEXT'+_np.str(self.machineprops.sextus)
         
-        self.gmadmachine.AddSextupole(name=elementid, length=length_in_metres, k2=_np.round(field_gradient, 4))
-        self.madxmachine.AddSextupole(name=elementid, length=length_in_metres, k2=_np.round(field_gradient, 4))
+        self.gmadmachine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
+        self.madxmachine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
 
         self._debug_printout('\tConverted to:')
-        debugstring = 'Sextupole ' + elementid + ', length ' + _np.str(length_in_metres) + \
+        debugstring = 'Sextupole ' + elementid + ', length ' + _np.str(lenInM) + \
                           ' m, k2 ' + _np.str(_np.round(field_gradient, 4)) + ' T/m^2'
         self._debug_printout('\t' + debugstring)
 
@@ -406,7 +406,7 @@ class elements(functions):
         field_in_Gauss = field * self.scale[self.units['magnetic_fields'][0]]  # Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
         
-        length_in_metres = length * self._scale_to_meters('element_length')
+        lenInM = length * self._scale_to_meters('element_length')
                 
         self.machineprops.solenoids += 1
         elementid = ''
@@ -415,11 +415,11 @@ class elements(functions):
         if not elementid:  # check on empty string
             elementid = 'SOLE'+_np.str(self.machineprops.solenoids)
         
-        self.gmadmachine.AddSolenoid(name=elementid, length=length_in_metres, ks=_np.round(field_in_Tesla, 4))
-        self.madxmachine.AddSolenoid(name=elementid, length=length_in_metres, ks=_np.round(field_in_Tesla, 4))
+        self.gmadmachine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
+        self.madxmachine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
 
         self._debug_printout('\tConverted to:')
-        debugstring = 'Solenoid ' + elementid + ', length ' + _np.str(length_in_metres) + \
+        debugstring = 'Solenoid ' + elementid + ', length ' + _np.str(lenInM) + \
                           ' m, ks ' + _np.str(_np.round(field_in_Tesla, 4)) + ' T'
         self._debug_printout('\t' + debugstring)
 
@@ -435,7 +435,7 @@ class elements(functions):
                 self.machineprops.benddef = True
                 self._debug_printout('\t47. Switched Dipoles to field definition.')
             elif number == 19:
-                if self._checkSingleLineOutputApplied(self._filename):
+                if _General.CheckSingleLineOutputApplied(self._filename):
                     self._singleLineOptics = True
                 self._debug_printout('\t19. Optics output switched to single line per element.')
             else:
@@ -496,18 +496,19 @@ class elements(functions):
 
     def special_input(self, linedict):
         specialdata = linedict['data']
+        self._debug_printout('\tSpecial Input line:')
 
         if specialdata[0] == 5.0:  # beampiperadius (technically only vertical, but will apply a circle for now)
-            debugstring1 = '\tType 5: Vertical half aperture,'
-            # self.machineprops.beampiperadius = specialdata[1]
-            debugstring2 = '\tNot setting vertical aperture, feature not supported yet.'
+            self._debug_printout('\tType 5: Vertical half aperture,')
+            debugstring = '\tNot setting vertical aperture, feature not supported yet.'
             if self.machineprops.fringeIntegral == 0:
                 self.machineprops.fringeIntegral = 0.5  # default if a vertical aperture is specified.
-                debugstring2 += 'K1 not set, setting K1 to default of 0.5.'
+                debugstring += 'K1 not set, setting K1 to default of 0.5.'
+                self._debug_printout(debugstring)
         elif specialdata[0] == 7.0:  # Fringe Field integral
             self.machineprops.fringeIntegral = specialdata[1]
-            debugstring1 = '\tType 7: K1 Fringe field integral,'
-            debugstring2 = '\tIntegral set to ' + _np.str(specialdata[1]) + '.'
+            self._debug_printout('\tType 7: K1 Fringe field integral,')
+            self._debug_printout('\tIntegral set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 14.0:  # Definition of element type code 6.
             if self._typeCode6IsTransUpdate:
                 self._typeCode6IsTransUpdate = False
@@ -515,27 +516,22 @@ class elements(functions):
             else:
                 self._typeCode6IsTransUpdate = True
                 typeCode6def = 'Transform Update'
-            debugstring1 = '\tType 14: Type code 6 definition,'
-            debugstring2 = '\tDefinition set to ' + typeCode6def + '.'
+            self._debug_printout('\tType 14: Type code 6 definition,')
+            self._debug_printout('\tDefinition set to ' + typeCode6def + '.')
         elif specialdata[0] == 16.0:  # X0 offset
             self.beamprops.X0 = specialdata[1]
-            debugstring1 = '\tType 16: X0 beam offset,'
-            debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
+            self._debug_printout('\tType 16: X0 beam offset,')
+            self._debug_printout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 17.0:  # Y0 offset
             self.beamprops.Y0 = specialdata[1]
-            debugstring1 = '\tType 17: Y0 beam offset,'
-            debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
+            self._debug_printout('\tType 17: Y0 beam offset,')
+            self._debug_printout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 18.0:  # Z0 offset
             self.beamprops.Z0 = specialdata[1]
-            debugstring1 = '\tType 18: Z0 beam offset,'
-            debugstring2 = '\tOffset set to ' + _np.str(specialdata[1]) + '.'
+            self._debug_printout('\tType 18: Z0 beam offset,')
+            self._debug_printout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         else:
-            debugstring1 = '\tCode type not yet supported, or unknown code type.'
-            debugstring2 = ''
-
-        self._debug_printout('\tSpecial Input line:')
-        self._debug_printout(debugstring1)
-        self._debug_printout(debugstring2)
+            self._debug_printout('\tCode type not yet supported, or unknown code type.')
 
     def unit_change(self, linedict):
         """
@@ -617,3 +613,4 @@ class elements(functions):
         self._debug_printout('\tUnit change line:')
         self._debug_printout(debugstring1)
         self._debug_printout(debugstring2)
+
