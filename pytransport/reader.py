@@ -18,12 +18,10 @@ class reader:
                 return transdata
     
         f = open(file)
-        flist = []
         transdata = None
         for line in f:
             # remove any carriage returns (both Mac and Unix)
             line = line.rstrip('\r\n')
-            flist.append(line)
             splitline = _remove_blanks(line.split(' '))
             if splitline and splitline[0] == '*BEAM*':  # Is beam output
                 # print "'*BEAM*' found in line " + _np.str(i+1)
@@ -112,11 +110,9 @@ class reader:
                 raise IOError(errorstring)
         fits.extend(flist[fitstart:fitend])
 
-        fitres = []
         output = self.optics._getOptics(flist, file)
-        for element in output:
-            fitres.append(element[0])
-        
+        fitres = [element[0] for element in output]
+
         return fits, fitres
 
     def _getLatticeAndOptics(self, file):
