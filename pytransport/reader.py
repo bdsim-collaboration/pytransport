@@ -3,11 +3,10 @@ import pybdsim
 import pytransport as _pyt
 
 
-class reader():
+class reader:
     def __init__(self):
         self._allowedIndicatorLines = ['0  100', '0    0']
         self.optics = optics()
-        self._general = _general()
 
     def getOptics(self, file, type=None):
         if isinstance(type, _np.str):
@@ -25,7 +24,7 @@ class reader():
             # remove any carriage returns (both Mac and Unix)
             line = line.rstrip('\r\n')
             flist.append(line)
-            splitline = self._general._remove_blanks(line.split(' '))
+            splitline = _remove_blanks(line.split(' '))
             if splitline and splitline[0] == '*BEAM*':  # Is beam output
                 # print "'*BEAM*' found in line " + _np.str(i+1)
                 f.close()
@@ -47,10 +46,11 @@ class reader():
         return transdata
 
     def _getLattice(self, file):
-        """ Function to extract the lattice from a standard output file. No processing at the moment, but
-            this function should identify the chunk that is the lattice.
-            """
-        flist = self._general._LoadFile(file)
+        """
+        Function to extract the lattice from a standard output file. No processing at the moment, but
+        this function should identify the chunk that is the lattice.
+        """
+        flist = _LoadFile(file)
         
         foundlatticestart = False
         foundlatticeend = False
@@ -69,7 +69,7 @@ class reader():
                     foundlatticeend = True
         if not foundlatticestart:
             if not foundlatticeend:
-                raise IOError('No lattice found in ' + self._general.file + '.')
+                raise IOError('No lattice found in ' + file + '.')
             else:
                 errorstring = 'The end of a lattice (line = "0SENTINEL") was found at line '+ _np.str(latticeend + 1) + ',\n'
                 errorstring += 'but the start of a lattice (line = "0    0") was not found. Please check the input file.'
@@ -88,7 +88,7 @@ class reader():
             the second with the first line of each element in the output data, which contains the 
             element parameters with their fitted values.
             """
-        flist = self._general._LoadFile(file)
+        flist = _LoadFile(file)
     
         foundfitstart = False
         foundfitend = False
@@ -99,7 +99,7 @@ class reader():
                     fitstart = linenum
                     foundfitstart = True
             if not foundfitend:
-                splitline = self._general._remove_blanks(line.split(' '))
+                splitline = _remove_blanks(line.split(' '))
                 if splitline and splitline[0] == '*BEAM*' and not foundfitend:
                     fitend = linenum
                     foundfitend = True
@@ -113,80 +113,80 @@ class reader():
         fits.extend(flist[fitstart:fitend])
 
         fitres = []
-        output = self.optics._getOptics(flist)
+        output = self.optics._getOptics(flist, file)
         for element in output:
             fitres.append(element[0])
         
         return fits, fitres
 
     def _getLatticeAndOptics(self, file):
-        flist = self._general._LoadFile(file)
+        flist = _LoadFile(file)
         lattice = self._getLattice(file)
-        optics = self.optics._getOptics(flist)
+        optics = self.optics._getOptics(flist, file)
         return lattice, optics
     
 
 class optics:
     def __init__(self):
-        self._general = _general()
         self.transdata = {
-            'Sigma_x'   :[],
-            'Sigma_xp'  :[],
-            'Sigma_y'   :[],
-            'Sigma_yp'  :[],
-            'S'         :[],
-            'Alph_x'    :[],
-            'Alph_y'    :[],
-            'Beta_x'    :[],
-            'Beta_y'    :[],
-            'Emitt_x'   :[],
-            'Emitt_y'   :[],
-            'Disp_x'    :[],
-            'Disp_y'    :[],
-            'Sigma_p'   :[],
-            'Momentum'  :[],
-            'E'         :[], # kinetic energy
-            'Name'      :[],
-            'Type'      :[]
+            'Sigma_x'   : [],
+            'Sigma_xp'  : [],
+            'Sigma_y'   : [],
+            'Sigma_yp'  : [],
+            'S'         : [],
+            'Alph_x'    : [],
+            'Alph_y'    : [],
+            'Beta_x'    : [],
+            'Beta_y'    : [],
+            'Emitt_x'   : [],
+            'Emitt_y'   : [],
+            'Disp_x'    : [],
+            'Disp_y'    : [],
+            'Sigma_p'   : [],
+            'Momentum'  : [],
+            'E'         : [],  # kinetic energy
+            'Name'      : [],
+            'Type'      : []
             }
-        self.transunits = { # TODO: some unit for now, needs to be extracted from output / convert.py !)
-            'Sigma_x'   :'mm',
-            'Sigma_xp'  :'mrad',
-            'Sigma_y'   :'mm',
-            'Sigma_yp'  :'mrad',
-            'S'         :'m',
-            'Alph_x'    :'',
-            'Alph_y'    :'',
-            'Beta_x'    :'mm / mrad',
-            'Beta_y'    :'mm / mrad',
-            'Emitt_x'   :'mm mrad',
-            'Emitt_y'   :'mm mrad',
-            'Disp_x'    :'',
-            'Disp_y'    :'',
-            'Sigma_p'   :'MeV/c',
-            'Momentum'  :'MeV/c',
-            'E'         :'MeV',  # kinetic energy
-            'Name'      :'',
-            'Type'      :''
+        # TODO: some unit for now, needs to be extracted from output / convert.py !
+        self.transunits = {
+            'Sigma_x'   : 'mm',
+            'Sigma_xp'  : 'mrad',
+            'Sigma_y'   : 'mm',
+            'Sigma_yp'  : 'mrad',
+            'S'         : 'm',
+            'Alph_x'    : '',
+            'Alph_y'    : '',
+            'Beta_x'    : 'mm / mrad',
+            'Beta_y'    : 'mm / mrad',
+            'Emitt_x'   : 'mm mrad',
+            'Emitt_y'   : 'mm mrad',
+            'Disp_x'    : '',
+            'Disp_y'    : '',
+            'Sigma_p'   : 'MeV/c',
+            'Momentum'  : 'MeV/c',
+            'E'         : 'MeV',  # kinetic energy
+            'Name'      : '',
+            'Type'      : ''
             }
 
     def _processBeamOptics(self, flist):
         transdata = {
-            'Sigma_x'   :[],
-            'Sigma_xp'  :[],
-            'Sigma_y'   :[],
-            'Sigma_yp'  :[],
-            'S'         :[],
-            'Alph_x'    :[],
-            'Alph_y'    :[],
-            'Beta_x'    :[],
-            'Beta_y'    :[],
-            'Emitt_x'   :[],
-            'Emitt_y'   :[],
-            'Disp_x'    :[],
-            'Disp_y'    :[],
-            'Sigma_p'   :[],
-            'Name'      :[],
+            'Sigma_x'   : [],
+            'Sigma_xp'  : [],
+            'Sigma_y'   : [],
+            'Sigma_yp'  : [],
+            'S'         : [],
+            'Alph_x'    : [],
+            'Alph_y'    : [],
+            'Beta_x'    : [],
+            'Beta_y'    : [],
+            'Emitt_x'   : [],
+            'Emitt_y'   : [],
+            'Disp_x'    : [],
+            'Disp_y'    : [],
+            'Sigma_p'   : [],
+            'Name'      : [],
             }
         num_elements = 0
         for elenum, element in enumerate(flist):
@@ -200,7 +200,7 @@ class optics:
                     typestr = line0split[1]
                     reststr = line0split[2]
                     restsplit = reststr.split(' ')
-                    restsplit = self._general._remove_blanks(restsplit)
+                    restsplit = _remove_blanks(restsplit)
                     transdata['S'].append(_np.float(restsplit[2]))
                     namestr = restsplit[4]
                     transdata['Name'].append(namestr)
@@ -208,13 +208,13 @@ class optics:
 
                     # Get sigma_x and sigma_xp
                     line3 = section[3].split(' ')
-                    line3 = self._general._remove_blanks(line3)
+                    line3 = _remove_blanks(line3)
                     transdata['Sigma_x'].append(_np.float(line3[3])/1000)
                     transdata['Sigma_xp'].append(_np.float(line3[5])/1000)
 
                     # Get sigma_y and sigma_yp
                     line4 = section[4].split(' ')
-                    line4 = self._general._remove_blanks(line4)
+                    line4 = _remove_blanks(line4)
                     transdata['Sigma_y'].append(_np.float(line4[3])/1000)
                     transdata['Sigma_yp'].append(_np.float(line4[5])/1000)
                     
@@ -224,7 +224,7 @@ class optics:
                     
                     # Get alfa and beta twiss transdata for x and y.
                     line7 = section[7].split(' ')
-                    line7 = self._general._remove_blanks(line7)
+                    line7 = _remove_blanks(line7)
                     transdata['Alph_x'].append(_np.float(line7[0]))
                     transdata['Beta_x'].append(_np.float(line7[1]))
                     transdata['Alph_y'].append(_np.float(line7[3]))
@@ -232,7 +232,7 @@ class optics:
 
                     # Get horizontal and vertical dispersion
                     line10 = section[10].split(' ')
-                    line10 = self._general._remove_blanks(line10)
+                    line10 = _remove_blanks(line10)
                     transdata['Disp_x'].append(_np.float(line10[2])/10)
                     transdata['Disp_y'].append(_np.float(line10[5])/10)
                     
@@ -296,21 +296,21 @@ class optics:
                 elementType = element[0].split('*')[1]
                 if elementType not in notokElements:
                     # rest of first line split with spaces
-                    splitline = self._general._remove_blanks(element[0].split('*')[2].split(' '))
+                    splitline = _remove_blanks(element[0].split('*')[2].split(' '))
                     name = splitline[1].strip('"')
                     if elementType == "BEAM" or elementType == "ACC":
                         momentum = _np.float(splitline[-2])
                         energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
-                    s       = _np.float(self._general._remove_blanks(element[1].split(' '))[0])
-                    sigx    = _np.float(self._general._remove_blanks(element[1].split(' '))[3])
-                    sigxp   = _np.float(self._general._remove_blanks(element[2].split(' '))[1])
-                    sigy    = _np.float(self._general._remove_blanks(element[3].split(' '))[1])
-                    sigyp   = _np.float(self._general._remove_blanks(element[4].split(' '))[1])
-                    sigt    = _np.float(self._general._remove_blanks(element[5].split(' '))[1])
-                    sigp    = _np.float(self._general._remove_blanks(element[6].split(' '))[1])
+                    s       = _np.float(_remove_blanks(element[1].split(' '))[0])
+                    sigx    = _np.float(_remove_blanks(element[1].split(' '))[3])
+                    sigxp   = _np.float(_remove_blanks(element[2].split(' '))[1])
+                    sigy    = _np.float(_remove_blanks(element[3].split(' '))[1])
+                    sigyp   = _np.float(_remove_blanks(element[4].split(' '))[1])
+                    sigt    = _np.float(_remove_blanks(element[5].split(' '))[1])
+                    sigp    = _np.float(_remove_blanks(element[6].split(' '))[1])
 
-                    r21     = _np.float(self._general._remove_blanks(element[2].split(' '))[3])
-                    r43     = _np.float(self._general._remove_blanks(element[4].split(' '))[5])
+                    r21     = _np.float(_remove_blanks(element[2].split(' '))[3])
+                    r43     = _np.float(_remove_blanks(element[4].split(' '))[5])
                     
                     # Add/Subtract small amount if sin of phase space ellipse rotation is +/-one.
                     # This comes from the output annoyingly rounding the code to one ,
@@ -325,8 +325,8 @@ class optics:
                     if r43 == -1.0:
                         r43 += 1e-4
                     
-                    dx = _np.float(self._general._split_negatives(self._general._remove_blanks(element[8].split(' ')))[5])
-                    dy = _np.float(self._general._split_negatives(self._general._remove_blanks(element[10].split(' ')))[5])
+                    dx = _np.float(_split_negatives(_remove_blanks(element[8].split(' ')))[5])
+                    dy = _np.float(_split_negatives(_remove_blanks(element[10].split(' ')))[5])
 
                     xpint = _np.sqrt(sigxp**2 * (1 - r21**2))
                     ypint = _np.sqrt(sigyp**2 * (1 - r43**2))
@@ -384,7 +384,7 @@ class optics:
         sMatrix = elementlist[:-2]
 
         for element in rMatrixElements[1:]:
-            rMatrix.append(self._general._remove_blanks(element.split(' ')))
+            rMatrix.append(_remove_blanks(element.split(' ')))
 
         num_elements = 0
         momentum = 0.0
@@ -395,10 +395,10 @@ class optics:
 
         for element in sMatrix:
             if len(element) > 1:  # I.e not a fit or matrix-modifying element
-                elementLine = self._general._remove_blanks(element[0].split(' '))
-                elementLine = self._general._updateElementLine(elementLine)
+                elementLine = _remove_blanks(element[0].split(' '))
+                elementLine = _updateElementLine(elementLine)
                 elementType = elementLine[0].strip('*')  # element type
-                typenum = _np.float(elementLine[1])
+                # typenum = _np.float(elementLine[1])
 
                 # Get line with sigma data.
                 # Element can have an additional line with fitting vary code data
@@ -408,39 +408,39 @@ class optics:
                     sigmaLine = element[1]
 
                 if elementType not in notokElements:
-                    name = self._general._removeIllegals(elementLine[2])  # remove illegal characters
+                    name = _removeIllegals(elementLine[2])  # remove illegal characters
 
                     if elementType == "BEAM" or elementType == "ACC":
                         momentum = _np.float(elementLine[-2])
                         energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
 
                     if len(element) > 6:  # In case beam is defined before output format change.
-                        s     = _np.float(self._general._remove_blanks(element[1].split(' '))[0])
-                        sigx  = _np.float(self._general._remove_blanks(element[1].split(' '))[3])
-                        sigxp = _np.float(self._general._remove_blanks(element[2].split(' '))[1])
-                        sigy  = _np.float(self._general._remove_blanks(element[3].split(' '))[1])
-                        sigyp = _np.float(self._general._remove_blanks(element[4].split(' '))[1])
-                        sigt  = _np.float(self._general._remove_blanks(element[5].split(' '))[1])
-                        sigp  = _np.float(self._general._remove_blanks(element[6].split(' '))[1])
+                        s     = _np.float(_remove_blanks(element[1].split(' '))[0])
+                        sigx  = _np.float(_remove_blanks(element[1].split(' '))[3])
+                        sigxp = _np.float(_remove_blanks(element[2].split(' '))[1])
+                        sigy  = _np.float(_remove_blanks(element[3].split(' '))[1])
+                        sigyp = _np.float(_remove_blanks(element[4].split(' '))[1])
+                        sigt  = _np.float(_remove_blanks(element[5].split(' '))[1])
+                        sigp  = _np.float(_remove_blanks(element[6].split(' '))[1])
 
                         try:
-                            r21 = _np.float(self._general._remove_blanks(element[2].split(' '))[3])
+                            r21 = _np.float(_remove_blanks(element[2].split(' '))[3])
                         except IndexError:
                             r21 = 0
                         try:
-                            r43 = _np.float(self._general._remove_blanks(element[4].split(' '))[5])
+                            r43 = _np.float(_remove_blanks(element[4].split(' '))[5])
                         except IndexError:
                             r43 = 0
                     else:
-                        s     = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[0])
-                        sigx  = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[2])
-                        sigxp = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[4])
-                        sigy  = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[6])
-                        sigyp = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[8])
-                        sigt  = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[10])
-                        sigp  = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[12])
-                        r21   = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[14])
-                        r43   = _np.float(self._general._remove_blanks(sigmaLine.split(' '))[15])
+                        s     = _np.float(_remove_blanks(sigmaLine.split(' '))[0])
+                        sigx  = _np.float(_remove_blanks(sigmaLine.split(' '))[2])
+                        sigxp = _np.float(_remove_blanks(sigmaLine.split(' '))[4])
+                        sigy  = _np.float(_remove_blanks(sigmaLine.split(' '))[6])
+                        sigyp = _np.float(_remove_blanks(sigmaLine.split(' '))[8])
+                        sigt  = _np.float(_remove_blanks(sigmaLine.split(' '))[10])
+                        sigp  = _np.float(_remove_blanks(sigmaLine.split(' '))[12])
+                        r21   = _np.float(_remove_blanks(sigmaLine.split(' '))[14])
+                        r43   = _np.float(_remove_blanks(sigmaLine.split(' '))[15])
                 
                     # Add/Subtract small amount if sin of phase space ellipse rotation is +/-one.
                     # This comes from the output annoyingly rounding the code to one ,
@@ -505,7 +505,7 @@ class optics:
                     num_elements += 1
 
         def get_elementdata(index):             # Function to get the data for each element, rather than each key.
-            elementlist2=[]                     # There's probably a better container type for this, but I'm familiar
+            elementlist2 = []                   # There's probably a better container type for this, but I'm familiar
             for name in self.transdata.keys():  # with dictionaries, and it works (for now).
                 elementlist2.append(self.transdata[name][index])
         
@@ -519,7 +519,7 @@ class optics:
         
         return data
 
-    def _getOptics(self, flist):
+    def _getOptics(self, flist, filename):
         """ Function to extract the output from a standard output file. The output will be an list of the lines
             for each element which contains the beam data. Each element should contain the R and TRANSPORT matrices
             which are necessary so the beam info can be calculated.
@@ -529,7 +529,7 @@ class optics:
         foundRMatrixElementStart = False
 
         for linenum, line in enumerate(flist):
-            splitline = self._general._remove_blanks(line.split(' '))
+            splitline = _remove_blanks(line.split(' '))
             if splitline and splitline[0] == '*BEAM*' and not foundOpticsStart:
                 opticsStart = linenum
                 foundOpticsStart = True
@@ -542,16 +542,16 @@ class optics:
     
         if not foundOpticsStart:
             if not foundOpticsEnd:
-                raise IOError('No output found in '+self._general.file+'.')
+                raise IOError('No output found in ' + filename + '.')
             else:
                 errorstring = 'The end of a lattice (line containing "0*LENGTH*") was found at ' \
-                              'line ' + _np.str(opticsStart+1)+',\n'
+                              'line ' + _np.str(opticsStart + 1)+',\n'
                 errorstring += 'but the start of a lattice (first line containing "*BEAM*") was not found. ' \
                                'Please check the input file.'
                 raise IOError(errorstring)
         elif not foundOpticsEnd:
                 errorstring = 'The start of a lattice (first line containing "*BEAM*") was found at ' \
-                              'line ' + _np.str(opticsStart-1)+',\n'
+                              'line ' + _np.str(opticsStart - 1)+',\n'
                 errorstring += 'but the end of a lattice (line containing "0*LENGTH*") was not found. ' \
                                'Please check the input file.'
                 raise IOError(errorstring)
@@ -635,83 +635,89 @@ class optics:
                 incorrect sign. This doesn't affect the resulting beam size, but beware 
                 that a direct dispersion comparison to another lattice may appear incorrect.
             """
-        flist = self._general._LoadFile(file)
+        flist = _LoadFile(file)
         transdata = self._processBeamOptics(flist)
         return transdata
 
     def _getStandardOptics(self, file):
-        flist = self._general._LoadFile(file)
-        optics = self._getOptics(flist)
+        flist = _LoadFile(file)
+        optics = self._getOptics(flist, file)
         transdata = self._processStandardOptics(optics, file)
         return transdata
 
 
-class _general:
-    def _remove_blanks(self, line):
-        """ Removes any blanks from a string (blanks being '' and not white spaces).
-            """
-        newline = ''
-        for element in line:
-            if element != '':
-                newline += element
-                newline += ' '
-        stripline = newline.split(' ')
-        # remove last element as it will be blank (due to added space)
-        return stripline[:-1]
+def _remove_blanks(line):
+    """
+    Removes any blanks from a string (blanks being '' and not white spaces).
+    """
+    newline = ''
+    for element in line:
+        if element != '':
+            newline += element
+            newline += ' '
+    stripline = newline.split(' ')
+    # remove last element as it will be blank (due to added space)
+    return stripline[:-1]
 
-    def _removeIllegals(self,line):
-        """ Function to remove '' and stray characters from lines.
-            """
-        illegal = ['"', '', '(', ')']
-        
-        modLine = ''
-        for element in line:
-            if element not in illegal:
-                modLine += element
-        return modLine
 
-    def _split_negatives(self, line):
-        newline = []
-        for element in line:
-            negpos = element.find('-')
-            if negpos > 1:
-                parts = element.split('-')
-                newline.append(parts[0])
-                newline.append('-' + parts[1])
-            else:
-                newline.append(element)
-        return newline
+def _removeIllegals(line):
+    """
+    Function to remove '' and stray characters from lines.
+    """
+    illegal = ['"', '', '(', ')']
 
-    def _LoadFile(self, file):
-        """ Converts the input file into a list. The data has to be in a format other than
-            handling line by line (using next()). 
-            
-            The function for processing the file reads section by section rather than line
-            by line. This may be an inefficent method but the input file should not be very 
-            large so it should not require a large amount of memory.
-            """
-        if file == '':
-            print 'No file name supplied.'
-        self.file = file
-        flist = []
-        infile = open(file)
-        # Loop over lines and remove any carriage returns (both Mac and Unix)
-        for line in infile:
-            cleanline = line.rstrip('\r\n')
-            flist.append(cleanline)
-        infile.close()
-        return flist
+    modLine = ''
+    for element in line:
+        if element not in illegal:
+            modLine += element
+    return modLine
 
-    def _updateElementLine(self, line):
-        if (line[0] == '*Z') and (line[1] == 'ROT*'):
-            newline = []
-            elementType = '*Z ROT*'
-            newline.append(elementType)
-            for element in line[2:]:
-                newline.append(element)
+
+def _split_negatives(line):
+    newline = []
+    for element in line:
+        negpos = element.find('-')
+        if negpos > 1:
+            parts = element.split('-')
+            newline.append(parts[0])
+            newline.append('-' + parts[1])
         else:
-            newline = line
+            newline.append(element)
+    return newline
 
-        return newline
+
+def _LoadFile(inputfile):
+    """
+    Converts the input file into a list. The data has to be in a format other than
+    handling line by line (using next()).
+
+    The function for processing the file reads section by section rather than line
+    by line. This may be an inefficient method but the input file should not be very
+    large so it should not require a large amount of memory.
+    """
+    if inputfile == '':
+        raise IOError('No file name supplied.')
+    flist = []
+    infile = open(inputfile)
+    # Loop over lines and remove any carriage returns (both Mac and Unix)
+    for line in infile:
+        cleanline = line.rstrip('\r\n')
+        flist.append(cleanline)
+    infile.close()
+    return flist
+
+
+def _updateElementLine(line):
+    if (line[0] == '*Z') and (line[1] == 'ROT*'):
+        newline = []
+        elementType = '*Z ROT*'
+        newline.append(elementType)
+        for element in line[2:]:
+            newline.append(element)
+    else:
+        newline = line
+
+    return newline
+
 
 
