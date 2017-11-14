@@ -1,39 +1,53 @@
 import numpy as _np
 
 from _General import *
+from _General import _Writer
 
 
 class Elements:
     def __init__(self, transportData):
         self.Transport = transportData
+        self.Writer = _Writer(debugOutput=self.Transport.convprops.debug,
+                              writeToLog=self.Transport.convprops.outlog,
+                              logfile=self.Transport.convprops.file + '_conversion.log')
 
     def DefineBeam(self, linedict):
         if linedict['isAddition']:
             if self.Transport.convprops.debug:
-                self.Transport.DebugPrintout('\tIgnoring beam rms addition.')
+                self.Writer.DebugPrintout('\tIgnoring beam rms addition.')
             return
         if self.Transport.convprops.beamdefined and not self.Transport.convprops.dontSplit:
             self.Transport.convprops.numberparts += 1
-            self.Transport._write()
-            self.Transport.Printout('Writing...')
+            self.Transport.AddBeam()
+            self.Transport.AddOptions()
+            self.Transport.gmadmachine.AddSampler('all')
+            self.Transport.madxmachine.AddSampler('all')
+            self.Writer.BeamDebugPrintout(self.Transport.beamprops, self.Transport.units)
+            fname = _General.RemoveFileExt(self.Transport.convprops.file)
+            if self.Transport.convprops.numberparts < 0:
+                filename = fname
+            else:
+                self.Transport.convprops.numberparts += 1
+                filename = fname + '_part' + _np.str(self.Transport.convprops.numberparts)
+            self.Writer.Write(self.Transport, filename)
             self.Transport._NewMachines()
             self.Transport.convprops.correctedbeamdef = False
 
-            self.Transport.Printout('\tBeam redefinition found. Writing previous section to file.')
-            self.Transport.Printout('\tSplitting into multiple machines.')
+            self.Writer.Printout('\tBeam redefinition found. Writing previous section to file.')
+            self.Writer.Printout('\tSplitting into multiple machines.')
 
         momentum = linedict['momentum']
 
         self.Transport.convprops.beamdefined = True
 
         # Convert momentum to energy and set distribution params.
-        self.Transport = UpdateEnergyFromMomentum(self.Transport, momentum)
+        self.Transport = _General.UpdateEnergyFromMomentum(self.Transport, momentum)
         self.Transport.beamprops.SigmaX  = _np.float(linedict['Sigmax'])
         self.Transport.beamprops.SigmaY  = _np.float(linedict['Sigmay'])
         self.Transport.beamprops.SigmaXP = _np.float(linedict['Sigmaxp'])
         self.Transport.beamprops.SigmaYP = _np.float(linedict['Sigmayp'])
         self.Transport.beamprops.SigmaE  = _np.float(linedict['SigmaE']) * 0.01 * (self.Transport.beamprops.beta**2)  # Convert from percentage mom spread to absolute espread
-        self.Transport.beamprops.SigmaT  = ConvertBunchLength(self.Transport, _np.float(linedict['SigmaT']))  # Get bunch length in seconds.
+        self.Transport.beamprops.SigmaT  = _General.ConvertBunchLength(self.Transport, _np.float(linedict['SigmaT']))  # Get bunch length in seconds.
 
         # Calculate Initial Twiss params
         try:
@@ -47,12 +61,12 @@ class Elements:
         self.Transport.beamprops.emitx = self.Transport.beamprops.SigmaX * self.Transport.beamprops.SigmaXP / 1000.0
         self.Transport.beamprops.emity = self.Transport.beamprops.SigmaY * self.Transport.beamprops.SigmaYP / 1000.0
 
-        self.Transport.BeamDebugPrintout()
+        self.Writer.BeamDebugPrintout(self.Transport.beamprops, self.Transport.units)
 
     def Drift(self, linedict):
         driftlen = linedict['length']
         if driftlen <= 0:
-            self.Transport.DebugPrintout('\tZero or negative length element, ignoring.')
+            self.Writer.DebugPrintout('\tZero or negative length element, ignoring.')
             return
 
         lenInM = driftlen * ScaleToMeters(self.Transport, 'element_length')  # length in metres
@@ -67,8 +81,8 @@ class Elements:
         self.Transport.gmadmachine.AddDrift(name=elementid, length=lenInM)
         self.Transport.madxmachine.AddDrift(name=elementid, length=lenInM)
 
-        self.Transport.DebugPrintout('\tConverted to:')
-        self.Transport.DebugPrintout('\t' + 'Drift ' + elementid + ', length ' + _np.str(lenInM) + ' m')
+        self.Writer.DebugPrintout('\tConverted to:')
+        self.Writer.DebugPrintout('\t' + 'Drift ' + elementid + ', length ' + _np.str(lenInM) + ' m')
 
     def Dipole(self, linedict):
         linenum = linedict['linenum']
@@ -80,9 +94,9 @@ class Elements:
         e2 = linedict['e2'] * ((_np.pi / 180.0)*self.Transport.machineprops.bending)  # Exit pole face rotation.
 
         if e1 != 0:
-            self.Transport.DebugPrintout('\tPreceding element (' + _np.str(linenum-1) + ') provides an entrance poleface rotation of ' + _np.str(_np.round(e1, 4)) + ' rad.')
+            self.Writer.DebugPrintout('\tPreceding element (' + _np.str(linenum-1) + ') provides an entrance poleface rotation of ' + _np.str(_np.round(e1, 4)) + ' rad.')
         if e2 != 0:
-            self.Transport.DebugPrintout('\tFollowing element (' + _np.str(linenum+1) + ') provides an exit poleface rotation of ' + _np.str(_np.round(e2, 4)) + ' rad.')
+            self.Writer.DebugPrintout('\tFollowing element (' + _np.str(linenum+1) + ') provides an exit poleface rotation of ' + _np.str(_np.round(e2, 4)) + ' rad.')
 
         # Fringe Field Integrals
         fintval = 0
@@ -92,11 +106,11 @@ class Elements:
         if e2 != 0:
             fintxval = self.Transport.machineprops.fringeIntegral
         if (fintval != 0) or (fintxval != 0):
-            self.Transport.DebugPrintout('\tA previous entry set the fringe field integral K1=' + _np.str(self.Transport.machineprops.fringeIntegral) + '.')
+            self.Writer.DebugPrintout('\tA previous entry set the fringe field integral K1=' + _np.str(self.Transport.machineprops.fringeIntegral) + '.')
         if (fintval != 0) and (e1 != 0):
-            self.Transport.DebugPrintout('\tSetting fint=' + _np.str(fintval) + '.')
+            self.Writer.DebugPrintout('\tSetting fint=' + _np.str(fintval) + '.')
         if (fintxval != 0) and (e2 != 0):
-            self.Transport.DebugPrintout('\tSetting fintx=' + _np.str(fintxval) + '.')
+            self.Writer.DebugPrintout('\tSetting fintx=' + _np.str(fintxval) + '.')
 
         # Calculate bending angle
         if self.Transport.machineprops.benddef:
@@ -108,9 +122,9 @@ class Elements:
             else:
                 rho = self.Transport.beamprops.brho / (_np.float(field_in_Tesla))         # Calculate bending radius.
                 angle = (_np.float(length) / rho) * self.Transport.machineprops.bending   # for direction of bend
-            self.Transport.DebugPrintout('\tbfield = ' + _np.str(field_in_Gauss) + ' kG')
-            self.Transport.DebugPrintout('\tbfield = ' + _np.str(field_in_Tesla) + ' T')
-            self.Transport.DebugPrintout('\tCorresponds to angle of ' + _np.str(_np.round(angle, 4)) + ' rad.')
+            self.Writer.DebugPrintout('\tbfield = ' + _np.str(field_in_Gauss) + ' kG')
+            self.Writer.DebugPrintout('\tbfield = ' + _np.str(field_in_Tesla) + ' T')
+            self.Writer.DebugPrintout('\tCorresponds to angle of ' + _np.str(_np.round(angle, 4)) + ' rad.')
         else:
             angle_in_deg = dipoledata[1]
             angle = angle_in_deg * (_np.pi/180.) * self.Transport.machineprops.bending
@@ -158,10 +172,10 @@ class Elements:
         else:
             fringestr = ''
 
-        self.Transport.DebugPrintout('\tConverted to:')
+        self.Writer.DebugPrintout('\tConverted to:')
         debugstring = 'Dipole ' + elementid + ', length= ' + _np.str(lenInM) + ' m, angle= ' + \
                       _np.str(_np.round(angle, 4)) + ' rad' + polefacestr + fringestr
-        self.Transport.DebugPrintout('\t' + debugstring)
+        self.Writer.DebugPrintout('\t' + debugstring)
 
     def ChangeBend(self, linedict):
         """
@@ -194,18 +208,18 @@ class Elements:
             # MadX Builder does not have transform 3d
             # Comment out and print warning
             # self.madxmachine.AddTransform3D(name=elementid, psi=anginrad)
-            self.Transport.DebugPrintout('\tWarning, MadX Builder does not have Transform 3D!')
+            self.Writer.DebugPrintout('\tWarning, MadX Builder does not have Transform 3D!')
 
             rotation = True
 
         if rotation:
-            self.Transport.DebugPrintout('\tConverted to:')
+            self.Writer.DebugPrintout('\tConverted to:')
             debugstring = '\tTransform3D ' + elementid + ', angle ' + _np.str(_np.round(self.Transport.machineprops.angle, 4)) + ' rad'
-            self.Transport.DebugPrintout('\t'+debugstring)
+            self.Writer.DebugPrintout('\t'+debugstring)
         elif self.Transport.machineprops.angle == 180:
-            self.Transport.DebugPrintout('\tBending direction set to Right')
+            self.Writer.DebugPrintout('\tBending direction set to Right')
         elif self.Transport.machineprops.angle == -180:
-            self.Transport.DebugPrintout('\tBending direction set to Left')
+            self.Writer.DebugPrintout('\tBending direction set to Left')
 
     def Quadrupole(self, linedict):
         quaddata = linedict['data']
@@ -240,12 +254,12 @@ class Elements:
         string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' G, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
         string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
         string3 = '\tBrho = ' + _np.str(_np.round(self.Transport.beamprops.brho, 4)) + ' Tm. K1 = ' +_np.str(_np.round(field_gradient, 4)) + ' m^-2'
-        self.Transport.DebugPrintout(string1)
-        self.Transport.DebugPrintout(string2)
-        self.Transport.DebugPrintout(string3)
-        self.Transport.DebugPrintout('\tConverted to:')
-        debugstring = 'Quadrupole '+elementid+', length= '+_np.str(lenInM)+' m, k1= '+_np.str(_np.round(field_gradient,4))+' T/m'
-        self.Transport.DebugPrintout('\t' + debugstring)
+        self.Writer.DebugPrintout(string1)
+        self.Writer.DebugPrintout(string2)
+        self.Writer.DebugPrintout(string3)
+        self.Writer.DebugPrintout('\tConverted to:')
+        debugstring = 'Quadrupole ' + elementid + ', length= ' + _np.str(lenInM) + ' m, k1= ' + _np.str(_np.round(field_gradient, 4)) + ' T/m'
+        self.Writer.DebugPrintout('\t' + debugstring)
 
     def Collimator(self, linedict):
         """
@@ -253,7 +267,7 @@ class Elements:
         Only added for gmad, not for madx!
         """
         if linedict['length'] <= 0:
-            self.Transport.DebugPrintout('\tZero or negative length element, ignoring.')
+            self.Writer.DebugPrintout('\tZero or negative length element, ignoring.')
             return
         colldata = linedict['data']
 
@@ -289,12 +303,12 @@ class Elements:
 
         debugstring = '\tCollimator, x aperture = ' + _np.str(aperx_in_metres) \
                       + ' m, y aperture = ' + _np.str(apery_in_metres) + ' m.'
-        self.Transport.DebugPrintout(debugstring)
-        self.Transport.DebugPrintout('\tConverted to:')
+        self.Writer.DebugPrintout(debugstring)
+        self.Writer.DebugPrintout('\tConverted to:')
         debugstring = 'Collimator ' + elementid + ', length= ' + _np.str(lenInM)\
                       + ' m, xsize= ' + _np.str(_np.round(aperx_in_metres, 4))
         debugstring += ' m, ysize= ' + _np.str(_np.round(apery_in_metres, 4)) + ' m.'
-        self.Transport.DebugPrintout('\t' + debugstring)
+        self.Writer.DebugPrintout('\t' + debugstring)
 
     def Acceleration(self, linedict):
         """
@@ -374,10 +388,10 @@ class Elements:
         self.Transport.gmadmachine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
         self.Transport.madxmachine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
 
-        self.Transport.DebugPrintout('\tConverted to:')
+        self.Writer.DebugPrintout('\tConverted to:')
         debugstring = 'Sextupole ' + elementid + ', length ' + _np.str(lenInM) + \
                       ' m, k2 ' + _np.str(_np.round(field_gradient, 4)) + ' T/m^2'
-        self.Transport.DebugPrintout('\t' + debugstring)
+        self.Writer.DebugPrintout('\t' + debugstring)
 
     def Solenoid(self, linedict):
         soledata = linedict['data']
@@ -399,34 +413,34 @@ class Elements:
         self.Transport.gmadmachine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
         self.Transport.madxmachine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
 
-        self.Transport.DebugPrintout('\tConverted to:')
+        self.Writer.DebugPrintout('\tConverted to:')
         debugstring = 'Solenoid ' + elementid + ', length ' + _np.str(lenInM) + \
                       ' m, ks ' + _np.str(_np.round(field_in_Tesla, 4)) + ' T'
-        self.Transport.DebugPrintout('\t' + debugstring)
+        self.Writer.DebugPrintout('\t' + debugstring)
 
     def Printline(self, linedict):
         number = linedict['data'][0]
-        self.Transport.DebugPrintout('\tTRANSPORT control line,')
+        self.Writer.DebugPrintout('\tTRANSPORT control line,')
         try:
             number = _np.float(number)
             if number == 48:
                 self.Transport.machineprops.benddef = False
-                self.Transport.DebugPrintout('\t48. Switched Dipoles to Angle definition.')
+                self.Writer.DebugPrintout('\t48. Switched Dipoles to Angle definition.')
             elif number == 47:
                 self.Transport.machineprops.benddef = True
-                self.Transport.DebugPrintout('\t47. Switched Dipoles to field definition.')
+                self.Writer.DebugPrintout('\t47. Switched Dipoles to field definition.')
             elif number == 19:
-                if CheckSingleLineOutputApplied(self.Transport.convprops.filename):
+                if _General.CheckSingleLineOutputApplied(self.Transport.convprops.filename):
                     self.Transport.convprops.singleLineOptics = True
-                self.Transport.DebugPrintout('\t19. Optics output switched to single line per element.')
+                self.Writer.DebugPrintout('\t19. Optics output switched to single line per element.')
             else:
-                self.Transport.DebugPrintout('\tCode 13. ' + _np.str(number) + ' handling not implemented.')
+                self.Writer.DebugPrintout('\tCode 13. ' + _np.str(number) + ' handling not implemented.')
         except ValueError:
             pass
 
     def Correction(self, linedict):
         if self.Transport.convprops.correctedbeamdef:
-            self.Transport.DebugPrintout('\tNot Correction to original beam definition')
+            self.Writer.DebugPrintout('\tNot Correction to original beam definition')
             return
         # Check if the previous line was the original beam definition and not an rms update
         if linedict['prevlinenum'] == 1.0 and not linedict['isAddition'] and self.Transport.convprops.beamdefined:
@@ -437,7 +451,7 @@ class Elements:
             sigma21 = correctiondata[0]
             sigma43 = correctiondata[5]
         else:
-            self.Transport.DebugPrintout('\tLength of correction line is incorrect')
+            self.Writer.DebugPrintout('\tLength of correction line is incorrect')
             return
 
         emittoverbeta = self.Transport.beamprops.SigmaXP**2 * (1 - sigma21**2)
@@ -464,32 +478,32 @@ class Elements:
 
         self.Transport.beamprops.distrType = 'gausstwiss'
 
-        self.Transport.DebugPrintout('\tConverted to:')
-        self.Transport.DebugPrintout('\t Beam Correction. Sigma21 = ' + _np.str(sigma21) + ', Sigma43 = ' + _np.str(sigma43) + '.')
-        self.Transport.DebugPrintout('\t Beam distribution type now switched to "gausstwiss":')
-        self.Transport.DebugPrintout('\t Twiss Params:')
-        self.Transport.DebugPrintout('\t BetaX = ' + _np.str(self.Transport.beamprops.betx) + ' ' + self.Transport.units['beta_func'])
-        self.Transport.DebugPrintout('\t BetaY = ' + _np.str(self.Transport.beamprops.bety) + ' ' + self.Transport.units['beta_func'])
-        self.Transport.DebugPrintout('\t AlphaX = ' + _np.str(self.Transport.beamprops.alfx))
-        self.Transport.DebugPrintout('\t AlphaY = ' + _np.str(self.Transport.beamprops.alfy))
-        self.Transport.DebugPrintout('\t Emittx = ' + _np.str(self.Transport.beamprops.emitx) + ' ' + self.Transport.units['emittance'])
-        self.Transport.DebugPrintout('\t EmittY = ' + _np.str(self.Transport.beamprops.emity) + ' ' + self.Transport.units['emittance'])
+        self.Writer.DebugPrintout('\tConverted to:')
+        self.Writer.DebugPrintout('\t Beam Correction. Sigma21 = ' + _np.str(sigma21) + ', Sigma43 = ' + _np.str(sigma43) + '.')
+        self.Writer.DebugPrintout('\t Beam distribution type now switched to "gausstwiss":')
+        self.Writer.DebugPrintout('\t Twiss Params:')
+        self.Writer.DebugPrintout('\t BetaX = ' + _np.str(self.Transport.beamprops.betx) + ' ' + self.Transport.units['beta_func'])
+        self.Writer.DebugPrintout('\t BetaY = ' + _np.str(self.Transport.beamprops.bety) + ' ' + self.Transport.units['beta_func'])
+        self.Writer.DebugPrintout('\t AlphaX = ' + _np.str(self.Transport.beamprops.alfx))
+        self.Writer.DebugPrintout('\t AlphaY = ' + _np.str(self.Transport.beamprops.alfy))
+        self.Writer.DebugPrintout('\t Emittx = ' + _np.str(self.Transport.beamprops.emitx) + ' ' + self.Transport.units['emittance'])
+        self.Writer.DebugPrintout('\t EmittY = ' + _np.str(self.Transport.beamprops.emity) + ' ' + self.Transport.units['emittance'])
 
     def SpecialInput(self, linedict):
         specialdata = linedict['data']
-        self.Transport.DebugPrintout('\tSpecial Input line:')
+        self.Writer.DebugPrintout('\tSpecial Input line:')
 
         if specialdata[0] == 5.0:  # beampiperadius (technically only vertical, but will apply a circle for now)
-            self.Transport.DebugPrintout('\tType 5: Vertical half aperture,')
+            self.Writer.DebugPrintout('\tType 5: Vertical half aperture,')
             debugstring = '\tNot setting vertical aperture, feature not supported yet.'
             if self.Transport.machineprops.fringeIntegral == 0:
                 self.Transport.machineprops.fringeIntegral = 0.5  # default if a vertical aperture is specified.
                 debugstring += 'K1 not set, setting K1 to default of 0.5.'
-                self.Transport.DebugPrintout(debugstring)
+                self.Writer.DebugPrintout(debugstring)
         elif specialdata[0] == 7.0:  # Fringe Field integral
             self.Transport.machineprops.fringeIntegral = specialdata[1]
-            self.Transport.DebugPrintout('\tType 7: K1 Fringe field integral,')
-            self.Transport.DebugPrintout('\tIntegral set to ' + _np.str(specialdata[1]) + '.')
+            self.Writer.DebugPrintout('\tType 7: K1 Fringe field integral,')
+            self.Writer.DebugPrintout('\tIntegral set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 14.0:  # Definition of element type code 6.
             if self.Transport.convprops.typeCode6IsTransUpdate:
                 self.Transport.convprops.typeCode6IsTransUpdate = False
@@ -497,22 +511,22 @@ class Elements:
             else:
                 self.Transport.convprops.typeCode6IsTransUpdate = True
                 typeCode6def = 'Transform Update'
-            self.Transport.DebugPrintout('\tType 14: Type code 6 definition,')
-            self.Transport.DebugPrintout('\tDefinition set to ' + typeCode6def + '.')
+            self.Writer.DebugPrintout('\tType 14: Type code 6 definition,')
+            self.Writer.DebugPrintout('\tDefinition set to ' + typeCode6def + '.')
         elif specialdata[0] == 16.0:  # X0 offset
             self.Transport.beamprops.X0 = specialdata[1]
-            self.Transport.DebugPrintout('\tType 16: X0 beam offset,')
-            self.Transport.DebugPrintout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
+            self.Writer.DebugPrintout('\tType 16: X0 beam offset,')
+            self.Writer.DebugPrintout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 17.0:  # Y0 offset
             self.Transport.beamprops.Y0 = specialdata[1]
-            self.Transport.DebugPrintout('\tType 17: Y0 beam offset,')
-            self.Transport.DebugPrintout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
+            self.Writer.DebugPrintout('\tType 17: Y0 beam offset,')
+            self.Writer.DebugPrintout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 18.0:  # Z0 offset
             self.Transport.beamprops.Z0 = specialdata[1]
-            self.Transport.DebugPrintout('\tType 18: Z0 beam offset,')
-            self.Transport.DebugPrintout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
+            self.Writer.DebugPrintout('\tType 18: Z0 beam offset,')
+            self.Writer.DebugPrintout('\tOffset set to ' + _np.str(specialdata[1]) + '.')
         else:
-            self.Transport.DebugPrintout('\tCode type not yet supported, or unknown code type.')
+            self.Writer.DebugPrintout('\tCode type not yet supported, or unknown code type.')
 
     def UnitChange(self, linedict):
         """
@@ -591,13 +605,13 @@ class Elements:
             debugstring1 = '\tCode type not yet supported, or unknown code type.'
             debugstring2 = ''
 
-        self.Transport.DebugPrintout('\tUnit change line:')
-        self.Transport.DebugPrintout(debugstring1)
-        self.Transport.DebugPrintout(debugstring2)
+        self.Writer.DebugPrintout('\tUnit change line:')
+        self.Writer.DebugPrintout(debugstring1)
+        self.Writer.DebugPrintout(debugstring2)
 
     def TransformUpdate(self, linedict):
         if linedict['elementnum'] == 6.0:
             errorline = '\tElement is either a transform update or a collimator. The type code 6 definition'
             errorline2 = '\thas not been switched to collimators, therefore nothing will be done for this element.'
-            self.Transport.DebugPrintout(errorline)
-            self.Transport.DebugPrintout(errorline2)
+            self.Writer.DebugPrintout(errorline)
+            self.Writer.DebugPrintout(errorline2)

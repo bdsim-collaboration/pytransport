@@ -1,5 +1,7 @@
 import numpy as _np
 from scipy import constants as _con
+import sys as _sys
+import os as _os
 import string as _string
 import glob as _glob
 import reader as _reader
@@ -196,6 +198,77 @@ class _Registry:
         if not isinstance(linedict, dict):
             raise TypeError("Added element is not a Dictionary")
         self._totalLength += linedict['length']
+
+
+class _Writer:
+    def __init__(self, debugOutput=False, writeToLog=False, logfile=''):
+        self.debug = debugOutput
+        self.logfile = logfile
+        self.outlog = writeToLog
+
+    def Printout(self, line, outToTerminal=True):
+        if outToTerminal:
+            _sys.stdout.write(line+'\n')
+        if self.outlog:
+            logfile = open(self.logfile, 'a')
+            logfile.write(line)
+            logfile.write('\n')
+            logfile.close()
+
+    def DebugPrintout(self, line):
+        if self.debug:
+            self.Printout(line, outToTerminal=False)
+
+    def BeamDebugPrintout(self, beam, units):
+        if not isinstance(beam, _beamprops):
+            raise TypeError("Beam must be pytransport _beamprops instance.")
+        self.DebugPrintout('\tBeam definition :')
+        self.DebugPrintout('\tdistrType = ' + beam.distrType)
+        self.DebugPrintout('\tenergy = '  + _np.str(beam.tot_energy) + ' GeV')
+        self.DebugPrintout('\tSigmaX = '  + _np.str(beam.SigmaX) + ' ' + units['x'])
+        self.DebugPrintout('\tSigmaXP = ' + _np.str(beam.SigmaXP) + ' ' + units['xp'])
+        self.DebugPrintout('\tSigmaY = '  + _np.str(beam.SigmaY) + ' ' + units['y'])
+        self.DebugPrintout('\tSigmaYP = ' + _np.str(beam.SigmaYP) + ' ' + units['yp'])
+        self.DebugPrintout('\tSigmaE = '  + _np.str(beam.SigmaE))
+        self.DebugPrintout('\tSigmaT = '  + _np.str(beam.SigmaT))
+        self.DebugPrintout('\t(Final brho = ' + _np.str(_np.round(beam.brho, 2)) + ' Tm)')
+        self.DebugPrintout('\tTwiss Params:')
+        self.DebugPrintout('\tBetaX = '  + _np.str(beam.betx) + ' ' + units['beta_func'])
+        self.DebugPrintout('\tBetaY = '  + _np.str(beam.bety) + ' ' + units['beta_func'])
+        self.DebugPrintout('\tAlphaX = ' + _np.str(beam.alfx))
+        self.DebugPrintout('\tAlphaY = ' + _np.str(beam.alfy))
+        self.DebugPrintout('\tEmittx = ' + _np.str(beam.emitx) + ' ' + units['emittance'])
+        self.DebugPrintout('\tEmittY = ' + _np.str(beam.emity) + ' ' + units['emittance'])
+
+    def ElementPrepDebugPrintout(self, elementType, numElements):
+        debugString = "\tEntry is a " + elementType + ", adding to the element registry as element "
+        debugString += numElements + "."
+        self.DebugPrintout(debugString)
+
+    def Write(self, transport, filename):
+        """
+        Write the converted TRANSPORT file to disk.
+        """
+        if not isinstance(filename, _np.str):
+            raise TypeError("Filename must be a string")
+        if transport.convprops.gmadoutput:
+            fname = filename + '.gmad'
+            dir = transport.convprops.gmadDir
+            self.Printout('Writing to file: ' + dir + "/" + fname)
+            if not CheckDirExists(dir):
+                _os.mkdir(dir)
+            _os.chdir(dir)
+            transport.gmadmachine.Write(fname)
+            _os.chdir('../')
+        if transport.convprops.madxoutput:
+            fname = filename + '.madx'
+            dir = transport.convprops.madxDir
+            self.Printout('Writing to file: ' + dir + "/" + fname)
+            if not CheckDirExists(dir):
+                _os.mkdir(dir)
+            _os.chdir(dir)
+            transport.madxmachine.Write(fname)
+            _os.chdir('../')
 
 
 def GetTypeNum(line):

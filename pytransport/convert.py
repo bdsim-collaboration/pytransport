@@ -1,13 +1,11 @@
 import numpy as _np
 from scipy import constants as _con
-import sys
-import os as _os
 
 from pybdsim import Options as _Options
 from pymadx import Builder as _mdBuilder
 from pybdsim import Builder as _pyBuilder
 
-from elements import Elements
+from elements import Elements as _Elements
 import reader as _reader
 import _General
 from _General import _beamprops
@@ -91,12 +89,14 @@ class pytransport(Elements):
         self.Transport._file = infile[:-4]  # Remove extension
         self.Transport._filename = inputfile
         isOutput = _General.CheckIsOutput(inputfile)  # Is a TRANSPORT standard output file.
-
+        self.Writer.DebugPrintout("File Read.")
         if isOutput:
             lattice, output = temp._getLatticeAndOptics(inputfile)
             fits, fitres = temp._getFits(inputfile)
             self.Transport = _General.OutputFitsToRegistry(self.Transport, fitres)
-            self.Transport.DebugPrintout('\tAdding any fitting output to the fitting registry (self.FitRegistry)')
+            self.Writer.DebugPrintout('Adding any fitting output to the fitting registry (self.FitRegistry)')
+
+            self.Writer.DebugPrintout('Processing file and adding to Transport class.')
             for linenum, latticeline in enumerate(lattice):
                 latticeline = latticeline.replace(';', '')
                 line = _np.array(latticeline.split(' '), dtype=_np.str)
@@ -141,21 +141,33 @@ class pytransport(Elements):
         self.Transport.convprops.fileloaded = True
 
         # convert automatically
-        if auto:
+        if self.Transport.convprops.auto:
             self.transport2gmad()
 
     def Write(self):
         """
         Write the converted TRANSPORT file to disk.
         """
-        self.Transport._write()
+        self.Writer.DebugPrintout("Adding beam to gmad machine:")
+        self.Transport.AddBeam()
+        self.Transport.AddOptions()
+        self.Transport.gmadmachine.AddSampler('all')
+        self.Transport.madxmachine.AddSampler('all')
+        self.Writer.BeamDebugPrintout(self.Transport.beamprops, self.Transport.units)
+        fname = _General.RemoveFileExt(self.Transport.convprops.file)
+        if self.Transport.convprops.numberparts < 0:
+            filename = fname
+        else:
+            self.Transport.convprops.numberparts += 1
+            filename = fname + '_part' + _np.str(self.Transport.convprops.numberparts)
+        self.Writer.Write(self.Transport, filename)
 
     def transport2gmad(self):
         """
         Function to convert TRANSPORT file on a line by line basis.
         """
         if not self.Transport.convprops.fileloaded:
-            self.Transport.Printout('No file loaded.')
+            self.Writer.Printout('No file loaded.')
             return
         self.ProcessAndBuild()
         self.Write()
@@ -181,7 +193,7 @@ class pytransport(Elements):
             if filetype == 'input':
                 linedict['label'] = label
             linedict['number'] = line[1]
-            self.Transport.ElementPrepDebugPrintout("Unit Control", numElements)
+            self.Writer.ElementPrepDebugPrintout("Unit Control", numElements)
 
         if typeNum == 20.0:
             angle = 0  # Default
@@ -196,7 +208,7 @@ class pytransport(Elements):
                     except ValueError:
                         pass
             linedict['angle'] = angle
-            self.Transport.ElementPrepDebugPrintout("coordinate rotation", numElements)
+            self.Writer.ElementPrepDebugPrintout("coordinate rotation", numElements)
 
         if typeNum == 1.0:
             linedict['name'] = _General.GetLabel(line)
@@ -224,19 +236,19 @@ class pytransport(Elements):
             linedict['Sigmayp'] = line[4+n]
             linedict['SigmaT'] = line[5+n]
             linedict['SigmaE'] = line[6+n]
-            self.Transport.ElementPrepDebugPrintout("Beam definition or r.m.s addition", numElements)
+            self.Writer.ElementPrepDebugPrintout("Beam definition or r.m.s addition", numElements)
 
         if typeNum == 2.0:
             linedict['name'] = _General.GetLabel(line)
             linedict['data'] = _General.GetElementData(line)
-            self.Transport.ElementPrepDebugPrintout("poleface rotation", numElements)
+            self.Writer.ElementPrepDebugPrintout("poleface rotation", numElements)
 
         if typeNum == 3.0:
             linedict['name'] = _General.GetLabel(line)
             data = _General.GetElementData(line)
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            self.Transport.ElementPrepDebugPrintout("drift", numElements)
+            self.Writer.ElementPrepDebugPrintout("drift", numElements)
 
         if typeNum == 4.0:
             linedict['name'] = _General.GetLabel(line)
@@ -248,7 +260,7 @@ class pytransport(Elements):
             e1, e2 = _General.GetFaceRotationAngles(self.Transport.data, linenum)
             linedict['e1'] = e1
             linedict['e2'] = e2
-            self.Transport.ElementPrepDebugPrintout("dipole", numElements)
+            self.Writer.ElementPrepDebugPrintout("dipole", numElements)
 
         if typeNum == 5.0:
             linedict['name'] = _General.GetLabel(line)
@@ -256,7 +268,7 @@ class pytransport(Elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            self.Transport.ElementPrepDebugPrintout("quadrupole", numElements)
+            self.Writer.ElementPrepDebugPrintout("quadrupole", numElements)
 
         if typeNum == 6.0:
             # element is a collimator or transform update
@@ -295,10 +307,10 @@ class pytransport(Elements):
                         pass
             # Can be either transform update or collimator, a 16. 14 entry changes the definition but is only
             # processed after ALL elements are added to the registry.
-            self.Transport.ElementPrepDebugPrintout("transform update or collimator", numElements)
+            self.Writer.ElementPrepDebugPrintout("transform update or collimator", numElements)
 
         if typeNum == 9.0:
-            self.Transport.ElementPrepDebugPrintout("repetition control", numElements)
+            self.Writer.ElementPrepDebugPrintout("repetition control", numElements)
 
         if typeNum == 11.0:
             linedict['name'] = _General.GetLabel(line)
@@ -310,7 +322,7 @@ class pytransport(Elements):
             if len(data) == 4:  # Older case for single element
                 linedict['phase_lag'] = data[2]
                 linedict['wavel'] = data[3]
-            self.Transport.ElementPrepDebugPrintout("acceleration element", numElements)
+            self.Writer.ElementPrepDebugPrintout("acceleration element", numElements)
 
         if typeNum == 12.0:
             linedict['data'] = _General.GetElementData(line)
@@ -321,15 +333,15 @@ class pytransport(Elements):
             linedict['isAddition'] = False
             if _General.CheckIsAddition(line):
                 linedict['isAddition'] = True
-            self.Transport.ElementPrepDebugPrintout("beam rotation", numElements)
+            self.Writer.ElementPrepDebugPrintout("beam rotation", numElements)
 
         if typeNum == 13.0:
             linedict['data'] = _General.GetElementData(line)
-            self.Transport.ElementPrepDebugPrintout("Input/Output control", numElements)
+            self.Writer.ElementPrepDebugPrintout("Input/Output control", numElements)
 
         if typeNum == 16.0:
             linedict['data'] = _General.GetElementData(line)
-            self.Transport.ElementPrepDebugPrintout("special input", numElements)
+            self.Writer.ElementPrepDebugPrintout("special input", numElements)
 
         if typeNum == 18.0:
             linedict['name'] = _General.GetLabel(line)
@@ -337,7 +349,7 @@ class pytransport(Elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            self.Transport.ElementPrepDebugPrintout("sextupole", numElements)
+            self.Writer.ElementPrepDebugPrintout("sextupole", numElements)
 
         if typeNum == 19.0:
             linedict['name'] = _General.GetLabel(line)
@@ -345,13 +357,13 @@ class pytransport(Elements):
             linedict['data'] = data
             linedict['length'] = data[0]
             linedict['isZeroLength'] = False
-            self.Transport.ElementPrepDebugPrintout("solenoid", numElements)
+            self.Writer.ElementPrepDebugPrintout("solenoid", numElements)
 
         if typeNum == 22.0:
-            self.Transport.ElementPrepDebugPrintout("space charge element", numElements)
+            self.Writer.ElementPrepDebugPrintout("space charge element", numElements)
 
         if typeNum == 23.0:
-            self.Transport.ElementPrepDebugPrintout("buncher", numElements)
+            self.Writer.ElementPrepDebugPrintout("buncher", numElements)
 
         rawline = self.Transport.filedata[linenum]
         self.Transport.ElementRegistry.AddToRegistry(linedict, rawline)
@@ -362,18 +374,18 @@ class pytransport(Elements):
         and updates any elements that have fitted parameters.
         It then converts the registry elements into pybdsim format and add to the pybdsim builder.
         """
-        self.Transport.DebugPrintout('Converting registry elements to pybdsim compatible format and adding to machine builder.')
+        self.Writer.DebugPrintout('Processing tokenised lines from input file and adding to element registry.\n')
 
         for linenum, line in enumerate(self.Transport.data):
-            self.Transport.DebugPrintout('Processing tokenised line '+_np.str(linenum)+' :')
-            self.Transport.DebugPrintout('\t' + str(line))
-            self.Transport.DebugPrintout('Original :')
-            self.Transport.DebugPrintout('\t' + self.Transport.filedata[linenum])
+            self.Writer.DebugPrintout('Processing tokenised line '+_np.str(linenum)+' :')
+            self.Writer.DebugPrintout('\t' + str(line))
+            self.Writer.DebugPrintout('\tOriginal :')
+            self.Writer.DebugPrintout('\t' + self.Transport.filedata[linenum])
 
             # Checks if the SENTINEL line is found. SENTINEL relates to TRANSPORT fitting routine and is only written
             # after the lattice definition, so there's no point reading lines beyond it.
             if _General.CheckIsSentinel(line):
-                self.Transport.DebugPrintout('Sentinel Found.')
+                self.Writer.DebugPrintout('Sentinel Found.')
                 break
             # Test for positive element, negative ones ignored in TRANSPORT so ignored here too.
             try:
@@ -386,7 +398,7 @@ class pytransport(Elements):
                         line = _General.RemoveIllegals(line)
                         self._element_prepper(line, linenum, 'input')
                 else:
-                    self.Transport.DebugPrintout('\tType code is 0 or negative, ignoring line.')
+                    self.Writer.DebugPrintout('\tType code is 0 or negative, ignoring line.')
             except ValueError:
                 errorline = '\tCannot process line '+_np.str(linenum) + ', '
                 if line[0][0] == '(' or line[0][0] == '/':
@@ -397,14 +409,16 @@ class pytransport(Elements):
                     errorline = 'line is blank.'
                 else:
                     errorline = 'reason unknown.'
-                self.Transport.DebugPrintout(errorline)
+                self.Writer.DebugPrintout(errorline)
+
+        self.Writer.DebugPrintout('Converting registry elements to pybdsim compatible format and adding to machine builder.\n')
 
         skipNextDrift = False  # used for collimators
         lastElementWasADrift = True  # default value
         if self.Transport.convprops.combineDrifts:
             lastElementWasADrift = False
         for linenum, linedict in enumerate(self.Transport.ElementRegistry.elements):
-            self.Transport.DebugPrintout('Converting element number ' + _np.str(linenum) + ':')
+            self.Writer.DebugPrintout('Converting element number ' + _np.str(linenum) + ':')
             convertline = '\t'
             for keynum, key in enumerate(linedict.keys()):
                 if keynum != 0:
@@ -417,31 +431,31 @@ class pytransport(Elements):
                     convertline += (key + ': '+_np.str(linedict[key]))
                 if keynum == len(linedict.keys()):
                     convertline += '.'
-            self.Transport.DebugPrintout(convertline)
+            self.Writer.DebugPrintout(convertline)
 
             if self.Transport.convprops.combineDrifts:
                 if lastElementWasADrift and linedict['elementnum'] != 3.0 and linedict['elementnum'] < 20.0:
                     # write possibly combined drift
-                    self.Transport.DebugPrintout('\n\tConvert delayed drift(s)')
-                    self.Transport.drift(linedictDrift)
+                    self.Writer.DebugPrintout('\n\tConvert delayed drift(s)')
+                    self.Drift(linedictDrift)
                     lastElementWasADrift = False
-                    self.Transport.DebugPrintout('\n\tNow convert element number' + _np.str(linenum))
+                    self.Writer.DebugPrintout('\n\tNow convert element number' + _np.str(linenum))
 
             if linedict['elementnum'] == 15.0:
-                self.Transport.UnitChange(linedict)
+                self.UnitChange(linedict)
             if linedict['elementnum'] == 20.0:
-                self.Transport.ChangeBend(linedict)
+                self.ChangeBend(linedict)
             if linedict['elementnum'] == 1.0:  # Add beam on first definition
                 if not self.Transport.convprops.beamdefined:
-                    self.Transport.DefineBeam(linedict)
+                    self.DefineBeam(linedict)
                 elif not self.Transport.convprops.dontSplit:  # Only update beyond first definition if splitting is permitted
-                    self.Transport.DefineBeam(linedict)
+                    self.DefineBeam(linedict)
             if linedict['elementnum'] == 3.0:
                 if skipNextDrift:
                     skipNextDrift = False
                     continue
                 if self.Transport.convprops.combineDrifts:
-                    self.Transport.DebugPrintout('\tDelay drift')
+                    self.Writer.DebugPrintout('\tDelay drift')
                     if lastElementWasADrift:
                         linedictDrift['length'] += linedict['length']  # update linedictDrift
                         if not linedictDrift['name']:
@@ -450,40 +464,40 @@ class pytransport(Elements):
                         linedictDrift = linedict   # new linedictDrift
                         lastElementWasADrift = True
                 else:
-                    self.Transport.Drift(linedict)
+                    self.Drift(linedict)
             if linedict['elementnum'] == 4.0:
-                self.Transport.Dipole(linedict)
+                self.Dipole(linedict)
             if linedict['elementnum'] == 5.0:
-                self.Transport.Quadrupole(linedict)
+                self.Quadrupole(linedict)
             if linedict['elementnum'] == 6.0:
                 if not self.Transport.convprops.typeCode6IsTransUpdate:
-                    self.Transport.Collimator(linedict)
+                    self.Collimator(linedict)
                     # Length gotten from next drift
                     if linedict['length'] > 0.0:
                         skipNextDrift = True
                 else:
-                    self.Transport.TransformUpdate(linedict)
+                    self.TransformUpdate(linedict)
             if linedict['elementnum'] == 12.0:
-                self.Transport.Correction(linedict)
+                self.Correction(linedict)
             if linedict['elementnum'] == 11.0:
-                self.Transport.Acceleration(linedict)
+                self.Acceleration(linedict)
             if linedict['elementnum'] == 13.0:
-                self.Transport.Printline(linedict)
+                self.Printline(linedict)
             if linedict['elementnum'] == 16.0:
-                self.Transport.SpecialInput(linedict)
+                self.SpecialInput(linedict)
             if linedict['elementnum'] == 18.0:
-                self.Transport.Sextupole(linedict)
+                self.Sextupole(linedict)
             if linedict['elementnum'] == 19.0:
-                self.Transport.Solenoid(linedict)
+                self.Solenoid(linedict)
 
             # 9.  : 'Repetition' - for nesting elements
             if linedict['elementnum'] == 9.0:
-                self.Transport.DebugPrintout('\tWARNING Repetition Element not implemented in converter!')
+                self.Writer.DebugPrintout('\tWARNING Repetition Element not implemented in converter!')
             if linedict['elementnum'] == 2.0:
                 errorline = '\tLine is a poleface rotation which is handled by the previous or next dipole element.'
-                self.Transport.DebugPrintout(errorline)
+                self.Writer.DebugPrintout(errorline)
             
-            self.Transport.DebugPrintout('\n')
+            self.Writer.DebugPrintout('\n')
 
         # OTHER TYPES WHICH CAN BE IGNORED:
         # 6.0.X : Update RX matrix used in TRANSPORT
@@ -497,8 +511,8 @@ class pytransport(Elements):
         # Write also last drift
         if self.Transport.convprops.combineDrifts:
             if lastElementWasADrift:
-                self.Transport.DebugPrintout('\tConvert delayed drift(s)')
-                self.Transport.drift(linedictDrift)
+                self.Writer.DebugPrintout('\tConvert delayed drift(s)')
+                self.Drift(linedictDrift)
 
     def UpdateElementsFromFits(self):
         # Functions that update the elements in the element registry.
@@ -589,19 +603,19 @@ class pytransport(Elements):
                             eledict = _updateQuad(eleindex[elenum], fitindex[fitnum], fitelement)
             
                         if eledict['updated']:
-                            self.Transport.DebugPrintout("\tElement " + _np.str(eleindex[elenum]) + " was updated from fitting.")
-                            self.Transport.DebugPrintout("\tOptics Output line:")
-                            self.Transport.DebugPrintout("\t\t'" + self.Transport.FitRegistry.lines[fitindex[fitnum]] + "'")
+                            self.Writer.DebugPrintout("\tElement " + _np.str(eleindex[elenum]) + " was updated from fitting.")
+                            self.Writer.DebugPrintout("\tOptics Output line:")
+                            self.Writer.DebugPrintout("\t\t'" + self.Transport.FitRegistry.lines[fitindex[fitnum]] + "'")
                             if eledict.has_key('length'):
                                 lenline = "\t"+eledict['element']+" length updated to "
                                 lenline += _np.str(eledict['length']['new'])
                                 lenline += " (from " + _np.str(eledict['length']['old']) + ")."
-                                self.Transport.DebugPrintout(lenline)
+                                self.Writer.DebugPrintout(lenline)
                             for param in eledict['params']:
                                 parline = "\t" + eledict['element'] + " " + param[0]
                                 parline += " updated to " + _np.str(param[2]) + " (from " + _np.str(param[1]) + ")."
-                                self.Transport.DebugPrintout(parline)
-                            self.Transport.DebugPrintout("\n")
+                                self.Writer.DebugPrintout(parline)
+                            #self.Writer.DebugPrintout("\n")
                 
                         break
 
@@ -634,6 +648,11 @@ class Transport:
         self.beamprops = _beamprops(p_mass)
         self.beamprops.distrType = distrType
         self.machineprops = _machineprops()
+        self.options = _Options.Options()
+
+        # a machine for both gmad and madx. Both created by default, input booleans only decide writing.
+        self.gmadmachine = _pyBuilder.Machine()
+        self.madxmachine = _mdBuilder.Machine()
 
         # different beam objects depending on output type
         self.madxbeam = self.madxmachine.beam
@@ -642,11 +661,6 @@ class Transport:
         # initialise registries
         self.ElementRegistry = _Registry()
         self.FitRegistry = _Registry()
-
-        # a machine for both gmad and madx. Both created by default, input booleans only decide writing.
-        self.gmadmachine = _pyBuilder.Machine()
-        self.madxmachine = _mdBuilder.Machine()
-        self.options = _Options.Options()
 
         self.units = {  # Default TRANSPORT units
             'x': 'cm',
@@ -679,35 +693,6 @@ class Transport:
         self.accstart = []  # An index of the start of acceleration elements.
         self.data = []  # A list that will contain arrays of the element data
         self.filedata = []  # A list that will contain the raw strings from the input file
-
-    def _write(self):
-        """
-        Write the converted TRANSPORT file to disk.
-        """
-        if self.convprops.numberparts < 0:
-            self._filename = self.convprops.file
-        else:
-            self.convprops.numberparts += 1
-            self._filename = self.convprops.file+'_part'+_np.str(self.convprops.numberparts)
-
-        self.AddBeam()
-        self.AddOptions()
-        self.gmadmachine.AddSampler('all')
-        self.madxmachine.AddSampler('all')
-        if self.convprops.gmadoutput:
-            if not _General.CheckDirExists(self.convprops.gmadDir):
-                _os.mkdir(self.convprops.gmadDir)
-            _os.chdir(self.convprops.gmadDir)
-            filename = self._filename + '.gmad'
-            self.gmadmachine.Write(filename)
-            _os.chdir('../')
-        if self.convprops.madxoutput:
-            if not _General.CheckDirExists(self.convprops.madxDir):
-                _os.mkdir(self.convprops.madxDir)
-            _os.chdir(self.convprops.madxDir)
-            filename = self._filename + '.madx'
-            self.madxmachine.Write(filename)
-            _os.chdir('../')
 
     def AddOptions(self):
         """
@@ -792,47 +777,8 @@ class Transport:
         if self.beamprops.Z0 != 0:
             self.gmadbeam.SetZ0(self.beamprops.Z0, unitsstring=self.units['z'])
 
-        self.BeamDebugPrintout()
-
         self.gmadmachine.AddBeam(self.gmadbeam)
         self.madxmachine.AddBeam(self.madxbeam)
-
-    def Printout(self, line):
-        sys.stdout.write(line+'\n')
-        logfile = self.convprops.file + '_conversion.log'
-        if self.convprops.outlog:
-            self.convprops.logfile = open(logfile, 'a')
-            self.convprops.logfile.write(line)
-            self.convprops.logfile.write('\n')
-            self.convprops.logfile.close()
-
-    def ElementPrepDebugPrintout(self, elementType, numElements):
-        debugString = "\tEntry is a " + elementType + ", adding to the element registry as element "
-        debugString += numElements + "."
-        self.DebugPrintout(debugString)
-
-    def DebugPrintout(self, line):
-        if self.convprops.debug:
-            self.Printout(line)
-
-    def BeamDebugPrintout(self):
-        self.DebugPrintout('\t Beam definition :')
-        self.DebugPrintout('\t distrType = ' + self.beamprops.distrType)
-        self.DebugPrintout('\t energy = '  + _np.str(self.beamprops.tot_energy) + ' GeV')
-        self.DebugPrintout('\t SigmaX = '  + _np.str(self.beamprops.SigmaX) + ' ' + self.units['x'])
-        self.DebugPrintout('\t SigmaXP = ' + _np.str(self.beamprops.SigmaXP) + ' ' + self.units['xp'])
-        self.DebugPrintout('\t SigmaY = '  + _np.str(self.beamprops.SigmaY) + ' ' + self.units['y'])
-        self.DebugPrintout('\t SigmaYP = ' + _np.str(self.beamprops.SigmaYP) + ' ' + self.units['yp'])
-        self.DebugPrintout('\t SigmaE = '  + _np.str(self.beamprops.SigmaE))
-        self.DebugPrintout('\t SigmaT = '  + _np.str(self.beamprops.SigmaT))
-        self.DebugPrintout('\t (Final brho = ' + _np.str(_np.round(self.beamprops.brho, 2)) + ' Tm)')
-        self.DebugPrintout('\t Twiss Params:')
-        self.DebugPrintout('\t BetaX = '  + _np.str(self.beamprops.betx) + ' ' + self.units['beta_func'])
-        self.DebugPrintout('\t BetaY = '  + _np.str(self.beamprops.bety) + ' ' + self.units['beta_func'])
-        self.DebugPrintout('\t AlphaX = ' + _np.str(self.beamprops.alfx))
-        self.DebugPrintout('\t AlphaY = ' + _np.str(self.beamprops.alfy))
-        self.DebugPrintout('\t Emittx = ' + _np.str(self.beamprops.emitx) + ' ' + self.units['emittance'])
-        self.DebugPrintout('\t EmittY = ' + _np.str(self.beamprops.emity) + ' ' + self.units['emittance'])
 
     def _NewMachines(self):
         """
