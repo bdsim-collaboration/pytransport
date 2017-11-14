@@ -440,7 +440,7 @@ def CheckDirExists(directory):
     dirs = _glob.glob('*/')
     if directory[-1] != '/':
         directory += '/'
-    if dir in dirs:
+    if directory in dirs:
         return True
     return False
 
@@ -791,3 +791,13 @@ def CheckIsOutput(inputfile):
     except IOError:
         raise IOError('Cannot open file.')
     return isOutput
+
+
+def RemoveFileExt(inputfile):
+    """
+    Remove the file extension from the input file name. Only works on known extensions.
+    """
+    exts = [".txt", ".dat"]
+    if inputfile[-4:] in exts:
+        return inputfile[:-4]
+    return inputfile

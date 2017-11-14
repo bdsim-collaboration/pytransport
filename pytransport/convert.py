@@ -521,7 +521,9 @@ class pytransport(Elements):
         # follows the pattern of [parameter name (e.g. 'field'),oldvalue,newvalue]
         
         # Length update common to nearly all elements, seperate function to prevent duplication
-        def _updateLength(index, fitindex, element):
+        # fitIndex was used in the past. Pass in anyway in case of future need, just delete for now.
+        def _updateLength(index, fitIndex, element):
+            del fitIndex
             oldlength = self.Transport.ElementRegistry.elements[index]['length']
             lengthDiff = self.Transport.ElementRegistry.elements[index]['length'] - element['length']
             self.Transport.ElementRegistry.elements[index]['length'] = element['length']  # Update length
