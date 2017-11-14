@@ -1,6 +1,6 @@
 import numpy as _np
 
-from _General import *
+import _General
 from _General import _Writer
 
 
@@ -69,7 +69,7 @@ class Elements:
             self.Writer.DebugPrintout('\tZero or negative length element, ignoring.')
             return
 
-        lenInM = driftlen * ScaleToMeters(self.Transport, 'element_length')  # length in metres
+        lenInM = driftlen * _General.ScaleToMeters(self.Transport, 'element_length')  # length in metres
 
         self.Transport.machineprops.drifts += 1
         elementid = ''
@@ -130,7 +130,7 @@ class Elements:
             angle = angle_in_deg * (_np.pi/180.) * self.Transport.machineprops.bending
 
         # Convert element length
-        lenInM = length * ScaleToMeters(self.Transport, 'element_length')
+        lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
 
         self.Transport.machineprops.dipoles += 1
         elementid = ''
@@ -230,8 +230,8 @@ class Elements:
         field_in_Gauss = field_at_tip * self.Transport.scale[self.Transport.units['magnetic_fields'][0]]  # Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
 
-        pipe_in_metres = pipe_rad * ScaleToMeters(self.Transport, 'bend_vert_gap')
-        lenInM = length * ScaleToMeters(self.Transport, 'element_length')
+        pipe_in_metres = pipe_rad * _General.ScaleToMeters(self.Transport, 'bend_vert_gap')
+        lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
 
         field_gradient = (field_in_Tesla / pipe_in_metres) / self.Transport.beamprops.brho  # K1 in correct units
 
@@ -287,9 +287,9 @@ class Elements:
         aperx = _np.float(aperx)
         apery = _np.float(apery)
 
-        lenInM = linedict['length'] * ScaleToMeters(self.Transport, 'element_length')
-        aperx_in_metres = aperx * ScaleToMeters(self.Transport, 'x')
-        apery_in_metres = apery * ScaleToMeters(self.Transport, 'y')
+        lenInM = linedict['length'] * _General.ScaleToMeters(self.Transport, 'element_length')
+        aperx_in_metres = aperx * _General.ScaleToMeters(self.Transport, 'x')
+        apery_in_metres = apery * _General.ScaleToMeters(self.Transport, 'y')
 
         self.Transport.machineprops.collimators += 1
         elementid = ''
@@ -348,7 +348,7 @@ class Elements:
         self.Transport.gmadmachine.AddRFCavity(name=elname, length=acclen, gradient=gradient)
 
         # Update beam parameters
-        self.Transport = UpdateMomentumFromEnergy(self.Transport, self.Transport.beamprops.k_energy + e_gain)
+        self.Transport = _General.UpdateMomentumFromEnergy(self.Transport, self.Transport.beamprops.k_energy + e_gain)
 
         # Commented out untested code
         # if len(accdata) == 2:  # Newer case with multiple elements
@@ -373,8 +373,8 @@ class Elements:
         field_in_Gauss = field_at_tip * self.Transport.scale[self.Transport.units['magnetic_fields'][0]]  # Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
 
-        pipe_in_metres = pipe_rad * ScaleToMeters(self.Transport, 'bend_vert_gap')
-        lenInM = length * ScaleToMeters(self.Transport, 'element_length')
+        pipe_in_metres = pipe_rad * _General.ScaleToMeters(self.Transport, 'bend_vert_gap')
+        lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
 
         field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.Transport.beamprops.brho  # K2 in correct units
 
@@ -401,7 +401,7 @@ class Elements:
         field_in_Gauss = field * self.Transport.scale[self.Transport.units['magnetic_fields'][0]]  # Convert to Gauss
         field_in_Tesla = field_in_Gauss * 1e-4  # Convert to Tesla
 
-        lenInM = length * ScaleToMeters(self.Transport, 'element_length')
+        lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
 
         self.Transport.machineprops.solenoids += 1
         elementid = ''
