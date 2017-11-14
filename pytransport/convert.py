@@ -14,7 +14,7 @@ from _General import _conversionProps
 from _General import _Registry
 
 
-class pytransport(Elements):
+class pytransport(_Elements):
     """
     A module for converting a TRANSPORT file into gmad for use in BDSIM.
         
@@ -73,12 +73,18 @@ class pytransport(Elements):
                  dontSplit     = False,
                  keepName      = False,
                  combineDrifts = False,
-                 outlog        = True):
-        # instantiate the main data container and pass in to element class.
-        transportData = Transport(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
-                                  auto, dontSplit, keepName, combineDrifts, outlog)
-        Elements.__init__(self, transportData)
+                 outlog        = True,
+                 transport     = None):
+        if isinstance(transport, Transport):
+            transportData = transport
+        else:
+            # instantiate the main data container and pass in to element class.
+            transportData = Transport(inputfile, particle, debug, distrType, gmad, gmadDir, madx, madxDir,
+                                      auto, dontSplit, keepName, combineDrifts, outlog)
+        _Elements.__init__(self, transportData)
+        self.LoadFile(inputfile)
 
+    def LoadFile(self, inputfile):
         # load file automatically
         temp = _reader.reader()
 
