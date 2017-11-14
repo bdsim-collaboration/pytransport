@@ -270,7 +270,7 @@ def RemoveIllegals(line):
     """
     illegal = ['"', '', '(', ')']
 
-    linelist = [element for element in line if element in illegal]
+    linelist = [element for element in line if element not in illegal]
     line = _np.array(linelist)
     return line
 
