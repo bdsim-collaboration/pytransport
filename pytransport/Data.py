@@ -288,6 +288,9 @@ class ConversionData:
         self.machine = machine
         self.beam = self.machine.beam
 
+        # make a copy of the empty machine. Copy needed in case machine is split and a new machine is needed.
+        self._machineCopy = machine
+
         # initialise registries
         self.ElementRegistry = _General._Registry()
         self.FitRegistry = _General._Registry()
