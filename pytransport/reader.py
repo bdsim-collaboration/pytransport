@@ -1,9 +1,9 @@
 import numpy as _np
-import pybdsim
-import pytransport as _pyt
+from Data import BDSData as _BDA
+import _General
 
 
-class reader:
+class Reader:
     def __init__(self):
         self._allowedIndicatorLines = ['0  100', '0    0']
         self.optics = optics()

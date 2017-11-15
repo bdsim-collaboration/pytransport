@@ -4,7 +4,7 @@ import sys as _sys
 import os as _os
 import string as _string
 import glob as _glob
-import reader as _reader
+import Reader as _reader
 
 
 class _beamprops:
@@ -299,7 +299,7 @@ def CheckSingleLineOutputApplied(inputfile):
     a single line was successfully applied. Check needed as not all versions
     of TRANSPORT can run this type code.
     """
-    reader = _reader.reader()
+    reader = _reader.Reader()
     flist = _reader._LoadFile(inputfile)
     optics = reader.optics._getOptics(flist)
     for element in optics:
