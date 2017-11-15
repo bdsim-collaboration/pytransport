@@ -6,18 +6,18 @@ import _General
 class Reader:
     def __init__(self):
         self._allowedIndicatorLines = ['0  100', '0    0']
-        self.optics = optics()
+        self.optics = Optics()
 
-    def getOptics(self, file, type=None):
-        if isinstance(type, _np.str):
-            if type == 'beam':
-                transdata = self.optics._getBeamOptics(file)
+    def getOptics(self, inputFile, inputType=None):
+        if isinstance(inputType, _np.str):
+            if inputType == 'beam':
+                transdata = self.optics._getBeamOptics(inputFile)
                 return transdata
-            elif type == 'standard':
-                transdata = self.optics._getStandardOptics(file)
+            elif inputType == 'standard':
+                transdata = self.optics._getStandardOptics(inputFile)
                 return transdata
     
-        f = open(file)
+        f = open(inputFile)
         transdata = None
         for line in f:
             # remove any carriage returns (both Mac and Unix)
@@ -26,12 +26,12 @@ class Reader:
             if splitline and splitline[0] == '*BEAM*':  # Is beam output
                 # print "'*BEAM*' found in line " + _np.str(i+1)
                 f.close()
-                transdata = self.optics._getBeamOptics(file)
+                transdata = self.optics._getBeamOptics(inputFile)
                 break
             elif line in self._allowedIndicatorLines:
                 # print "'0    0' found in line " + _np.str(i+1)
                 f.close()
-                transdata = self.optics._getStandardOptics(file)
+                transdata = self.optics._getStandardOptics(inputFile)
                 break
             else:
                 pass
@@ -43,17 +43,16 @@ class Reader:
             raise IOError(errorstring)
         return transdata
 
-    def _getLattice(self, file):
+    def _getLattice(self, inputFile):
         """
         Function to extract the lattice from a standard output file. No processing at the moment, but
         this function should identify the chunk that is the lattice.
         """
-        flist = _LoadFile(file)
+        flist = _LoadFile(inputFile)
         
         foundlatticestart = False
         foundlatticeend = False
-        lattice = []
-        lattice.append('OUTPUT LATTICE')
+        lattice = ['OUTPUT LATTICE']
         for linenum, line in enumerate(flist):
             if line in self._allowedIndicatorLines:
                 if not foundlatticestart:
@@ -67,26 +66,26 @@ class Reader:
                     foundlatticeend = True
         if not foundlatticestart:
             if not foundlatticeend:
-                raise IOError('No lattice found in ' + file + '.')
+                raise IOError('No lattice found in ' + inputFile + '.')
             else:
-                errorstring = 'The end of a lattice (line = "0SENTINEL") was found at line '+ _np.str(latticeend + 1) + ',\n'
+                errorstring = 'The end of a lattice (line = "0SENTINEL") was found at line ' + _np.str(latticeend + 1) + ',\n'
                 errorstring += 'but the start of a lattice (line = "0    0") was not found. Please check the input file.'
                 raise IOError(errorstring)
         elif not foundlatticeend:
-                errorstring = 'The start of a lattice (line = "0    0") was found at line '+ _np.str(latticestart - 1) + ',\n'
+                errorstring = 'The start of a lattice (line = "0    0") was found at line ' + _np.str(latticestart - 1) + ',\n'
                 errorstring += 'but the end of a lattice (line = "0SENTINEL") was not found. Please check the input file.'
                 raise IOError(errorstring)
         else:
             lattice.extend(flist[latticestart:latticeend])
         return lattice
 
-    def _getFits(self, file):
+    def _getFits(self, inputFile):
         """ Function to get the fit routine data from the standard transport output.
             Returns two lists, the first with the direct output from the fitting data,
             the second with the first line of each element in the output data, which contains the 
             element parameters with their fitted values.
             """
-        flist = _LoadFile(file)
+        flist = _LoadFile(inputFile)
     
         foundfitstart = False
         foundfitend = False
@@ -105,24 +104,24 @@ class Reader:
             print('No fitting output found.')
             return None
         elif foundfitstart and not foundfitend:
-                errorstring  = 'The start of the fitting output (first line containing "0SENTINEL") was found at line '+ _np.str(fitstart-1)+',\n'
+                errorstring = 'The start of the fitting output (first line containing "0SENTINEL") was found at line ' + _np.str(fitstart-1) + ',\n'
                 errorstring += 'but the end of the fitting output (first line containing "*BEAM*") was not found. Please check the input file.'
                 raise IOError(errorstring)
         fits.extend(flist[fitstart:fitend])
 
-        output = self.optics._getOptics(flist, file)
+        output = self.optics._getOptics(flist, inputFile)
         fitres = [element[0] for element in output]
 
         return fits, fitres
 
-    def _getLatticeAndOptics(self, file):
-        flist = _LoadFile(file)
-        lattice = self._getLattice(file)
-        optics = self.optics._getOptics(flist, file)
+    def _getLatticeAndOptics(self, inputFile):
+        flist = _LoadFile(inputFile)
+        lattice = self._getLattice(inputFile)
+        optics = self.optics._getOptics(flist, inputFile)
         return lattice, optics
     
 
-class optics:
+class Optics:
     def __init__(self):
         self.transdata = {
             'Sigma_x'   : [],
@@ -193,7 +192,7 @@ class optics:
                     # Get the element name, type and start position (in s)
                     line0 = section[0]
                     line0split = line0.split('*')
-                    typestr = line0split[1]
+                    # typestr = line0split[1]
                     reststr = line0split[2]
                     restsplit = reststr.split(' ')
                     restsplit = _remove_blanks(restsplit)
@@ -292,7 +291,7 @@ class optics:
                 if elementType not in notokElements:
                     # rest of first line split with spaces
                     splitline = _remove_blanks(element[0].split('*')[2].split(' '))
-                    name = splitline[1].strip('"')
+                    elename = splitline[1].strip('"')
                     if elementType == "BEAM" or elementType == "ACC":
                         momentum = _np.float(splitline[-2])
                         energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
@@ -351,7 +350,7 @@ class optics:
                     self.transdata['Sigma_p'].append(sigp)
                     self.transdata['Momentum'].append(momentum)
                     self.transdata['E'].append(energy)
-                    self.transdata['Name'].append(name)
+                    self.transdata['Name'].append(elename)
                     self.transdata['Type'].append(elementType)
                     num_elements += 1 
 
@@ -403,7 +402,7 @@ class optics:
                     sigmaLine = element[1]
 
                 if elementType not in notokElements:
-                    name = _removeIllegals(elementLine[2])  # remove illegal characters
+                    elename = _removeIllegals(elementLine[2])  # remove illegal characters
 
                     if elementType == "BEAM" or elementType == "ACC":
                         momentum = _np.float(elementLine[-2])
@@ -456,7 +455,7 @@ class optics:
                     # Find matching R matrix element and get dispersion
                     for rElement in rMatrix:
                         if _np.float(rElement[1]) in okRElements and (_np.float(rElement[0]) == s) \
-                                and (rElement[2] == name):
+                                and (rElement[2] == elename):
                             # Dispersion position dependent on existence of field strength in output
                             # Field strength written before first *, which should be the 4th element
                             if rElement.index('*') == 4:
@@ -495,7 +494,7 @@ class optics:
                     self.transdata['Sigma_p'].append(sigp)
                     self.transdata['Momentum'].append(momentum)
                     self.transdata['E'].append(energy)
-                    self.transdata['Name'].append(name)
+                    self.transdata['Name'].append(elename)
                     self.transdata['Type'].append(elementType)
                     num_elements += 1
 
@@ -598,7 +597,7 @@ class optics:
                 pass
         return elementlist
 
-    def _getBeamOptics(self, file):
+    def _getBeamOptics(self, inputFile):
         """ Returns a BDSAsciiData instance of parameters from the input file.
             The input file is assumed to contain the beam data as output 
             manually by TRANSPORT. As such, the structure of said output 
@@ -630,14 +629,14 @@ class optics:
                 incorrect sign. This doesn't affect the resulting beam size, but beware 
                 that a direct dispersion comparison to another lattice may appear incorrect.
             """
-        flist = _LoadFile(file)
+        flist = _LoadFile(inputFile)
         transdata = self._processBeamOptics(flist)
         return transdata
 
-    def _getStandardOptics(self, file):
-        flist = _LoadFile(file)
-        optics = self._getOptics(flist, file)
-        transdata = self._processStandardOptics(optics, file)
+    def _getStandardOptics(self, inputFile):
+        flist = _LoadFile(inputFile)
+        optics = self._getOptics(flist, inputFile)
+        transdata = self._processStandardOptics(optics, inputFile)
         return transdata
 
 
