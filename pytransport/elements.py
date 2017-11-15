@@ -17,6 +17,8 @@ class Elements:
                 self.Writer.DebugPrintout('\tIgnoring beam rms addition.')
             return
         if self.Transport.convprops.beamdefined and not self.Transport.convprops.dontSplit:
+            self.Writer.Printout('Beam redefinition found. Writing previous section to file.')
+            self.Writer.Printout('Splitting into multiple machines.')
             self.Transport.convprops.numberparts += 1
             self.Transport.AddBeam()
             self.Transport.AddOptions()
@@ -32,9 +34,6 @@ class Elements:
             self.Writer.Write(self.Transport, filename)
             self.Transport._NewMachines()
             self.Transport.convprops.correctedbeamdef = False
-
-            self.Writer.Printout('\tBeam redefinition found. Writing previous section to file.')
-            self.Writer.Printout('\tSplitting into multiple machines.')
 
         momentum = linedict['momentum']
 
