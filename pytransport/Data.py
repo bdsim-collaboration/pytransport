@@ -323,3 +323,93 @@ class ConversionData:
         self.accstart = []  # An index of the start of acceleration elements.
         self.data = []  # A list that will contain arrays of the element data
         self.filedata = []  # A list that will contain the raw strings from the input file
+
+    def AddOptions(self):
+        """
+        Function to set the Options for the BDSIM machine.
+        """
+        self.options.SetPhysicsList(physicslist='em')
+        self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
+                                       unitsstring=self.units['pipe_rad'])
+        self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
+        self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
+        self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
+        self.options.SetSamplerDiameter(radius=1, unitsstring='m')
+        self.options.SetStopTracks(stop=True)
+        self.options.SetIncludeFringeFields(on=True)
+
+        self.machine.AddOptions(self.options)
+
+    def AddBeam(self):
+        """
+        Function to prepare the beam for writing.
+        """
+        # convert energy to GeV (madx only handles GeV)
+        energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
+        self.beamprops.tot_energy = energy_in_gev
+
+        self.beam.SetParticleType(self.convprops.particle)
+        self.beam.SetEnergy(energy=self.beamprops.tot_energy, unitsstring='GeV')
+
+        if self.convprops.gmadoutput:
+            # set gmad parameters depending on distribution
+            if self.beamprops.distrType == 'gausstwiss':
+                self.beam.SetDistributionType(self.beamprops.distrType)
+                self.beam.SetBetaX(self.beamprops.betx)
+                self.beam.SetBetaY(self.beamprops.bety)
+                self.beam.SetAlphaX(self.beamprops.alfx)
+                self.beam.SetAlphaY(self.beamprops.alfy)
+                self.beam.SetEmittanceX(self.beamprops.emitx, unitsstring='mm')
+                self.beam.SetEmittanceY(self.beamprops.emity, unitsstring='mm')
+                self.beam.SetSigmaE(self.beamprops.SigmaE)
+                self.beam.SetSigmaT(self.beamprops.SigmaT)
+
+            else:
+                self.beam.SetDistributionType(self.beamprops.distrType)
+                self.beam.SetSigmaX(self.beamprops.SigmaX, unitsstring=self.units['x'])
+                self.beam.SetSigmaY(self.beamprops.SigmaY, unitsstring=self.units['y'])
+                self.beam.SetSigmaXP(self.beamprops.SigmaXP, unitsstring=self.units['xp'])
+                self.beam.SetSigmaYP(self.beamprops.SigmaYP, unitsstring=self.units['yp'])
+                self.beam.SetSigmaE(self.beamprops.SigmaE)
+                self.beam.SetSigmaT(self.beamprops.SigmaT)
+
+            # set beam offsets in gmad if non zero
+            if self.beamprops.X0 != 0:
+                self.beam.SetX0(self.beamprops.X0, unitsstring=self.units['x'])
+            if self.beamprops.Y0 != 0:
+                self.beam.SetY0(self.beamprops.Y0, unitsstring=self.units['y'])
+            if self.beamprops.Z0 != 0:
+                self.beam.SetZ0(self.beamprops.Z0, unitsstring=self.units['z'])
+
+        elif self.convprops.madxoutput:
+            # calculate betas and emittances regardless for madx beam
+            try:
+                self.beamprops.betx = self.beamprops.SigmaX / self.beamprops.SigmaXP
+            except ZeroDivisionError:
+                self.beamprops.betx = 0
+            try:
+                self.beamprops.bety = self.beamprops.SigmaY / self.beamprops.SigmaYP
+            except ZeroDivisionError:
+                self.beamprops.bety = 0
+                self.beamprops.emitx = self.beamprops.SigmaX * self.beamprops.SigmaXP / 1000.0
+                self.beamprops.emity = self.beamprops.SigmaY * self.beamprops.SigmaYP / 1000.0
+
+            # set madx beam
+            self.beam.SetDistributionType('madx')
+            self.beam.SetBetaX(self.beamprops.betx)
+            self.beam.SetBetaY(self.beamprops.bety)
+            self.beam.SetAlphaX(self.beamprops.alfx)
+            self.beam.SetAlphaY(self.beamprops.alfy)
+            self.beam.SetEmittanceX(self.beamprops.emitx / 1000)
+            self.beam.SetEmittanceY(self.beamprops.emity / 1000)
+            self.beam.SetSigmaE(self.beamprops.SigmaE)
+            self.beam.SetSigmaT(self.beamprops.SigmaT)
+
+        self.machine.AddBeam(self.beam)
+
+    def _NewMachines(self):
+        """
+        Delete the machine and set to be the empty copied at class instantiation.
+        """
+        del self.machine
+        self.machine = self._machineCopy
