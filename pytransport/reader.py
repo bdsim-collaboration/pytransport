@@ -259,11 +259,7 @@ class Optics:
         return data
 
     def _processStandardOptics(self, elementlist, filename):
-        # Quickly convert the lattice to gmad but do not write to disk. This is purely to find out if
-        # the optics are single line or multiline.
-        conv = _pyt.convert.pytransport(filename, madx=False, auto=False, debug=False, dontSplit=True)
-        conv.ProcessAndBuild()
-        if conv._singleLineOptics:
+        if _General.CheckSingleLineOutputApplied(filename):
             optics = self._processStandardOpticsSingleLine(elementlist)
         else:
             optics = self._processStandardOpticsMultiLines(elementlist)
