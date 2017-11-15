@@ -21,9 +21,9 @@ class Elements:
             self.Writer.Printout('Splitting into multiple machines.')
             self.Transport.convprops.numberparts += 1
             self.Transport.AddBeam()
-            self.Transport.AddOptions()
-            self.Transport.gmadmachine.AddSampler('all')
-            self.Transport.madxmachine.AddSampler('all')
+            if self.Transport.convprops.gmadoutput:
+                self.Transport.AddOptions()
+            self.Transport.machine.AddSampler('all')
             self.Writer.BeamDebugPrintout(self.Transport.beamprops, self.Transport.units)
             fname = _General.RemoveFileExt(self.Transport.convprops.file)
             if self.Transport.convprops.numberparts < 0:
@@ -77,8 +77,8 @@ class Elements:
         if not elementid:  # check on empty string
             elementid = 'DR'+_np.str(self.Transport.machineprops.drifts)
 
-        self.Transport.gmadmachine.AddDrift(name=elementid, length=lenInM)
-        self.Transport.madxmachine.AddDrift(name=elementid, length=lenInM)
+        # pybdsim and pymadx are the same.
+        self.Transport.machine.AddDrift(name=elementid, length=lenInM)
 
         self.Writer.DebugPrintout('\tConverted to:')
         self.Writer.DebugPrintout('\t' + 'Drift ' + elementid + ', length ' + _np.str(lenInM) + ' m')
@@ -138,19 +138,15 @@ class Elements:
         if not elementid:  # check on empty string
             elementid = 'BM' + _np.str(self.Transport.machineprops.dipoles)
 
-        # Check for non zero pole face rotation
+        # pybdsim and pymadx are the same. Check for non zero pole face rotation.
         if (e1 != 0) and (e2 != 0):
-            self.Transport.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4), fint=fintval, fintx=fintxval)
-            self.Transport.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4), fint=fintval, fintx=fintxval)
+            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4), fint=fintval, fintx=fintxval)
         elif (e1 != 0) and (e2 == 0):
-            self.Transport.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintval)
-            self.Transport.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintval)
+            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintval)
         elif (e1 == 0) and (e2 != 0):
-            self.Transport.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2, 4), fintx=fintxval)
-            self.Transport.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2, 4), fintx=fintxval)
+            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2, 4), fintx=fintxval)
         else:
-            self.Transport.gmadmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
-            self.Transport.madxmachine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
+            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
 
         # Debug output
         if (e1 != 0) and (e2 != 0):
@@ -203,11 +199,12 @@ class Elements:
                 elementid = linedict['name']
             if not elementid:  # check on empty string
                 elementid = 't' + _np.str(self.Transport.machineprops.transforms)
-            self.Transport.gmadmachine.AddTransform3D(name=elementid, psi=anginrad)
-            # MadX Builder does not have transform 3d
-            # Comment out and print warning
-            # self.madxmachine.AddTransform3D(name=elementid, psi=anginrad)
-            self.Writer.DebugPrintout('\tWarning, MadX Builder does not have Transform 3D!')
+
+            # only call for gmad, warning for madx
+            if self.Transport.convprops.gmadoutput:
+                self.Transport.machine.AddTransform3D(name=elementid, psi=anginrad)
+            elif self.Transport.convprops.madxoutput:
+                self.Writer.DebugPrintout('\tWarning, MadX Builder does not have Transform 3D!')
 
             rotation = True
 
@@ -247,8 +244,8 @@ class Elements:
             else:
                 elementid = 'NULLQUAD' + _np.str(self.Transport.machineprops.quads)  # For K1 = 0.
 
-        self.Transport.gmadmachine.AddQuadrupole(name=elementid, length=lenInM, k1=_np.round(field_gradient, 4))
-        self.Transport.madxmachine.AddQuadrupole(name=elementid, length=lenInM, k1=_np.round(field_gradient, 4))
+        # pybdsim and pymadx are the same.
+        self.Transport.machine.AddQuadrupole(name=elementid, length=lenInM, k1=_np.round(field_gradient, 4))
 
         string1 = '\tQuadrupole, field in gauss = ' + _np.str(field_in_Gauss) + ' G, field in Tesla = ' + _np.str(field_in_Tesla) + ' T.'
         string2 = '\tBeampipe radius = ' + _np.str(pipe_in_metres) + ' m. Field gradient = '+ _np.str(field_in_Tesla/pipe_in_metres) + ' T/m.'
@@ -298,7 +295,12 @@ class Elements:
             elementid = 'COL'+_np.str(self.Transport.machineprops.collimators)
 
         collimatorMaterial = 'copper'  # Default in BDSIM, added to prevent warnings
-        self.Transport.gmadmachine.AddRCol(name=elementid, length=lenInM, xsize=aperx_in_metres, ysize=apery_in_metres, material=collimatorMaterial)
+        # only call for gmad, warning for madx
+        if self.Transport.convprops.gmadoutput:
+            self.Transport.machine.AddRCol(name=elementid, length=lenInM, xsize=aperx_in_metres, ysize=apery_in_metres,
+                                           material=collimatorMaterial)
+        elif self.Transport.convprops.madxoutput:
+            self.Writer.DebugPrintout('\tWarning, MadX Builder does not have RCOL')
 
         debugstring = '\tCollimator, x aperture = ' + _np.str(aperx_in_metres) \
                       + ' m, y aperture = ' + _np.str(apery_in_metres) + ' m.'
@@ -344,7 +346,11 @@ class Elements:
         self.Transport.machineprops.rf += 1
         elname = "ACC" + _np.str(self.Transport.machineprops.rf)
 
-        self.Transport.gmadmachine.AddRFCavity(name=elname, length=acclen, gradient=gradient)
+        # only call for gmad, warning for madx
+        if self.Transport.convprops.gmadoutput:
+            self.Transport.machine.AddRFCavity(name=elname, length=acclen, gradient=gradient)
+        elif self.Transport.convprops.madxoutput:
+            self.Writer.DebugPrintout('\tWarning, MadX Builder does not have RF Cavity')
 
         # Update beam parameters
         self.Transport = _General.UpdateMomentumFromEnergy(self.Transport, self.Transport.beamprops.k_energy + e_gain)
@@ -384,8 +390,8 @@ class Elements:
         if not elementid:  # check on empty string
             elementid = 'SEXT'+_np.str(self.Transport.machineprops.sextus)
 
-        self.Transport.gmadmachine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
-        self.Transport.madxmachine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
+        # pybdsim and pymadx are the same.
+        self.Transport.machine.AddSextupole(name=elementid, length=lenInM, k2=_np.round(field_gradient, 4))
 
         self.Writer.DebugPrintout('\tConverted to:')
         debugstring = 'Sextupole ' + elementid + ', length ' + _np.str(lenInM) + \
@@ -409,8 +415,8 @@ class Elements:
         if not elementid:  # check on empty string
             elementid = 'SOLE'+_np.str(self.Transport.machineprops.solenoids)
 
-        self.Transport.gmadmachine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
-        self.Transport.madxmachine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
+        # pybdsim and pymadx are the same.
+        self.Transport.machine.AddSolenoid(name=elementid, length=lenInM, ks=_np.round(field_in_Tesla, 4))
 
         self.Writer.DebugPrintout('\tConverted to:')
         debugstring = 'Solenoid ' + elementid + ', length ' + _np.str(lenInM) + \

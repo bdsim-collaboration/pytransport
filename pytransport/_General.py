@@ -258,7 +258,7 @@ class _Writer:
             if not CheckDirExists(dir):
                 _os.mkdir(dir)
             _os.chdir(dir)
-            transport.gmadmachine.Write(fname)
+            transport.machine.Write(fname)
             _os.chdir('../')
         if transport.convprops.madxoutput:
             fname = filename + '.madx'
@@ -267,7 +267,7 @@ class _Writer:
             if not CheckDirExists(dir):
                 _os.mkdir(dir)
             _os.chdir(dir)
-            transport.madxmachine.Write(fname)
+            transport.machine.Write(fname)
             _os.chdir('../')
 
 
