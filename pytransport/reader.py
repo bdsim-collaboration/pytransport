@@ -250,17 +250,11 @@ class Optics:
                     print " "
                     print(element)
 
-        def get_elementdata(index):        # Function to get the data for each element, rather than each key.
-            elementlist = []               # There's probably a better container type for this, but I'm familiar
-            for name in transdata.keys():  # with dictionaries, and it works (for now).
-                elementlist.append(transdata[name][index])
-            return elementlist
-
-        data = pybdsim.Data.BDSAsciiData()  # Now convert the dict into BDSAsciiData instance for final output.
-        for name in transdata.keys():
-            data._AddProperty(name)
+        data = _BDA()  # Now convert the dict into BDSData instance for final output.
+        for keyName in transdata.keys():
+            data._AddProperty(keyName)
         for i in range(num_elements):
-            data.append(get_elementdata(i))
+            data.append(_GetElementData(i, transdata))
 
         return data
 
@@ -354,17 +348,11 @@ class Optics:
                     self.transdata['Type'].append(elementType)
                     num_elements += 1 
 
-        def get_elementdata(index):             # Function to get the data for each element, rather than each key.
-            elementlist2 = []                   # There's probably a better container type for this, but I'm familiar
-            for name in self.transdata.keys():  # with dictionaries, and it works (for now).
-                elementlist2.append(self.transdata[name][index])
-            return elementlist2
-
-        data = pybdsim.Data.BDSAsciiData()      # Now convert the dict into BDSAsciiData instance for final output.
-        for name, unit in self.transunits.iteritems():
-            data._AddProperty(name,unit)
+        data = _BDA()      # Now convert the dict into BDSData instance for final output.
+        for keyName, unit in self.transunits.iteritems():
+            data._AddProperty(keyName, unit)
         for i in range(num_elements):
-            data.append(get_elementdata(i))
+            data.append(_GetElementData(i, self.transdata))
 
         return data
 
@@ -498,18 +486,11 @@ class Optics:
                     self.transdata['Type'].append(elementType)
                     num_elements += 1
 
-        def get_elementdata(index):             # Function to get the data for each element, rather than each key.
-            elementlist2 = []                   # There's probably a better container type for this, but I'm familiar
-            for name in self.transdata.keys():  # with dictionaries, and it works (for now).
-                elementlist2.append(self.transdata[name][index])
-        
-            return elementlist2
-
-        data = pybdsim.Data.BDSAsciiData()      # Now convert the dict into BDSAsciiData instance for final output.
-        for name, unit in self.transunits.iteritems():
-            data._AddProperty(name, unit)
+        data = _BDA()      # Now convert the dict into BDSData instance for final output.
+        for keyName, unit in self.transunits.iteritems():
+            data._AddProperty(keyName, unit)
         for i in range(num_elements):
-            data.append(get_elementdata(i))
+            data.append(_GetElementData(i, self.transdata))
         
         return data
 
@@ -714,4 +695,8 @@ def _updateElementLine(line):
     return newline
 
 
-
+def _GetElementData(index, dataDict):
+    # Function to get the data for each element, rather than each key. There's probably a better container
+    # type for this, but I'm familiar with dictionaries, and it works (for now).
+    elementlist = [dataDict[keyName][index] for keyName in dataDict.keys()]
+    return elementlist
