@@ -1,14 +1,39 @@
+# pytransport.Reader - Transport input and output file readers.
+# Version 1.0
+# W. Shields and J. Snuverink
+# william.shields.2010@live.rhul.ac.uk
+
+"""
+Reader
+
+Readers for loading Transport input files and output files.
+Can extract the individual lattice, optics, and fitting sections.
+
+Classes:
+Reader - a list of data read from Transport files.
+ConversionData - a class for holding data during conversion.
+
+"""
+
 import numpy as _np
 from Data import BDSData as _BDA
 import _General
 
 
 class Reader:
+    """
+    Class for reading Transport input and output files.
+    The output file can be standard output or Beam output.
+
+    """
     def __init__(self):
         self._allowedIndicatorLines = ['0  100', '0    0']
         self.optics = _Optics()
 
     def GetOptics(self, inputFile, inputType=None):
+        """
+        Extract the optics from a Transport output file.
+        """
         if isinstance(inputType, _np.str):
             if inputType == 'beam':
                 transdata = self.optics._getBeamOptics(inputFile)
@@ -46,8 +71,7 @@ class Reader:
 
     def GetLattice(self, inputFile):
         """
-        Function to extract the lattice from a standard output file. No processing at the moment, but
-        this function should identify the chunk that is the lattice.
+        Function to extract the lattice from a standard output file.
         """
         flist = _LoadFile(inputFile)
         latticestart = 0
@@ -82,11 +106,12 @@ class Reader:
         return lattice
 
     def GetFits(self, inputFile):
-        """ Function to get the fit routine data from the standard transport output.
-            Returns two lists, the first with the direct output from the fitting data,
-            the second with the first line of each element in the output data, which contains the 
-            element parameters with their fitted values.
-            """
+        """
+        Function to get the fit routine data from the standard transport output.
+        Returns two lists, the first with the direct output from the fitting data,
+        the second with the first line of each element in the output data, which contains the
+        element parameters with their fitted values.
+        """
         flist = _LoadFile(inputFile)
         fitstart = 0
         fitend = 0
@@ -118,6 +143,9 @@ class Reader:
         return fits, fitres
 
     def GetLatticeAndOptics(self, inputFile):
+        """
+        Function to extract the lattice and optics from a standard output file.
+        """
         flist = _LoadFile(inputFile)
         lattice = self.GetLattice(inputFile)
         optics = self.optics._getOptics(flist, inputFile)
@@ -125,6 +153,10 @@ class Reader:
     
 
 class _Optics:
+    """
+    Class for reading optics from Transport output files.
+    The optics can be from standard output or Beam output.
+    """
     def __init__(self):
         self.transdata = {
             'Sigma_x'   : [],
@@ -169,6 +201,9 @@ class _Optics:
             }
 
     def _processBeamOptics(self, flist):
+        """
+        Process the optics from a Beam output file.
+        """
         transdata = {
             'Sigma_x'   : [],
             'Sigma_xp'  : [],
@@ -262,6 +297,9 @@ class _Optics:
         return data
 
     def _processStandardOptics(self, elementlist, filename):
+        """
+        Process the optics from a standard output file.
+        """
         if _General.CheckSingleLineOutputApplied(filename):
             optics = self._processStandardOpticsSingleLine(elementlist)
         else:
@@ -269,6 +307,9 @@ class _Optics:
         return optics
 
     def _processStandardOpticsMultiLines(self, elementlist):
+        """
+        Process the optics from a standard output file when written to multiple lines.
+        """
         # okElements=['BEAM','CORR','DRIFT','QUAD','SLIT','ADD TO BEAM','BEND','ROTAT','Z RO']
         notokElements = ['AXIS SHIFT']
         
@@ -363,6 +404,11 @@ class _Optics:
         self.transdata['Name'].append(elename)
         self.transdata['Type'].append(elementType)
 
+    def _processStandardOpticsSingleLine(self, elementlist):
+        """
+        Process the optics from a standard output file when written to single lines as specified
+        by a 13. 19. element in Transport.
+        """
         # seperate R matrix table from sigma matrix elements
         rMatrixElements = elementlist[-1]
         rMatrix = []
@@ -458,10 +504,11 @@ class _Optics:
         return data
 
     def _getOptics(self, flist, filename):
-        """ Function to extract the output from a standard output file. The output will be an list of the lines
-            for each element which contains the beam data. Each element should contain the R and TRANSPORT matrices
-            which are necessary so the beam info can be calculated.
-            """
+        """
+        Function to extract the output from a standard output file. The output will be an list of the lines
+        for each element which contains the beam data. Each element should contain the R and TRANSPORT matrices
+        which are necessary so the beam info can be calculated.
+        """
         foundOpticsStart = False
         foundOpticsEnd = False
         foundRMatrixElementStart = False
@@ -542,42 +589,46 @@ class _Optics:
         return elementlist
 
     def _getBeamOptics(self, inputFile):
-        """ Returns a BDSAsciiData instance of parameters from the input file.
-            The input file is assumed to contain the beam data as output 
-            manually by TRANSPORT. As such, the structure of said output 
-            is assumed to remain unchanged from lattice to lattice. This code 
-            is designed to work with that output only. An example of that 
-            output would be:
-            
-            *DRIFT*      z = 34.372 m
-            *SIGMA*
-             Center:         0.000 mm    0.000 mrad    0.000 mm    0.000 mrad
-             horz. Par. :   18.361 mm   23.134 mrad    0.997
-             vert. Par. :    8.447 mm   10.242 mrad   -0.995
-            *TWISS PARAMETERS* (for dp/p = 1.000 % )
-               alfax:     betax:         alfay:     betay:
-             -13.51800   10.75807 m      9.55361    7.92270 m
-            *TRANSFORM 1*
-                horz:                              vert:
-              -14.22000   -0.64752   -9.32539      0.13646    0.97529    0.00000
-              -18.40864   -0.90858  -10.33185     -1.18959   -1.17399    0.00000
+        """
+        Returns a BDSData instance of parameters from the input file.
+        The input file is assumed to contain the beam data as output
+        manually by TRANSPORT. As such, the structure of said output
+        is assumed to remain unchanged from lattice to lattice. This code
+        is designed to work with that output only. An example of that
+        output would be:
 
-            Anything other than this format will be read incorrectly or will 
-            not be read. There has to be a blank line between every element's 
-            output in the file.
-            
-            Note:
-                It is assumed that the element (3,2) in the displayed *TRANSFORM 1*
-                matrices corresponds to the dispersion (-9.32539 and 0.0000 in the above
-                example). Some output however appears to have the correct magnitude, but 
-                incorrect sign. This doesn't affect the resulting beam size, but beware 
-                that a direct dispersion comparison to another lattice may appear incorrect.
-            """
+        *DRIFT*      z = 34.372 m
+        *SIGMA*
+         Center:         0.000 mm    0.000 mrad    0.000 mm    0.000 mrad
+         horz. Par. :   18.361 mm   23.134 mrad    0.997
+         vert. Par. :    8.447 mm   10.242 mrad   -0.995
+        *TWISS PARAMETERS* (for dp/p = 1.000 % )
+           alfax:     betax:         alfay:     betay:
+         -13.51800   10.75807 m      9.55361    7.92270 m
+        *TRANSFORM 1*
+            horz:                              vert:
+          -14.22000   -0.64752   -9.32539      0.13646    0.97529    0.00000
+          -18.40864   -0.90858  -10.33185     -1.18959   -1.17399    0.00000
+
+        Anything other than this format will be read incorrectly or will
+        not be read. There has to be a blank line between every element's
+        output in the file.
+
+        Note:
+            It is assumed that the element (3,2) in the displayed *TRANSFORM 1*
+            matrices corresponds to the dispersion (-9.32539 and 0.0000 in the above
+            example). Some output however appears to have the correct magnitude, but
+            incorrect sign. This doesn't affect the resulting beam size, but beware
+            that a direct dispersion comparison to another lattice may appear incorrect.
+        """
         flist = _LoadFile(inputFile)
         transdata = self._processBeamOptics(flist)
         return transdata
 
     def _getStandardOptics(self, inputFile):
+        """
+        Get the optics from a standard output file. Returns a pytransport.Data.BDSData object.
+        """
         flist = _LoadFile(inputFile)
         optics = self._getOptics(flist, inputFile)
         transdata = self._processStandardOptics(optics, inputFile)
@@ -659,7 +710,6 @@ def _updateElementLine(line):
 
 
 def _GetElementData(index, dataDict):
-    # Function to get the data for each element, rather than each key. There's probably a better container
-    # type for this, but I'm familiar with dictionaries, and it works (for now).
+    # Function to get the data for each element, rather than each key.
     elementlist = [dataDict[keyName][index] for keyName in dataDict.keys()]
     return elementlist

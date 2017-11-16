@@ -1,3 +1,17 @@
+# pytransport.Elements - tools for Transport element conversion
+# Version 1.0
+# W. Shields and J. Snuverink
+# william.shields.2010@live.rhul.ac.uk
+
+"""
+Functions to help convert elements from Transport to gmad/madx.
+Code inherited in classes in pybdsim.Convert.Transport2Gmad and pymadx.Convert.Transport2Madx.
+
+Classes:
+Elements - a class used to convert different element types.
+
+"""
+
 import numpy as _np
 
 import _General
@@ -6,6 +20,12 @@ from Data import ConversionData as _convData
 
 
 class Elements:
+    """
+    Class for converting different Transport element types into gmad/madx format.
+
+    Required: transportData, dtype = pytransport.Data.ConversionData
+
+    """
     def __init__(self, transportData):
         if not isinstance(transportData, _convData):
             raise TypeError("transportData must be a pytransport.Data.ConversionData instance")

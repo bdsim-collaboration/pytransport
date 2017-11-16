@@ -1,3 +1,19 @@
+# pytransport.Data - Data loaders and data containers.
+# Version 1.0
+# W. Shields and J. Snuverink
+# william.shields.2010@live.rhul.ac.uk
+
+"""
+Data
+
+Data containers used in converting from Transport to gmad or madx.
+
+Classes:
+BDSData - a list of data read from Transport files.
+ConversionData - a class for holding data during conversion.
+
+"""
+
 import numpy as _np
 import os as _os
 from scipy import constants as _con
@@ -251,6 +267,17 @@ class BDSData(list):
 
 
 class ConversionData:
+    """
+    Class used as data container object in Transport2Gmad / Transport2Madx conversion.
+    Required input:
+    - inputfile: string, inputfile name
+    - machine: either pybdsim.Builder.Machine or pymadx.Builder.Machine instance.
+
+    Note: if used as a holder for conversion to gmad, options must be supplied a pybdsim.Options.Options instance.
+
+    This class will hold ALL conversion related data, some stored in member variables which are separate containers
+    for: conversion related properties (user input arguments), beam properties, and machine properties.
+    """
     def __init__(self,
                  inputfile,
                  machine,
@@ -335,7 +362,7 @@ class ConversionData:
 
     def AddOptions(self):
         """
-        Function to set the Options for the BDSIM machine.
+        Function to set the Options for a BDSIM machine.
         """
         self.options.SetPhysicsList(physicslist='em')
         self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
@@ -351,7 +378,7 @@ class ConversionData:
 
     def AddBeam(self):
         """
-        Function to prepare the beam for writing.
+        Function to prepare the beam and add to the machine.
         """
         # convert energy to GeV (madx only handles GeV)
         energy_in_gev = self.beamprops.tot_energy * self.scale[self.units['p_egain'][0]] / 1e9
@@ -418,7 +445,7 @@ class ConversionData:
 
     def _NewMachines(self):
         """
-        Delete the machine and set to be the empty copied at class instantiation.
+        Delete the machine and set to be the empty machine copied at class instantiation.
         """
         del self.machine
         self.machine = self._machineCopy

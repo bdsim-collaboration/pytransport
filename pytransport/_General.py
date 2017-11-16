@@ -1,3 +1,15 @@
+# pytransport._General - general python scripts / tools
+# Version 1.0
+# W. Shields and J. Snuverink
+# william.shields.2010@live.rhul.ac.uk
+
+"""
+General utilities for day to day housekeeping
+
+Classes:
+_Writer - a class used for writing any output during conversion.
+
+"""
 import numpy as _np
 from scipy import constants as _con
 import sys as _sys
@@ -11,12 +23,25 @@ from Data import ConversionData
 
 
 class _Writer:
+    """
+    Class for writing terminal output, logfile output, and the converted machine. Class is designed specifically for
+    use with pytransport conversion. Class is protected as it should be hidden.
+
+    kwargs:
+    debugOutput: bool, default = False. If true, strings supplied to class functions for debug output will be written.
+    writeToLog: bool, default = False. If true, strings supplied to class functions will be written to a logfile.
+    logfile: string, default = ''. Log file name.
+    """
     def __init__(self, debugOutput=False, writeToLog=False, logfile=''):
         self.debug = debugOutput
         self.logfile = logfile
         self.outlog = writeToLog
 
     def Printout(self, line, outToTerminal=True):
+        """
+        Print line output string. Prints to output log if specified at class instantiation.
+        Argument outToTerminal (bool, default = True) will print line to the terminal if True.
+        """
         if outToTerminal:
             _sys.stdout.write(line+'\n')
         if self.outlog:
@@ -28,10 +53,18 @@ class _Writer:
             logfile.close()
 
     def DebugPrintout(self, line):
+        """
+        Print line debug output string to logfile only.
+        """
         if self.debug:
             self.Printout(line, outToTerminal=False)
 
     def BeamDebugPrintout(self, beam, units):
+        """
+        Print the debug output strings for the beam definition.
+        The beam must be a pytransport.Data._beamprops instance, and the units must be the
+        pytransport.Data.ConversionData.units dict.
+        """
         if not isinstance(beam, _beamprops):
             raise TypeError("Beam must be pytransport.Data._beamprops instance.")
         self.DebugPrintout('\tBeam definition :')
@@ -53,13 +86,17 @@ class _Writer:
         self.DebugPrintout('\tEmittY = ' + _np.str(beam.emity) + ' ' + units['emittance'])
 
     def ElementPrepDebugPrintout(self, elementType, numElements):
+        """
+        Print the debug output string as required in the element preparation stage.
+        """
         debugString = "\tEntry is a " + elementType + ", adding to the element registry as element "
         debugString += numElements + "."
         self.DebugPrintout(debugString)
 
     def Write(self, convData, filename):
         """
-        Write the converted TRANSPORT file to disk.
+        Write the converted TRANSPORT file to disk. A pytransport.Data.ConversionData instance and filename (string)
+        must be supplied.
         """
         if not isinstance(filename, _np.str):
             raise TypeError("Filename must be a string")
