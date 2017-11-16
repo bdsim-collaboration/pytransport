@@ -1,14 +1,13 @@
 import numpy as _np
 import os as _os
 from scipy import constants as _con
-import _General
 
-useRootNumpy = True
+_useRootNumpy = True
 
 try:
     import root_numpy as _rnp
 except ImportError:
-    useRootNumpy = False
+    _useRootNumpy = False
     pass
 
 
@@ -292,8 +291,8 @@ class ConversionData:
         self._machineCopy = machine
 
         # initialise registries
-        self.ElementRegistry = _General._Registry()
-        self.FitRegistry = _General._Registry()
+        self.ElementRegistry = _Registry()
+        self.FitRegistry = _Registry()
 
         self.units = {  # Default TRANSPORT units
             'x': 'cm',
