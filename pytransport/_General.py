@@ -116,7 +116,7 @@ def CheckSingleLineOutputApplied(inputfile):
     """
     reader = _Reader.Reader()
     flist = _Reader._LoadFile(inputfile)
-    optics = reader._Optics._getOptics(flist)
+    optics = reader.optics._getOptics(flist)
     for element in optics:
         if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
             return False
