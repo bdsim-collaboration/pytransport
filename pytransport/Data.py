@@ -11,7 +11,7 @@ except ImportError:
     pass
 
 
-def Load(filepath):
+def _Load(filepath):
     extension = filepath.split('.')[-1]
     if not _os.path.isfile(filepath):
         raise IOError("File does not exist")
@@ -47,7 +47,7 @@ def _LoadAsciiHistogram(filepath):
 
 
 def _LoadRoot(filepath):
-    if not useRootNumpy:
+    if not _useRootNumpy:
         raise IOError("root_numpy not available - can't load ROOT file")
     data = BDSData()
     trees = _rnp.list_trees(filepath)
@@ -124,7 +124,7 @@ class BDSData(list):
         
         for machine in args:
             if isinstance(machine, _np.str):
-                machine = Load(machine)
+                machine = _Load(machine)
         
             # check names sets are equal
             if len(set(self.names).difference(set(machine.names))) != 0:
@@ -275,13 +275,20 @@ class ConversionData:
         else:
             p_mass = 1
 
-        # pytransport data container classes
-        self.convprops = _General._conversionProps(inputfile, particle, debug, gmad, gmadDir, madx, madxDir,
+        # pytransport data container classes. Split into different container classes so that this class is not
+        # overloaded with member variables. Could be stored as a dictionary but given their widespread use in
+        # conversion, access is just cleaner.
+        self.convprops = _conversionProps(inputfile, particle, debug, gmad, gmadDir, madx, madxDir,
                                                    auto, dontSplit, keepName, combineDrifts, outlog)
-        self.beamprops = _General._beamprops(p_mass)
+        self.beamprops = _beamprops(p_mass)
         self.beamprops.distrType = distrType
-        self.machineprops = _General._machineprops()
-        self.options = options
+        self.machineprops = _machineprops()
+
+        # can't verify correct data type so at least check that it's not None if converting to gmad.
+        if (options is None) and gmad:
+            raise TypeError("options must be a pybdsim.Options.Options instance when converting to gmad")
+        else:
+            self.options = options
 
         # the gmad/madx machine and beam that will be written.
         self.machine = machine

@@ -6,9 +6,9 @@ import _General
 class Reader:
     def __init__(self):
         self._allowedIndicatorLines = ['0  100', '0    0']
-        self.optics = Optics()
+        self.optics = _Optics()
 
-    def getOptics(self, inputFile, inputType=None):
+    def GetOptics(self, inputFile, inputType=None):
         if isinstance(inputType, _np.str):
             if inputType == 'beam':
                 transdata = self.optics._getBeamOptics(inputFile)
@@ -43,7 +43,7 @@ class Reader:
             raise IOError(errorstring)
         return transdata
 
-    def _getLattice(self, inputFile):
+    def GetLattice(self, inputFile):
         """
         Function to extract the lattice from a standard output file. No processing at the moment, but
         this function should identify the chunk that is the lattice.
@@ -79,7 +79,7 @@ class Reader:
             lattice.extend(flist[latticestart:latticeend])
         return lattice
 
-    def _getFits(self, inputFile):
+    def GetFits(self, inputFile):
         """ Function to get the fit routine data from the standard transport output.
             Returns two lists, the first with the direct output from the fitting data,
             the second with the first line of each element in the output data, which contains the 
@@ -114,14 +114,14 @@ class Reader:
 
         return fits, fitres
 
-    def _getLatticeAndOptics(self, inputFile):
+    def GetLatticeAndOptics(self, inputFile):
         flist = _LoadFile(inputFile)
-        lattice = self._getLattice(inputFile)
+        lattice = self.GetLattice(inputFile)
         optics = self.optics._getOptics(flist, inputFile)
         return lattice, optics
     
 
-class Optics:
+class _Optics:
     def __init__(self):
         self.transdata = {
             'Sigma_x'   : [],

@@ -5,6 +5,9 @@ import os as _os
 import string as _string
 import glob as _glob
 
+import Reader as _Reader
+from Data import _beamprops
+from Data import ConversionData
 
 
 class _Writer:
@@ -17,6 +20,8 @@ class _Writer:
         if outToTerminal:
             _sys.stdout.write(line+'\n')
         if self.outlog:
+            if self.logfile == '':
+                raise IOError("Invalid log file name: ''")
             logfile = open(self.logfile, 'a')
             logfile.write(line)
             logfile.write('\n')
@@ -28,7 +33,7 @@ class _Writer:
 
     def BeamDebugPrintout(self, beam, units):
         if not isinstance(beam, _beamprops):
-            raise TypeError("Beam must be pytransport _beamprops instance.")
+            raise TypeError("Beam must be pytransport.Data._beamprops instance.")
         self.DebugPrintout('\tBeam definition :')
         self.DebugPrintout('\tdistrType = ' + beam.distrType)
         self.DebugPrintout('\tenergy = '  + _np.str(beam.tot_energy) + ' GeV')
@@ -52,29 +57,32 @@ class _Writer:
         debugString += numElements + "."
         self.DebugPrintout(debugString)
 
-    def Write(self, transport, filename):
+    def Write(self, convData, filename):
         """
         Write the converted TRANSPORT file to disk.
         """
         if not isinstance(filename, _np.str):
             raise TypeError("Filename must be a string")
-        if transport.convprops.gmadoutput:
+        if not isinstance(convData, ConversionData):
+            raise TypeError("convData must be a pytransport.Data.ConversionData instance.")
+
+        fname = ""
+        directory = ""
+        if convData.convprops.gmadoutput:
             fname = filename + '.gmad'
-            dir = transport.convprops.gmadDir
-            self.Printout('Writing to file: ' + dir + "/" + fname)
-            if not CheckDirExists(dir):
-                _os.mkdir(dir)
-            _os.chdir(dir)
-            transport.machine.Write(fname)
-            _os.chdir('../')
-        if transport.convprops.madxoutput:
+            directory = convData.convprops.gmadDir
+        elif convData.convprops.madxoutput:
             fname = filename + '.madx'
-            dir = transport.convprops.madxDir
-            self.Printout('Writing to file: ' + dir + "/" + fname)
-            if not CheckDirExists(dir):
-                _os.mkdir(dir)
-            _os.chdir(dir)
-            transport.machine.Write(fname)
+            directory = convData.convprops.madxDir
+
+        self.Printout('Writing to file: ' + directory + "/" + fname)
+        if directory == "":
+            convData.machine.Write(fname)
+        else:
+            if not CheckDirExists(directory):
+                _os.mkdir(directory)
+            _os.chdir(directory)
+            convData.machine.Write(fname)
             _os.chdir('../')
 
 
@@ -108,7 +116,7 @@ def CheckSingleLineOutputApplied(inputfile):
     """
     reader = _Reader.Reader()
     flist = _Reader._LoadFile(inputfile)
-    optics = reader.optics._getOptics(flist)
+    optics = reader._Optics._getOptics(flist)
     for element in optics:
         if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
             return False

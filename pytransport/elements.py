@@ -2,10 +2,13 @@ import numpy as _np
 
 import _General
 from _General import _Writer
+from Data import ConversionData as _convData
 
 
 class Elements:
     def __init__(self, transportData):
+        if not isinstance(transportData, _convData):
+            raise TypeError("transportData must be a pytransport.Data.ConversionData instance")
         self.Transport = transportData
         self.Writer = _Writer(debugOutput=self.Transport.convprops.debug,
                               writeToLog=self.Transport.convprops.outlog,
