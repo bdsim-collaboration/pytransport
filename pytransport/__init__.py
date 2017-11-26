@@ -17,6 +17,6 @@ filename_sequence.gmad
 """
 
 import _General
-import elements
-import convert
-import reader
+import Elements
+import Reader
+import Data
