@@ -123,87 +123,12 @@ class _Writer:
             _os.chdir('../')
 
 
-def GetTypeNum(line):
-    """
-    Function to extract the element type number (type code).
-    Written because element types can contain alphabetical
-    characters when fits are used, e.g: 5.0A. Only the number
-    is required, the use of fitting does not need to be known.
-    """
-    eleNum = line[0]
-    characNum = 0
-    if len(eleNum) > 2:
-        for characNum in range(len(eleNum[2:])):
-            try:
-                converted = _np.float(eleNum[:characNum+2])
-                del converted
-            except ValueError:
-                break
-        typeNum = _np.float(eleNum[:characNum+2])
-    else:
-        typeNum = _np.float(eleNum)
-    return typeNum
-
-
-def CheckSingleLineOutputApplied(inputfile):
-    """
-    Function to check if the control element that print element output in
-    a single line was successfully applied. Check needed as not all versions
-    of TRANSPORT can run this type code.
-    """
-    reader = _Reader.Reader()
-    flist = _Reader._LoadFile(inputfile)
-    optics = reader.optics._getOptics(flist)
-    for element in optics:
-        if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
-            return False
-    return True
-
-
-def RemoveSpaces(line):
-    elementlist = []
-    for i in line:
-        if (i != '') and (i != ' '):
-            elementlist.append(i)
-    line = _np.array(elementlist)
-    return line
-
-
-def FindEndOfLine(line):  # Find the end of the line of code
-    endpos = -1
-    breakloop = False
-    if isinstance(line, _np.str):
-        for charnum, char in enumerate(line):
-            if char == ';':
-                endpos = charnum
-                break
-    elif isinstance(line, _np.ndarray):
-        for index, ele in enumerate(line):
-            for char in ele:
-                if char == ';':
-                    endpos = index
-                    breakloop = True
-                    break
-            if breakloop:
-                break
-    return endpos
-
-
-def RemoveIllegals(line):
-    """
-    Function to remove '' and stray characters from lines.
-    """
-    illegal = ['"', '', '(', ')']
-
-    linelist = [element for element in line if element not in illegal]
-    line = _np.array(linelist)
-    return line
-
-
-def CheckIsSentinel(line):
-    for element in line:
-        if element[:8] == 'SENTINEL':
-            return True
+def CheckDirExists(directory):
+    dirs = _glob.glob('*/')
+    if directory[-1] != '/':
+        directory += '/'
+    if directory in dirs:
+        return True
     return False
 
 
@@ -226,6 +151,82 @@ def CheckIsAddition(line, filetype='input'):
         raise ValueError("File type can only be input or output")
 
 
+def CheckIsOutput(inputfile):
+    """
+    Function to check if a file is a standard TRANSPORT output file.
+    Based upon existence of the lines:
+        "0  XXX"
+    being present, which represents the TRANSPORT indicator card line.
+    X can be 0, 1, 2. Default is 0.
+    """
+    temp = _Reader.Reader()
+    isOutput = False
+    try:
+        f = open(inputfile)
+        for inputline in f:
+            inputline = inputline.replace("\r", '')
+            inputline = inputline.replace("\n", '')
+            if inputline in temp._allowedIndicatorLines:
+                isOutput = True
+                break
+        f.close()
+    except IOError:
+        raise IOError('Cannot open file.')
+    return isOutput
+
+
+def CheckIsSentinel(line):
+    for element in line:
+        if element[:8] == 'SENTINEL':
+            return True
+    return False
+
+
+def CheckSingleLineOutputApplied(inputfile):
+    """
+    Function to check if the control element that print element output in
+    a single line was successfully applied. Check needed as not all versions
+    of TRANSPORT can run this type code.
+    """
+    reader = _Reader.Reader()
+    flist = _Reader._LoadFile(inputfile)
+    optics = reader.optics._getOptics(flist, inputfile)
+    for element in optics:
+        if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
+            return True
+    return False
+
+
+def ConvertBunchLength(transport, bunch_length):
+    """
+    Function to convert bunch length unit in TRANSPORT into seconds.
+    """
+    scale = transport.scale[transport.units['bunch_length'][0]]
+    blmeters = bunch_length * scale  # Bunch length scaled to metres
+    blseconds = blmeters / (transport.beamprops.beta*_con.c)  # Length converted to seconds
+    return blseconds
+
+
+def FindEndOfLine(line):  # Find the end of the line of code
+    endpos = -1
+    breakloop = False
+    if isinstance(line, _np.str):
+        for charnum, char in enumerate(line):
+            if char == ';':
+                endpos = charnum
+                break
+    elif isinstance(line, _np.ndarray):
+        for index, ele in enumerate(line):
+            for char in ele:
+                if char == ';':
+                    endpos = index
+                    breakloop = True
+                    break
+            if breakloop:
+                break
+    return endpos
+
+
 def GetComment(line):
     """
     Function to extract a comment from a line.
@@ -243,6 +244,92 @@ def GetComment(line):
     else:
         gmadcomment = None
     return gmadcomment
+
+
+def GetElementData(line):
+    data = []
+    for index, ele in enumerate(line[1:]):
+        if ele != '':
+            try:
+                data.append(_np.float(ele))
+            except ValueError:
+                pass
+    return data
+
+
+def GetFaceRotationAngles(data, linenum):
+
+    def searchForAngle(linelist):
+        angle = 0
+        for line in linelist:
+            try:
+                elecode = _np.float(line[0])
+                del elecode
+            except ValueError:
+                angle = 0
+                break
+
+            if _np.float(line[0]) == 4.0:
+                break
+            elif _np.float(line[0]) == 2.0:
+                endof = FindEndOfLine(line[1])
+                if endof != -1:
+                    try:
+                        angle = _np.round(_np.float(line[1][:endof]), 4)
+                    except ValueError:
+                        try:
+                            angle = _np.round(_np.float(line[2][:endof]), 4)
+                        except ValueError:
+                            pass
+                    else:
+                        pass
+                else:
+                    try:
+                        angle = _np.round(_np.float(line[1]), 4)
+                    except ValueError:
+                        try:
+                            angle = _np.round(_np.float(line[2]), 4)
+                        except ValueError:
+                            pass
+                    else:
+                        pass
+                break
+            else:
+                pass
+        return angle
+
+    lineList = [i for i in data[(linenum - 5):linenum]]
+    lineList.reverse()  # Search for input poleface in reverse line order
+
+    anglein = searchForAngle(lineList)
+    angleout = searchForAngle(data[linenum + 1:(linenum + 6)])
+
+    return anglein, angleout
+
+
+def GetIndicator(data):
+    """
+    Function to read the indicator number. Must be 0, 1, or 2, where:
+        0 is a new lattice
+        1 is for fitting with the first lattice (from a 0 indicator file)
+        2 if for a second fitting which suppresses the first fitting.
+    """
+    indc = 0
+    linenum = 0
+    for linenum, line in enumerate(data):
+        if line[0] == '0':
+            if line[1] == '\r' or '\n':
+                indc = 0
+                break
+        if line[0] == '1':
+            if line[1] == '\r' or '\n':
+                indc = 1
+                break
+        if line[0] == '2':
+            if line[1] == '\r' or '\n':
+                indc = 2
+                break
+    return indc, linenum
 
 
 def GetLabel(line):
@@ -288,68 +375,42 @@ def GetLabel(line):
     return label
 
 
-def CheckDirExists(directory):
-    dirs = _glob.glob('*/')
-    if directory[-1] != '/':
-        directory += '/'
-    if directory in dirs:
-        return True
-    return False
-
-
-def RemoveLabel(line):
+def GetPreamble(data):  # Redundant until pybdsim can handle comments.
     """
-    Function to remove the label from a line.
+    Function to read any preamble at the start of the TRANSPORT file.
     """
-    label, elenum = GetLabel(line)
-    if label is not None:
-        element = line[elenum]
-        lablen = len(label)
-        newval = element
-        for index in range(len(element)):
-            if element[index:index + lablen] == label:
-                prelabel = element[:index - 1]
-                postlabel = element[index + lablen + 1:]
-                newval = prelabel + ' ' + postlabel
-                break
-        line[elenum] = newval
-    return line
+    # indc, linenum = GetIndicator(data)
+    gmadpreamble = []
+    # for line in self.Transport.data[:linenum-1]:
+    for line in data:
+        if line == '\r\n':
+            pass
+        else:
+            gmadline = '!' + line
+            gmadpreamble.append(gmadline)
+    return gmadpreamble
 
 
-def GetElementData(line):
-    data = []
-    for index, ele in enumerate(line[1:]):
-        if ele != '':
+def GetTypeNum(line):
+    """
+    Function to extract the element type number (type code).
+    Written because element types can contain alphabetical
+    characters when fits are used, e.g: 5.0A. Only the number
+    is required, the use of fitting does not need to be known.
+    """
+    eleNum = line[0]
+    characNum = 0
+    if len(eleNum) > 2:
+        for characNum in range(len(eleNum[2:])):
             try:
-                data.append(_np.float(ele))
+                converted = _np.float(eleNum[:characNum+2])
+                del converted
             except ValueError:
-                pass
-    return data
-
-
-def GetIndicator(data):
-    """
-    Function to read the indicator number. Must be 0, 1, or 2, where:
-        0 is a new lattice
-        1 is for fitting with the first lattice (from a 0 indicator file)
-        2 if for a second fitting which suppresses the first fitting.
-    """
-    indc = 0
-    linenum = 0
-    for linenum, line in enumerate(data):
-        if line[0] == '0':
-            if line[1] == '\r' or '\n':
-                indc = 0
                 break
-        if line[0] == '1':
-            if line[1] == '\r' or '\n':
-                indc = 1
-                break
-        if line[0] == '2':
-            if line[1] == '\r' or '\n':
-                indc = 2
-                break
-    return indc, linenum
+        typeNum = _np.float(eleNum[:characNum+2])
+    else:
+        typeNum = _np.float(eleNum)
+    return typeNum
 
 
 def JoinSplitLines(linenum, lattice):
@@ -403,98 +464,6 @@ def JoinSplitLines(linenum, lattice):
     return latticeline, line
 
 
-def GetFaceRotationAngles(data, linenum):
-
-    def searchForAngle(linelist):
-        angle = 0
-        for line in linelist:
-            try:
-                elecode = _np.float(line[0])
-                del elecode
-            except ValueError:
-                angle = 0
-                break
-
-            if _np.float(line[0]) == 4.0:
-                break
-            elif _np.float(line[0]) == 2.0:
-                endof = FindEndOfLine(line[1])
-                if endof != -1:
-                    try:
-                        angle = _np.round(_np.float(line[1][:endof]), 4)
-                    except ValueError:
-                        try:
-                            angle = _np.round(_np.float(line[2][:endof]), 4)
-                        except ValueError:
-                            pass
-                    else:
-                        pass
-                else:
-                    try:
-                        angle = _np.round(_np.float(line[1]), 4)
-                    except ValueError:
-                        try:
-                            angle = _np.round(_np.float(line[2]), 4)
-                        except ValueError:
-                            pass
-                    else:
-                        pass
-                break
-            else:
-                pass
-        return angle
-
-    lineList = [i for i in data[(linenum - 5):linenum]]
-    lineList.reverse()  # Search for input poleface in reverse line order
-
-    anglein = searchForAngle(lineList)
-    angleout = searchForAngle(data[linenum + 1:(linenum + 6)])
-
-    return anglein, angleout
-
-
-def _get_preamble(data):  # Redundant until pybdsim can handle comments.
-    """
-    Function to read any preamble at the start of the TRANSPORT file.
-    """
-    # indc, linenum = GetIndicator(data)
-    gmadpreamble = []
-    # for line in self.Transport.data[:linenum-1]:
-    for line in data:
-        if line == '\r\n':
-            pass
-        else:
-            gmadline = '!' + line
-            gmadpreamble.append(gmadline)
-    return gmadpreamble
-
-
-def _process_fits(fits):  # redundant
-    # First split the fitting output into its respective sections (input problem step).
-    fitsections = []
-    fitsstarts = []
-    # Start line of each section
-    for linenum, line in enumerate(fits):
-        if line.startswith('1'):
-            fitsstarts.append(linenum)
-
-    for secnum in range(len(fitsstarts)):
-        if secnum + 1 < len(fitsstarts):
-            section = fits[fitsstarts[secnum]:fitsstarts[secnum + 1]]
-        else:
-            section = fits[fitsstarts[secnum]:]
-        lines = []
-        for line in section:
-            lines.append(RemoveIllegals(line.split(' ')))
-        fitsections.append(lines)
-
-    magnetlines = []
-    for section in fitsections:
-        for line in section:
-            if (len(line) > 0) and (line[0][0] == '*' and line[0][-1] == '*') and line[0] != '*FIT*':
-                magnetlines.append(line)
-
-
 def OutputFitsToRegistry(transport, outputdata):
     isLegal = {'*DRIFT*': 3.0,
                '*QUAD*': 5.0,
@@ -525,14 +494,124 @@ def OutputFitsToRegistry(transport, outputdata):
     return transport
 
 
-def ConvertBunchLength(transport, bunch_length):
+def ProcessFits(fits):  # redundant
+    # First split the fitting output into its respective sections (input problem step).
+    fitsections = []
+    fitsstarts = []
+    # Start line of each section
+    for linenum, line in enumerate(fits):
+        if line.startswith('1'):
+            fitsstarts.append(linenum)
+
+    for secnum in range(len(fitsstarts)):
+        if secnum + 1 < len(fitsstarts):
+            section = fits[fitsstarts[secnum]:fitsstarts[secnum + 1]]
+        else:
+            section = fits[fitsstarts[secnum]:]
+        lines = []
+        for line in section:
+            lines.append(RemoveIllegals(line.split(' ')))
+        fitsections.append(lines)
+
+    magnetlines = []
+    for section in fitsections:
+        for line in section:
+            if (len(line) > 0) and (line[0][0] == '*' and line[0][-1] == '*') and line[0] != '*FIT*':
+                magnetlines.append(line)
+
+
+def RemoveFileExt(inputfile):
     """
-    Function to convert bunch length unit in TRANSPORT into seconds.
+    Remove the file extension from the input file name. Only works on known extensions.
     """
-    scale = transport.scale[transport.units['bunch_length'][0]]
-    blmeters = bunch_length * scale  # Bunch length scaled to metres
-    blseconds = blmeters / (transport.beamprops.beta*_con.c)  # Length converted to seconds
-    return blseconds
+    exts = [".txt", ".dat", ".DAT", ".TXT"]
+    if inputfile[-4:] in exts:
+        return inputfile[:-4]
+    return inputfile
+
+
+def RemoveIllegals(line):
+    """
+    Function to remove '' and stray characters from lines.
+    """
+    illegal = ['"', '', '(', ')']
+
+    linelist = [element for element in line if element not in illegal]
+    line = _np.array(linelist)
+    return line
+
+
+def RemoveLabel(line):
+    """
+    Function to remove the label from a line.
+    """
+    label, elenum = GetLabel(line)
+    if label is not None:
+        element = line[elenum]
+        lablen = len(label)
+        newval = element
+        for index in range(len(element)):
+            if element[index:index + lablen] == label:
+                prelabel = element[:index - 1]
+                postlabel = element[index + lablen + 1:]
+                newval = prelabel + ' ' + postlabel
+                break
+        line[elenum] = newval
+    return line
+
+
+def RemoveSpaces(line):
+    elementlist = []
+    for i in line:
+        if (i != '') and (i != ' '):
+            elementlist.append(i)
+    line = _np.array(elementlist)
+    return line
+
+
+def ScaleToMeters(transport, quantity):
+    """
+    Function to scale quantity (string) to meters, returns conversion factor.
+    """
+    if transport.units[quantity] != 'm':
+        conversionFactor = transport.scale[transport.units[quantity][0]]
+    else:
+        conversionFactor = 1
+    return conversionFactor
+
+
+def UpdateEnergyFromMomentum(transport, momentum):
+    """
+    Function to calculate (from momentum):
+        Total Energy
+        Kinetic Energy
+        Momentum
+        Lorentz factor (gamma)
+        Velocity (beta)
+        Magnetic rigidity (brho)
+    """
+    momentum = _np.float(momentum)
+    transport.beamprops.momentum = momentum
+    p_mass = transport.beamprops.mass  # Particle rest mass (in GeV)
+    scaling = 1
+    mom_in_ev = momentum
+
+    mom_unit = transport.units['p_egain']
+    if mom_unit != 'eV':
+        scaling = 1e9 / transport.scale[mom_unit[0]]     # Scaling relative to mom. unit
+        mom_in_ev = momentum * transport.scale[mom_unit[0]]
+    elif mom_unit == 'eV':
+        scaling = 1e9                               # Scaling relative to 1 eV
+        mom_in_ev = momentum
+    p_mass *= scaling                               # Scale particle rest mass
+    energy = _np.sqrt((p_mass**2) + (momentum**2))
+    transport.beamprops.tot_energy = energy
+    transport.beamprops.tot_energy_current = energy
+    transport.beamprops.k_energy = energy - p_mass
+    transport.beamprops.gamma = energy / p_mass
+    transport.beamprops.beta = _np.sqrt((1.0 - (1.0 / transport.beamprops.gamma**2)))
+    transport.beamprops.brho = mom_in_ev / _con.c
+    return transport
 
 
 def UpdateMomentumFromEnergy(transport, k_energy):
@@ -574,82 +653,3 @@ def UpdateMomentumFromEnergy(transport, k_energy):
 
     transport.beamprops.brho = mom_in_ev / _con.c
     return transport
-
-
-def UpdateEnergyFromMomentum(transport, momentum):
-    """
-    Function to calculate (from momentum):
-        Total Energy
-        Kinetic Energy
-        Momentum
-        Lorentz factor (gamma)
-        Velocity (beta)
-        Magnetic rigidity (brho)
-    """
-    momentum = _np.float(momentum)
-    transport.beamprops.momentum = momentum
-    p_mass = transport.beamprops.mass  # Particle rest mass (in GeV)
-    scaling = 1
-    mom_in_ev = momentum
-
-    mom_unit = transport.units['p_egain']
-    if mom_unit != 'eV':
-        scaling = 1e9 / transport.scale[mom_unit[0]]     # Scaling relative to mom. unit
-        mom_in_ev = momentum * transport.scale[mom_unit[0]]
-    elif mom_unit == 'eV':
-        scaling = 1e9                               # Scaling relative to 1 eV
-        mom_in_ev = momentum
-    p_mass *= scaling                               # Scale particle rest mass
-    energy = _np.sqrt((p_mass**2) + (momentum**2))
-    transport.beamprops.tot_energy = energy
-    transport.beamprops.tot_energy_current = energy
-    transport.beamprops.k_energy = energy - p_mass
-    transport.beamprops.gamma = energy / p_mass
-    transport.beamprops.beta = _np.sqrt((1.0 - (1.0 / transport.beamprops.gamma**2)))
-    transport.beamprops.brho = mom_in_ev / _con.c
-    return transport
-
-
-def ScaleToMeters(transport, quantity):
-    """
-    Function to scale quantity (string) to meters, returns conversion factor.
-    """
-    if transport.units[quantity] != 'm':
-        conversionFactor = transport.scale[transport.units[quantity][0]]
-    else:
-        conversionFactor = 1
-    return conversionFactor
-
-
-def CheckIsOutput(inputfile):
-    """
-    Function to check if a file is a standard TRANSPORT output file.
-    Based upon existence of the lines:
-        "0  XXX"
-    being present, which represents the TRANSPORT indicator card line.
-    X can be 0, 1, 2. Default is 0.
-    """
-    temp = _Reader.Reader()
-    isOutput = False
-    try:
-        f = open(inputfile)
-        for inputline in f:
-            inputline = inputline.replace("\r", '')
-            inputline = inputline.replace("\n", '')
-            if inputline in temp._allowedIndicatorLines:
-                isOutput = True
-                break
-        f.close()
-    except IOError:
-        raise IOError('Cannot open file.')
-    return isOutput
-
-
-def RemoveFileExt(inputfile):
-    """
-    Remove the file extension from the input file name. Only works on known extensions.
-    """
-    exts = [".txt", ".dat"]
-    if inputfile[-4:] in exts:
-        return inputfile[:-4]
-    return inputfile
