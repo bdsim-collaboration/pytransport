@@ -235,7 +235,10 @@ class _Optics:
                     restsplit = reststr.split(' ')
                     restsplit = _remove_blanks(restsplit)
                     transdata['S'].append(_np.float(restsplit[2]))
-                    namestr = restsplit[4]
+                    try :
+                        namestr = restsplit[4]
+                    except IndexError:
+                        namestr = ''
                     transdata['Name'].append(namestr)
                     # transdata['type'].append(typestr)
 
@@ -287,6 +290,8 @@ class _Optics:
                     print(errstr)
                     print " "
                     print(element)
+            elif element == "EOF -- rewind file":
+                break
 
         data = _BDA()  # Now convert the dict into BDSData instance for final output.
         for keyName in transdata.keys():

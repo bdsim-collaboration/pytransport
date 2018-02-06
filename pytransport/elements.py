@@ -30,9 +30,10 @@ class Elements:
         if not isinstance(transportData, _convData):
             raise TypeError("transportData must be a pytransport.Data.ConversionData instance")
         self.Transport = transportData
+        logfileName = _General.RemoveFileExt(self.Transport.convprops.file) + '_conversion.log'
         self.Writer = _Writer(debugOutput=self.Transport.convprops.debug,
                               writeToLog=self.Transport.convprops.outlog,
-                              logfile=self.Transport.convprops.file + '_conversion.log')
+                              logfile=logfileName)
 
     def DefineBeam(self, linedict):
         if linedict['isAddition']:
