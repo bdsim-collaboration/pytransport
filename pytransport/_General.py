@@ -24,12 +24,15 @@ from Data import ConversionData
 
 class _Writer:
     """
-    Class for writing terminal output, logfile output, and the converted machine. Class is designed specifically for
-    use with pytransport conversion. Class is protected as it should be hidden.
+    Class for writing terminal output, logfile output, and the converted machine. 
+    Class is designed specifically for use with pytransport conversion. Class is 
+    protected as it should be hidden.
 
     kwargs:
-    debugOutput: bool, default = False. If true, strings supplied to class functions for debug output will be written.
-    writeToLog: bool, default = False. If true, strings supplied to class functions will be written to a logfile.
+    debugOutput: bool, default = False. 
+    If true, strings supplied to class functions for debug output will be written.
+    writeToLog: bool, default = False. 
+    If true, strings supplied to class functions will be written to a logfile.
     logfile: string, default = ''. Log file name.
     """
     def __init__(self, debugOutput=False, writeToLog=False, logfile=''):
@@ -95,7 +98,8 @@ class _Writer:
 
     def Write(self, convData, filename):
         """
-        Write the converted TRANSPORT file to disk. A pytransport.Data.ConversionData instance and filename (string)
+        Write the converted TRANSPORT file to disk. A pytransport.Data.ConversionData 
+        instance and filename (string)
         must be supplied.
         """
         if not isinstance(filename, _np.str):
@@ -154,8 +158,10 @@ def CheckIsAddition(line, filetype='input'):
 def CheckIsOutput(inputfile):
     """
     Function to check if a file is a standard TRANSPORT output file.
-    Based upon existence of the lines:
-        "0  XXX"
+    Based upon existence of the lines::
+        
+         "0  XXX"
+    
     being present, which represents the TRANSPORT indicator card line.
     X can be 0, 1, 2. Default is 0.
     """
