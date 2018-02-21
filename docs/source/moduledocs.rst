@@ -10,26 +10,34 @@ may be incomplete.
     :undoc-members:
     :show-inheritance:
 
-pytransport.convert module
---------------------------
-
-.. automodule:: pytransport.convert
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pytransport.elements module
----------------------------
+pytransport.Data module
+-----------------------
    
-.. automodule:: pytransport.elements
+.. automodule:: pytransport.Data
 		:members:
 		:undoc-members:
 		:show-inheritance:
 
-pytransport.reader
-------------------
+pytransport.Elements module
+---------------------------
    
-.. automodule:: pytransport.reader
+.. automodule:: pytransport.Elements
+		:members:
+		:undoc-members:
+		:show-inheritance:
+
+pytransport.Reader module
+-------------------------
+   
+.. automodule:: pytransport.Reader
+		:members:
+		:undoc-members:
+		:show-inheritance:
+
+pytransport._General module
+---------------------------
+   
+.. automodule:: pytransport._General
 		:members:
 		:undoc-members:
 		:show-inheritance:
