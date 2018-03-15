@@ -135,6 +135,8 @@ class Elements:
         if (fintxval != 0) and (e2 != 0):
             self.Writer.DebugPrintout('\tSetting fintx=' + _np.str(fintxval) + '.')
 
+        hgap = self.Transport.machineprops.dipoleVertAper * self.Transport.scale[self.Transport.units['bend_vert_gap'][0]] * 10
+
         # Calculate bending angle
         if self.Transport.machineprops.benddef:
             bfield = dipoledata[1]
@@ -164,11 +166,11 @@ class Elements:
 
         # pybdsim and pymadx are the same. Check for non zero pole face rotation.
         if (e1 != 0) and (e2 != 0):
-            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4), fint=fintval, fintx=fintxval)
+            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4), fint=fintval, fintx=fintxval, hgap=hgap)
         elif (e1 != 0) and (e2 == 0):
-            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintval)
+            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintval, fintx=0, hgap=hgap)
         elif (e1 == 0) and (e2 != 0):
-            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2, 4), fintx=fintxval)
+            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2, 4), fint=0, fintx=fintxval, hgap=hgap)
         else:
             self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
 
@@ -524,11 +526,11 @@ class Elements:
 
         if specialdata[0] == 5.0:  # beampiperadius (technically only vertical, but will apply a circle for now)
             self.Writer.DebugPrintout('\tType 5: Vertical half aperture,')
-            debugstring = '\tNot setting vertical aperture, feature not supported yet.'
+            self.Transport.machineprops.dipoleVertAper = specialdata[1]
+            self.Writer.DebugPrintout('\tHalf aperture set to ' + _np.str(specialdata[1]) + '.')
             if self.Transport.machineprops.fringeIntegral == 0:
                 self.Transport.machineprops.fringeIntegral = 0.5  # default if a vertical aperture is specified.
-                debugstring += 'K1 not set, setting K1 to default of 0.5.'
-                self.Writer.DebugPrintout(debugstring)
+                self.Writer.DebugPrintout('FINT/X not set, setting FINT/X to default of 0.5.')
         elif specialdata[0] == 7.0:  # Fringe Field integral
             self.Transport.machineprops.fringeIntegral = specialdata[1]
             self.Writer.DebugPrintout('\tType 7: K1 Fringe field integral,')
