@@ -344,8 +344,8 @@ class _Optics:
                     r21     = _np.float(_remove_blanks(element[2].split(' '))[3])
                     r43     = _np.float(_remove_blanks(element[4].split(' '))[5])
 
-                    dx = _np.float(_split_negatives(_remove_blanks(element[8].split(' ')))[5])
-                    dy = _np.float(_split_negatives(_remove_blanks(element[10].split(' ')))[5])
+                    dx = _GetTransformLineElements(element[8])[5]
+                    dy = _GetTransformLineElements(element[10])[5]
 
                     self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, sigp, momentum, energy, elename,
                                            elementType, r21, r43)
@@ -383,20 +383,47 @@ class _Optics:
 
         ex = sigx * xpint
         ey = sigy * ypint
-        betx = sigx ** 2 / ex
-        bety = sigy ** 2 / ey
-        gammax = sigxp ** 2 / ex
-        gammay = sigyp ** 2 / ey
-        alfx = _np.sqrt((gammax * betx) - 1)
-        alfy = _np.sqrt((gammax * betx) - 1)
 
-        self.transdata['Sigma_x'].append(sigx / 1000)
-        self.transdata['Sigma_xp'].append(sigxp)
-        self.transdata['Sigma_y'].append(sigy / 1000)
-        self.transdata['Sigma_yp'].append(sigyp)
+        if ex is 0:
+            betx = 0
+            gammax = 0
+        else:
+            betx = (sigx ** 2.0) / ex
+            gammax = (sigxp ** 2.0) / ex
+
+        if ey is 0:
+            bety = 0
+            gammay = 0
+        else:
+            bety = (sigy ** 2.0) / ey
+            gammay = (sigyp ** 2.0) / ey
+
+        if _np.isnan(betx):
+            betx = 0
+        if _np.isnan(bety):
+            bety = 0
+        if _np.isnan(gammax):
+            gammax = 0
+        if _np.isnan(gammay):
+            gammay = 0
+
+        alfx2 = (gammax * betx) - 1.0
+        alfy2 = (gammay * bety) - 1.0
+        if (alfx2 < 0):
+            alfx2 = 0
+        if (alfy2 < 0):
+            alfy2 = 0
+
+        alfx = _np.sqrt(alfx2)
+        alfy = _np.sqrt(alfy2)
+
+        self.transdata['Sigma_x'].append(sigx / 1000)  # convert to m
+        self.transdata['Sigma_xp'].append(sigxp / 1000)  # convert to rad
+        self.transdata['Sigma_y'].append(sigy / 1000)  # convert to m
+        self.transdata['Sigma_yp'].append(sigyp / 1000)  # convert to rad
         self.transdata['S'].append(s)
-        self.transdata['Alph_x'].append(alfx)
-        self.transdata['Alph_y'].append(alfy)
+        self.transdata['Alpha_x'].append(alfx)
+        self.transdata['Alpha_y'].append(alfy)
         self.transdata['Beta_x'].append(betx)
         self.transdata['Beta_y'].append(bety)
         self.transdata['Emitt_x'].append(ex)
@@ -718,3 +745,17 @@ def _GetElementData(index, dataDict):
     # Function to get the data for each element, rather than each key.
     elementlist = [dataDict[keyName][index] for keyName in dataDict.keys()]
     return elementlist
+
+def _GetTransformLineElements(line):
+    elements = []
+    for element in range(6):
+        start = ((element + 1) * 10 + 1)
+        end = start + 10
+        eleVal = _remove_blanks(line[start:end].split(' '))[0]
+        try:
+            elements.append(_np.float(eleVal))
+        except ValueError:
+            elements.append(0)
+    return elements
+
+
