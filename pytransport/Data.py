@@ -17,6 +17,7 @@ ConversionData - a class for holding data during conversion.
 import numpy as _np
 import os as _os
 from scipy import constants as _con
+import copy
 
 _useRootNumpy = True
 
@@ -322,7 +323,7 @@ class ConversionData:
         self.beam = self.machine.beam
 
         # make a copy of the empty machine. Copy needed in case machine is split and a new machine is needed.
-        self._machineCopy = machine
+        self._machineCopy = copy.deepcopy(self.machine)
 
         # initialise registries
         self.ElementRegistry = _Registry()
