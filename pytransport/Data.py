@@ -321,6 +321,7 @@ class ConversionData:
         # the gmad/madx machine and beam that will be written.
         self.machine = machine
         self.beam = self.machine.beam
+        self.beam['offsetSampleMean'] = 0
 
         # make a copy of the empty machine. Copy needed in case machine is split and a new machine is needed.
         self._machineCopy = copy.deepcopy(self.machine)
@@ -372,7 +373,7 @@ class ConversionData:
         self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
         self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
         self.options.SetSamplerDiameter(radius=1, unitsstring='m')
-        self.options.SetStopTracks(stop=True)
+        self.options.SetStopSecondaries(stop=True)
         self.options.SetIncludeFringeFields(on=True)
 
         self.machine.AddOptions(self.options)
@@ -483,6 +484,8 @@ class _beamprops:
         self.alfx = 0
         self.bety = 0
         self.alfy = 0
+        self.dx = 0
+        self.dy = 0
         self.emitx = 0
         self.emity = 0
         self.distrType = 'gauss'

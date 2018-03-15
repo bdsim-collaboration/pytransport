@@ -164,8 +164,8 @@ class _Optics:
             'Sigma_y'   : [],
             'Sigma_yp'  : [],
             'S'         : [],
-            'Alph_x'    : [],
-            'Alph_y'    : [],
+            'Alpha_x'   : [],
+            'Alpha_y'   : [],
             'Beta_x'    : [],
             'Beta_y'    : [],
             'Emitt_x'   : [],
@@ -185,8 +185,8 @@ class _Optics:
             'Sigma_y'   : 'mm',
             'Sigma_yp'  : 'mrad',
             'S'         : 'm',
-            'Alph_x'    : '',
-            'Alph_y'    : '',
+            'Alpha_x'   : '',
+            'Alpha_y'   : '',
             'Beta_x'    : 'mm / mrad',
             'Beta_y'    : 'mm / mrad',
             'Emitt_x'   : 'mm mrad',
@@ -210,8 +210,8 @@ class _Optics:
             'Sigma_y'   : [],
             'Sigma_yp'  : [],
             'S'         : [],
-            'Alph_x'    : [],
-            'Alph_y'    : [],
+            'Alpha_x'   : [],
+            'Alpha_y'   : [],
             'Beta_x'    : [],
             'Beta_y'    : [],
             'Emitt_x'   : [],
@@ -261,9 +261,9 @@ class _Optics:
                     # Get alfa and beta twiss transdata for x and y.
                     line7 = section[7].split(' ')
                     line7 = _remove_blanks(line7)
-                    transdata['Alph_x'].append(_np.float(line7[0]))
+                    transdata['Alpha_x'].append(_np.float(line7[0]))
                     transdata['Beta_x'].append(_np.float(line7[1]))
-                    transdata['Alph_y'].append(_np.float(line7[3]))
+                    transdata['Alpha_y'].append(_np.float(line7[3]))
                     transdata['Beta_y'].append(_np.float(line7[4]))
 
                     # Get horizontal and vertical dispersion
