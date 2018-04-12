@@ -165,14 +165,13 @@ def CheckIsOutput(inputfile):
     being present, which represents the TRANSPORT indicator card line.
     X can be 0, 1, 2. Default is 0.
     """
-    temp = _Reader.Reader()
     isOutput = False
     try:
         f = open(inputfile)
         for inputline in f:
             inputline = inputline.replace("\r", '')
             inputline = inputline.replace("\n", '')
-            if inputline in temp._allowedIndicatorLines:
+            if inputline in _Reader._allowedIndicatorLines:
                 isOutput = True
                 break
         f.close()
@@ -194,9 +193,9 @@ def CheckSingleLineOutputApplied(inputfile):
     a single line was successfully applied. Check needed as not all versions
     of TRANSPORT can run this type code.
     """
-    reader = _Reader.Reader()
+    reader = _Reader.Optics()
     flist = _Reader._LoadFile(inputfile)
-    optics = reader.optics._getOptics(flist, inputfile)
+    optics = reader._getOptics(flist, inputfile)
     for element in optics:
         if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
             return True
