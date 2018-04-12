@@ -14,5 +14,6 @@ setup(
     author='JAI@RHUL',
     author_email='william.shields.2010@live.rhul.ac.uk',
     description="Convert TRANSPORT models and load TRANSPORT output.",
+    license='GPL3',
     url='https://bitbucket.org/jairhul/pytransport/'
 )
