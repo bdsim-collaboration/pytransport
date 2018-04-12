@@ -158,6 +158,8 @@ class _Optics:
             'Emitt_y'   : [],
             'Disp_x'    : [],
             'Disp_y'    : [],
+            'Disp_xp'   : [],
+            'Disp_yp'   : [],
             'Sigma_p'   : [],
             'Momentum'  : [],
             'E'         : [],  # kinetic energy
@@ -179,6 +181,8 @@ class _Optics:
             'Emitt_y'   : 'mm mrad',
             'Disp_x'    : '',
             'Disp_y'    : '',
+            'Disp_xp'   : '',
+            'Disp_yp'   : '',
             'Sigma_p'   : 'MeV/c',
             'Momentum'  : 'MeV/c',
             'E'         : 'MeV',  # kinetic energy
@@ -217,6 +221,8 @@ class _Optics:
             'Emitt_y'   : [],
             'Disp_x'    : [],
             'Disp_y'    : [],
+            'Disp_xp'   : [],
+            'Disp_yp'   : [],
             'Sigma_p'   : [],
             'Name'      : [],
             }
@@ -344,9 +350,11 @@ class _Optics:
                     r43     = _np.float(_remove_blanks(element[4].split(' '))[5])
 
                     dx = _GetTransformLineElements(element[8])[5]
+                    dxp = _GetTransformLineElements(element[9])[5]
                     dy = _GetTransformLineElements(element[10])[5]
+                    dyp = _GetTransformLineElements(element[11])[5]
 
-                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, sigp, momentum, energy, elename,
+                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, dxp, dyp, sigp, momentum, energy, elename,
                                            elementType, r21, r43)
                     num_elements += 1 
 
@@ -358,7 +366,7 @@ class _Optics:
 
         return data
 
-    def _SetTransportData(self, sigx, sigxp, sigy, sigyp, s, dx, dy, sigp, momentum, energy, elename, elementType,
+    def _SetTransportData(self, sigx, sigxp, sigy, sigyp, s, dx, dy, dxp, dyp, sigp, momentum, energy, elename, elementType,
                           r21, r43):
         """
         Set the beam data.
@@ -429,6 +437,8 @@ class _Optics:
         self.transdata['Emitt_y'].append(ey)
         self.transdata['Disp_x'].append(dx)
         self.transdata['Disp_y'].append(dy)
+        self.transdata['Disp_xp'].append(dxp)
+        self.transdata['Disp_yp'].append(dyp)
         self.transdata['Sigma_p'].append(sigp)
         self.transdata['Momentum'].append(momentum)
         self.transdata['E'].append(energy)
@@ -522,7 +532,7 @@ class _Optics:
                                 dx = _np.float(rElement[14])
                                 dy = _np.float(rElement[16])
 
-                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, sigp, momentum, energy, elename,
+                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, 0, 0, sigp, momentum, energy, elename,
                                            elementType, r21, r43)
                     num_elements += 1
 
