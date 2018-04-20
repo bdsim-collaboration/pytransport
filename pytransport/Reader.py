@@ -158,6 +158,8 @@ class _Optics:
             'Emitt_y'   : [],
             'Disp_x'    : [],
             'Disp_y'    : [],
+            'Disp_xp'   : [],
+            'Disp_yp'   : [],
             'Sigma_p'   : [],
             'Momentum'  : [],
             'E'         : [],  # kinetic energy
@@ -179,6 +181,8 @@ class _Optics:
             'Emitt_y'   : 'mm mrad',
             'Disp_x'    : '',
             'Disp_y'    : '',
+            'Disp_xp'   : '',
+            'Disp_yp'   : '',
             'Sigma_p'   : 'MeV/c',
             'Momentum'  : 'MeV/c',
             'E'         : 'MeV',  # kinetic energy
@@ -204,6 +208,8 @@ class _Optics:
             'Emitt_y'   : [],
             'Disp_x'    : [],
             'Disp_y'    : [],
+            'Disp_xp'   : [],
+            'Disp_yp'   : [],
             'Sigma_p'   : [],
             'Name'      : [],
             }
@@ -330,11 +336,12 @@ class _Optics:
                     r21     = _np.float(_remove_blanks(element[2].split(' '))[3])
                     r43     = _np.float(_remove_blanks(element[4].split(' '))[5])
 
-                    dx = _GetTransformLineElements(element[8])[5]
-                    dy = _GetTransformLineElements(element[10])[5]
-
-                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, sigp, momentum, energy, elename,
-                                           elementType, r21, r43)
+                    dx = _np.float(_remove_blanks(element[6].split(' '))[3])
+                    dy = _np.float(_remove_blanks(element[6].split(' '))[5])
+                    dxp = _np.float(_remove_blanks(element[6].split(' '))[4])
+                    dyp = _np.float(_remove_blanks(element[6].split(' '))[6])
+                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, dxp, dyp, sigp, momentum, energy,
+                                           elename, elementType, r21, r43)
                     num_elements += 1 
 
         data = _BDA()      # Now convert the dict into BDSData instance for final output.
@@ -345,8 +352,8 @@ class _Optics:
 
         return data
 
-    def _SetTransportData(self, sigx, sigxp, sigy, sigyp, s, dx, dy, sigp, momentum, energy, elename, elementType,
-                          r21, r43):
+    def _SetTransportData(self, sigx, sigxp, sigy, sigyp, s, dx, dy, dxp, dyp, sigp, momentum, energy, elename,
+                          elementType, r21, r43):
         """
         Set the beam data.
         """
@@ -416,6 +423,8 @@ class _Optics:
         self.transdata['Emitt_y'].append(ey)
         self.transdata['Disp_x'].append(dx)
         self.transdata['Disp_y'].append(dy)
+        self.transdata['Disp_xp'].append(dxp)
+        self.transdata['Disp_yp'].append(dyp)
         self.transdata['Sigma_p'].append(sigp)
         self.transdata['Momentum'].append(momentum)
         self.transdata['E'].append(energy)
@@ -495,7 +504,9 @@ class _Optics:
 
                     dx = 0
                     dy = 0
-
+                    dxp = 0
+                    dyp = 0
+                    # TODO: Look up where dxp and dyp are in the output. Leave as zero for now.
                     # Find matching R matrix element and get dispersion
                     for rElement in rMatrix:
                         if _np.float(rElement[1]) in okRElements and (_np.float(rElement[0]) == s) \
@@ -509,8 +520,8 @@ class _Optics:
                                 dx = _np.float(rElement[14])
                                 dy = _np.float(rElement[16])
 
-                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, sigp, momentum, energy, elename,
-                                           elementType, r21, r43)
+                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, dxp, dyp, sigp, momentum, energy,
+                                           elename, elementType, r21, r43)
                     num_elements += 1
 
         data = _BDA()      # Now convert the dict into BDSData instance for final output.
