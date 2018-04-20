@@ -11,6 +11,12 @@ Copyright Royal Holloway, University of London 2017.
 """
 
 import _General
+import Compare
+import Data
 import Elements
 import Reader
-import Data
+
+__all__ = ['Compare',
+           'Data',
+           'Elements',
+           'Reader']
