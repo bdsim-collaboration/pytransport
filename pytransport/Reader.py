@@ -315,6 +315,10 @@ class _Optics:
         momentum = 0.0
         energy = 0.0
         proton_mass = 938.272
+
+        # cumulative machine length for s position. S position in optics output is rounded, too inaccurate.
+        length = 0
+
         for element in elementlist:
             if (not isinstance(element, _np.str)) and (len(element) > 1):  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
@@ -326,7 +330,7 @@ class _Optics:
                     if elementType == "BEAM" or elementType == "ACC":
                         momentum = _np.float(splitline[-2])
                         energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
-                    s       = _np.float(_remove_blanks(element[1].split(' '))[0])
+                    #s       = _np.float(_remove_blanks(element[1].split(' '))[0])
                     sigx    = _np.float(_remove_blanks(element[1].split(' '))[3])
                     sigxp   = _np.float(_remove_blanks(element[2].split(' '))[1])
                     sigy    = _np.float(_remove_blanks(element[3].split(' '))[1])
@@ -335,6 +339,14 @@ class _Optics:
                     sigp    = _np.float(_remove_blanks(element[6].split(' '))[1])
                     r21     = _np.float(_remove_blanks(element[2].split(' '))[3])
                     r43     = _np.float(_remove_blanks(element[4].split(' '))[5])
+
+                    # get s position after updating machine length with element length
+                    # transport output is column aligned, check the parameter has unit of M.
+                    # has to be "M  ", could be "MEV" in beam element.
+                    lengthStr = element[0][42:55]
+                    if lengthStr[-3:] == "M  ":
+                        length += _np.float(lengthStr[:-3])
+                    s = length
 
                     dx = _np.float(_remove_blanks(element[6].split(' '))[3])
                     dy = _np.float(_remove_blanks(element[6].split(' '))[5])
