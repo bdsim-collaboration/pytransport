@@ -19,137 +19,123 @@ import numpy as _np
 from Data import BDSData as _BDA
 import _General
 
+_allowedIndicatorLines = ['0  100', '0    0']
 
-class Reader:
+
+def GetOptics(inputFile, inputType=None):
     """
-    Class for reading Transport input and output files.
-    The output file can be standard output or Beam output.
-
+    Extract the optics from a Transport output file.
     """
-    def __init__(self):
-        self._allowedIndicatorLines = ['0  100', '0    0']
-        self.optics = _Optics()
+    optics = _Optics()
 
-    def GetOptics(self, inputFile, inputType=None):
-        """
-        Extract the optics from a Transport output file.
-        """
-        if isinstance(inputType, _np.str):
-            if inputType == 'beam':
-                transdata = self.optics._getBeamOptics(inputFile)
-                return transdata
-            elif inputType == 'standard':
-                transdata = self.optics._getStandardOptics(inputFile)
-                return transdata
-    
-        f = open(inputFile)
-        transdata = None
-        for line in f:
-            # remove any carriage returns (both Mac and Unix)
-            line = line.rstrip('\r\n')
-            splitline = _remove_blanks(line.split(' '))
-            if splitline and splitline[0] == '*BEAM*':  # Is beam output
-                # print "'*BEAM*' found in line " + _np.str(i+1)
-                f.close()
-                transdata = self.optics._getBeamOptics(inputFile)
-                break
-            elif line in self._allowedIndicatorLines:
-                # print "'0    0' found in line " + _np.str(i+1)
-                f.close()
-                transdata = self.optics._getStandardOptics(inputFile)
-                break
-            else:
-                pass
-        if transdata is None:
-            errorstring = "Could not find an indicator in the file for either a beam output file\n"
-            errorstring += "(indicator = '*BEAM*), or a standard output file (indicator = '0    0').\n"
-            errorstring += "Please check the input file or specify the input type with the type argument \n"
-            errorstring += "in the get_output function. Note that the only accepted values for type are \n"
-            errorstring += "'standard' or 'beam'."
-            raise IOError(errorstring)
-        return transdata
+    if isinstance(inputType, _np.str):
+        if inputType == 'beam':
+            transdata = optics._getBeamOptics(inputFile)
+            return transdata
+        elif inputType == 'standard':
+            transdata = optics._getStandardOptics(inputFile)
+            return transdata
 
-    def GetLattice(self, inputFile):
-        """
-        Function to extract the lattice from a standard output file.
-        """
-        flist = _LoadFile(inputFile)
-        latticestart = 0
-        latticeend = 0
-        foundlatticestart = False
-        foundlatticeend = False
-        lattice = ['OUTPUT LATTICE']
-        for linenum, line in enumerate(flist):
-            if line in self._allowedIndicatorLines:
-                if not foundlatticestart:
-                    latticestart = linenum+1
-                    if flist[linenum+1] == '0INDICATOR VALUE WRONG OR MISSING - ZERO ASSUMED':
-                        latticestart += 1
-                    foundlatticestart = True
-            if line == '0SENTINEL':
-                if not foundlatticeend:
-                    latticeend = linenum
-                    foundlatticeend = True
-        if not foundlatticestart:
-            if not foundlatticeend:
-                raise IOError('No lattice found in ' + inputFile + '.')
-            else:
-                errorstring = 'The end of a lattice (line = "0SENTINEL") was found at line ' + _np.str(latticeend + 1) + ',\n'
-                errorstring += 'but the start of a lattice (line = "0    0") was not found. Please check the input file.'
-                raise IOError(errorstring)
-        elif not foundlatticeend:
-                errorstring = 'The start of a lattice (line = "0    0") was found at line ' + _np.str(latticestart - 1) + ',\n'
-                errorstring += 'but the end of a lattice (line = "0SENTINEL") was not found. Please check the input file.'
-                raise IOError(errorstring)
+    f = open(inputFile)
+    transdata = None
+    for line in f:
+        # remove any carriage returns (both Mac and Unix)
+        line = line.rstrip('\r\n')
+        splitline = _remove_blanks(line.split(' '))
+        if splitline and splitline[0] == '*BEAM*':  # Is beam output
+            # print "'*BEAM*' found in line " + _np.str(i+1)
+            f.close()
+            transdata = optics._getBeamOptics(inputFile)
+            break
+        elif line in _allowedIndicatorLines:
+            # print "'0    0' found in line " + _np.str(i+1)
+            f.close()
+            transdata = optics._getStandardOptics(inputFile)
+            break
         else:
-            lattice.extend(flist[latticestart:latticeend])
-        return lattice
+            pass
+    if transdata is None:
+        errorstring = "Could not find an indicator in the file for either a beam output file\n"
+        errorstring += "(indicator = '*BEAM*), or a standard output file (indicator = '0    0').\n"
+        errorstring += "Please check the input file or specify the input type with the type argument \n"
+        errorstring += "in the get_output function. Note that the only accepted values for type are \n"
+        errorstring += "'standard' or 'beam'."
+        raise IOError(errorstring)
+    return transdata
 
-    def GetFits(self, inputFile):
-        """
-        Function to get the fit routine data from the standard transport output.
-        Returns two lists, the first with the direct output from the fitting data,
-        the second with the first line of each element in the output data, which contains the
-        element parameters with their fitted values.
-        """
-        flist = _LoadFile(inputFile)
-        fitstart = 0
-        fitend = 0
-        foundfitstart = False
-        foundfitend = False
-        fits = []
-        for linenum, line in enumerate(flist):
-            if not foundfitstart:
-                if line == '0SENTINEL':
-                    fitstart = linenum
-                    foundfitstart = True
-            if not foundfitend:
-                splitline = _remove_blanks(line.split(' '))
-                if splitline and splitline[0] == '*BEAM*' and not foundfitend:
-                    fitend = linenum
-                    foundfitend = True
+def GetLattice(inputFile):
+    """
+    Function to extract the lattice from a standard output file.
+    """
+    flist = _LoadFile(inputFile)
+    latticestart = 0
+    latticeend = 0
+    foundlatticestart = False
+    foundlatticeend = False
+    lattice = ['OUTPUT LATTICE']
+    for linenum, line in enumerate(flist):
+        if line in _allowedIndicatorLines:
+            if not foundlatticestart:
+                latticestart = linenum+1
+                if flist[linenum+1] == '0INDICATOR VALUE WRONG OR MISSING - ZERO ASSUMED':
+                    latticestart += 1
+                foundlatticestart = True
+        if line == '0SENTINEL':
+            if not foundlatticeend:
+                latticeend = linenum
+                foundlatticeend = True
+    if not foundlatticestart:
+        if not foundlatticeend:
+            raise IOError('No lattice found in ' + inputFile + '.')
+        else:
+            errorstring = 'The end of a lattice (line = "0SENTINEL") was found at line ' + _np.str(latticeend + 1) + ',\n'
+            errorstring += 'but the start of a lattice (line = "0    0") was not found. Please check the input file.'
+            raise IOError(errorstring)
+    elif not foundlatticeend:
+            errorstring = 'The start of a lattice (line = "0    0") was found at line ' + _np.str(latticestart - 1) + ',\n'
+            errorstring += 'but the end of a lattice (line = "0SENTINEL") was not found. Please check the input file.'
+            raise IOError(errorstring)
+    else:
+        lattice.extend(flist[latticestart:latticeend])
+    return lattice
+
+def GetFits(inputFile):
+    """
+    Function to get the fit routine data from the standard transport output.
+    Returns two lists, the first with the direct output from the fitting data,
+    the second with the first line of each element in the output data, which contains the
+    element parameters with their fitted values.
+    """
+    flist = _LoadFile(inputFile)
+    fitstart = 0
+    fitend = 0
+    foundfitstart = False
+    foundfitend = False
+    fits = []
+    for linenum, line in enumerate(flist):
         if not foundfitstart:
-            print('No fitting output found.')
-            return None
-        elif foundfitstart and not foundfitend:
-                errorstring = 'The start of the fitting output (first line containing "0SENTINEL") was found at line ' + _np.str(fitstart-1) + ',\n'
-                errorstring += 'but the end of the fitting output (first line containing "*BEAM*") was not found. Please check the input file.'
-                raise IOError(errorstring)
-        fits.extend(flist[fitstart:fitend])
+            if line == '0SENTINEL':
+                fitstart = linenum
+                foundfitstart = True
+        if not foundfitend:
+            splitline = _remove_blanks(line.split(' '))
+            if splitline and splitline[0] == '*BEAM*' and not foundfitend:
+                fitend = linenum
+                foundfitend = True
+    if not foundfitstart:
+        print('No fitting output found.')
+        return None
+    elif foundfitstart and not foundfitend:
+            errorstring = 'The start of the fitting output (first line containing "0SENTINEL") was found at line ' + _np.str(fitstart-1) + ',\n'
+            errorstring += 'but the end of the fitting output (first line containing "*BEAM*") was not found. Please check the input file.'
+            raise IOError(errorstring)
+    fits.extend(flist[fitstart:fitend])
 
-        output = self.optics._getOptics(flist, inputFile)
-        fitres = [element[0] for element in output]
+    optics = _Optics()
+    output = optics._getOptics(flist, inputFile)
+    fitres = [element[0] for element in output]
 
-        return fits, fitres
-
-    def GetLatticeAndOptics(self, inputFile):
-        """
-        Function to extract the lattice and optics from a standard output file.
-        """
-        flist = _LoadFile(inputFile)
-        lattice = self.GetLattice(inputFile)
-        optics = self.optics._getOptics(flist, inputFile)
-        return lattice, optics
+    return fits, fitres
     
 
 class _Optics:
