@@ -61,6 +61,7 @@ def GetOptics(inputFile, inputType=None):
         errorstring += "in the get_output function. Note that the only accepted values for type are \n"
         errorstring += "'standard' or 'beam'."
         raise IOError(errorstring)
+    #transdata.MergeDuplicatesAtSameS()
     return transdata
 
 def GetLattice(inputFile):
