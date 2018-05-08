@@ -60,6 +60,9 @@ def GetOptics(inputFile, inputType=None):
         errorstring += "in the get_output function. Note that the only accepted values for type are \n"
         errorstring += "'standard' or 'beam'."
         raise IOError(errorstring)
+
+    #transdata.MergeDuplicatesAtSameS()
+
     return transdata
 
 def GetLattice(inputFile):
@@ -105,7 +108,6 @@ def GetFits(inputFile):
     the second with the first line of each element in the output data, which contains the
     element parameters with their fitted values.
     """
-    optics = _Optics()  # Instantiate empty data optics container
 
     flist = _LoadFile(inputFile)
     fitstart = 0
@@ -132,6 +134,7 @@ def GetFits(inputFile):
             raise IOError(errorstring)
     fits.extend(flist[fitstart:fitend])
 
+    optics = _Optics() # Instantiate empty data optics container
     output = optics._getOptics(flist, inputFile)
     fitres = [element[0] for element in output]
 
@@ -328,6 +331,10 @@ class _Optics:
         momentum = 0.0
         energy = 0.0
         proton_mass = 938.272
+
+        # cumulative machine length for s position. S position in optics output is rounded, too inaccurate.
+        length = 0
+
         for element in elementlist:
             if (not isinstance(element, _np.str)) and (len(element) > 1):  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
@@ -339,7 +346,7 @@ class _Optics:
                     if elementType == "BEAM" or elementType == "ACC":
                         momentum = _np.float(splitline[-2])
                         energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
-                    s       = _np.float(_remove_blanks(element[1].split(' '))[0])
+                    #s       = _np.float(_remove_blanks(element[1].split(' '))[0])
                     sigx    = _np.float(_remove_blanks(element[1].split(' '))[3])
                     sigxp   = _np.float(_remove_blanks(element[2].split(' '))[1])
                     sigy    = _np.float(_remove_blanks(element[3].split(' '))[1])
@@ -354,9 +361,17 @@ class _Optics:
                     dy = _GetTransformLineElements(element[10])[5]
                     dyp = _GetTransformLineElements(element[11])[5]
 
-                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, dxp, dyp, sigp, momentum, energy, elename,
-                                           elementType, r21, r43)
-                    num_elements += 1 
+                    # get s position after updating machine length with element length
+                    # transport output is column aligned, check the parameter has unit of M.
+                    # has to be "M  ", could be "MEV" in beam element.
+                    lengthStr = element[0][42:55]
+                    if lengthStr[-3:] == "M  ":
+                        length += _np.float(lengthStr[:-3])
+                    s = length
+
+                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, dxp, dyp, sigp, momentum, energy,
+                                           elename, elementType, r21, r43)
+                    num_elements += 1
 
         data = _BDA()      # Now convert the dict into BDSData instance for final output.
         for keyName, unit in self.transunits.iteritems():
@@ -518,7 +533,9 @@ class _Optics:
 
                     dx = 0
                     dy = 0
-
+                    dxp = 0
+                    dyp = 0
+                    # TODO: Look up where dxp and dyp are in the output. Leave as zero for now.
                     # Find matching R matrix element and get dispersion
                     for rElement in rMatrix:
                         if _np.float(rElement[1]) in okRElements and (_np.float(rElement[0]) == s) \
@@ -532,8 +549,8 @@ class _Optics:
                                 dx = _np.float(rElement[14])
                                 dy = _np.float(rElement[16])
 
-                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, 0, 0, sigp, momentum, energy, elename,
-                                           elementType, r21, r43)
+                    self._SetTransportData(sigx, sigxp, sigy, sigyp, s, dx, dy, dxp, dyp, sigp, momentum, energy,
+                                           elename, elementType, r21, r43)
                     num_elements += 1
 
         data = _BDA()      # Now convert the dict into BDSData instance for final output.

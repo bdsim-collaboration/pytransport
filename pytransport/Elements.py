@@ -135,7 +135,7 @@ class Elements:
         if (fintxval != 0) and (e2 != 0):
             self.Writer.DebugPrintout('\tSetting fintx=' + _np.str(fintxval) + '.')
 
-        hgap = self.Transport.machineprops.dipoleVertAper * self.Transport.scale[self.Transport.units['bend_vert_gap'][0]] * 10
+        hgap = self.Transport.machineprops.dipoleVertAper * self.Transport.scale[self.Transport.units['bend_vert_gap'][0]]
 
         # Calculate bending angle
         if self.Transport.machineprops.benddef:

@@ -18,12 +18,13 @@ import numpy as _np
 import os as _os
 from scipy import constants as _con
 import copy
+from collections import defaultdict
 
 _useRootNumpy = True
 
 try:
     import root_numpy as _rnp
-except ImportError:
+except (ImportError, AttributeError):
     _useRootNumpy = False
     pass
 
@@ -265,6 +266,22 @@ class BDSData(list):
         s += 'pytransport.Data.BDSData instance\n'
         s += str(len(self)) + ' entries'
         return s
+
+    def MergeDuplicatesAtSameS(self):
+        """
+        Merge duplicate entries at the same s position. This is to prevent having multiple
+        entries at the same s in situations such as poleface rotations. Will merge zero-length items
+        into finite length items.
+        """
+
+        sPositions = defaultdict(list)
+        for sIndex, sPos in enumerate(self.S()):
+            sPositions[sPos].append(sIndex)
+        duplicates = [(key, locs) for key, locs in sPositions.items() if len(locs) > 1]
+
+        if len(duplicates):
+            self.pop(duplicates[0][1][0])
+            self.MergeDuplicatesAtSameS()
 
 
 class ConversionData:

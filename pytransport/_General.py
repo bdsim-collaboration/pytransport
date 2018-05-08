@@ -193,9 +193,10 @@ def CheckSingleLineOutputApplied(inputfile):
     a single line was successfully applied. Check needed as not all versions
     of TRANSPORT can run this type code.
     """
-    reader = _Reader.Optics()
+    _optics = _Reader._Optics()
     flist = _Reader._LoadFile(inputfile)
-    optics = reader._getOptics(flist, inputfile)
+    optics = _optics._getOptics(flist, inputfile)
+
     for element in optics:
         if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
             return True
