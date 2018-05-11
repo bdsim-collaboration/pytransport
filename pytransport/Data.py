@@ -441,7 +441,7 @@ class ConversionData:
 
         self.machine.AddBeam(self.beam)
 
-    def _NewMachines(self):
+    def ResetMachine(self):
         """
         Delete the machine and set to be the empty machine copied at class instantiation.
         """

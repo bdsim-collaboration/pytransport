@@ -12,11 +12,11 @@ Copyright Royal Holloway, University of London 2017.
 
 import _General
 import Compare
+import Convert
 import Data
-import Elements
 import Reader
 
 __all__ = ['Compare',
+           'Convert',
            'Data',
-           'Elements',
            'Reader']
