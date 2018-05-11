@@ -259,7 +259,10 @@ def GetElementData(line):
             try:
                 data.append(_np.float(ele))
             except ValueError:
-                pass
+                try:
+                    data.append(_np.float(ele[0]))
+                except ValueError:
+                    pass
     return data
 
 

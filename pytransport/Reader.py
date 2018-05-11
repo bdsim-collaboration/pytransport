@@ -324,7 +324,7 @@ class _Optics:
         Process the optics from a standard output file when written to multiple lines.
         """
         # okElements=['BEAM','CORR','DRIFT','QUAD','SLIT','ADD TO BEAM','BEND','ROTAT','Z RO']
-        notokElements = ['AXIS SHIFT']
+        notokElements = ['AXIS SHIFT', 'FIT']
         
         num_elements = 0
         # initialise momentum/energy since not given for every element
@@ -339,27 +339,45 @@ class _Optics:
             if (not isinstance(element, _np.str)) and (len(element) > 1):  # I.e not a fit or matrix-modifying element
                 # type is in between * can have a space (for space charge *SP CH*)
                 elementType = element[0].split('*')[1]
-                if elementType not in notokElements:
-                    # rest of first line split with spaces
-                    splitline = _remove_blanks(element[0].split('*')[2].split(' '))
-                    elename = splitline[1].strip('"')
-                    if elementType == "BEAM" or elementType == "ACC":
-                        momentum = _np.float(splitline[-2])
-                        energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
-                    #s       = _np.float(_remove_blanks(element[1].split(' '))[0])
-                    sigx    = _np.float(_remove_blanks(element[1].split(' '))[3])
-                    sigxp   = _np.float(_remove_blanks(element[2].split(' '))[1])
-                    sigy    = _np.float(_remove_blanks(element[3].split(' '))[1])
-                    sigyp   = _np.float(_remove_blanks(element[4].split(' '))[1])
-                    sigt    = _np.float(_remove_blanks(element[5].split(' '))[1])
-                    sigp    = _np.float(_remove_blanks(element[6].split(' '))[1])
-                    r21     = _np.float(_remove_blanks(element[2].split(' '))[3])
-                    r43     = _np.float(_remove_blanks(element[4].split(' '))[5])
+                elementProperties = _remove_blanks(element[0].split('*')[2].split(' '))
+                elementSigmaMatrix = element[1:7]
+                elementTransMatrix = element[8:]
 
-                    dx = _GetTransformLineElements(element[8])[5]
-                    dxp = _GetTransformLineElements(element[9])[5]
-                    dy = _GetTransformLineElements(element[10])[5]
-                    dyp = _GetTransformLineElements(element[11])[5]
+                if elementType not in notokElements:
+                    elename = elementProperties[1].strip('"')
+                    if elementType == "BEAM" or elementType == "ACC":
+                        momentum = _np.float(elementProperties[-2])
+                        energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
+
+                    firstLine = _remove_blanks(elementSigmaMatrix[0].split(' '))
+                    try:
+                        sigx = _np.float(firstLine[-2])
+                    except ValueError:
+                        pass
+
+                    if '*COORDINATES*' in firstLine:
+                        x = _np.float(firstLine[3])
+                        y = _np.float(firstLine[4])
+                        z = _np.float(firstLine[5])
+
+                    #sigx    = _np.float(_remove_blanks(elementSigmaMatrix[0].split(' '))[3])
+                    sigxp   = _np.float(_remove_blanks(elementSigmaMatrix[1].split(' '))[1])
+                    sigy    = _np.float(_remove_blanks(elementSigmaMatrix[2].split(' '))[1])
+                    sigyp   = _np.float(_remove_blanks(elementSigmaMatrix[3].split(' '))[1])
+                    sigt    = _np.float(_remove_blanks(elementSigmaMatrix[4].split(' '))[1])
+                    sigp    = _np.float(_remove_blanks(elementSigmaMatrix[5].split(' '))[1])
+                    r21     = _np.float(_remove_blanks(elementSigmaMatrix[1].split(' '))[3])
+                    r43     = _np.float(_remove_blanks(elementSigmaMatrix[3].split(' '))[5])
+
+                    dx      = _np.float(_remove_blanks(elementSigmaMatrix[5].split(' '))[3])
+                    dxp     = _np.float(_remove_blanks(elementSigmaMatrix[5].split(' '))[4])
+                    dy      = _np.float(_remove_blanks(elementSigmaMatrix[5].split(' '))[5])
+                    dyp     = _np.float(_remove_blanks(elementSigmaMatrix[5].split(' '))[6])
+
+                    #dx = _GetTransformLineElements(element[8])[5]
+                    #dxp = _GetTransformLineElements(element[9])[5]
+                    #dy = _GetTransformLineElements(element[10])[5]
+                    #dyp = _GetTransformLineElements(element[11])[5]
 
                     # get s position after updating machine length with element length
                     # transport output is column aligned, check the parameter has unit of M.
