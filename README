@@ -22,17 +22,11 @@ or for development:
 $ make develop
 
 
-## General Information ##
+```
+#!python
 
-A python package containing both utilities for processing and analysing TRANSPORT output.
-It contains classes used for converting TRANSPORT input or output into MAD and GMAD (BDSIM)
-lattices in the pymadx and pybdsim modules respectively.
-
-
-## Basic Commands ##
-
-
-# Read TRANSPORT output
-from pytransport import Reader
-a = Reader.Reader()
-data = a.GetOptics('FOR002.DAT')
+$>python
+$>>> import pytransport
+$>>> a = pytransport.Reader.GetOptics("FOR002.DAT")
+$>>> plot(a.S(), a.Sigma_X())
+```
