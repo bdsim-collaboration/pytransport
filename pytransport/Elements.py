@@ -95,9 +95,7 @@ class Elements:
         lenInM = driftlen * _General.ScaleToMeters(self.Transport, 'element_length')  # length in metres
 
         self.Transport.machineprops.drifts += 1
-        elementid = ''
-        if self.Transport.convprops.keepName:
-            elementid = linedict['name']
+        elementid = self._GetTransportElementName(linedict['name'])
         if not elementid:  # check on empty string
             elementid = 'DR'+_np.str(self.Transport.machineprops.drifts)
 
@@ -158,9 +156,7 @@ class Elements:
         lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
 
         self.Transport.machineprops.dipoles += 1
-        elementid = ''
-        if self.Transport.convprops.keepName:
-            elementid = linedict['name']
+        elementid = self._GetTransportElementName(linedict['name'])
         if not elementid:  # check on empty string
             elementid = 'BM' + _np.str(self.Transport.machineprops.dipoles)
 
@@ -221,8 +217,7 @@ class Elements:
             # For conversion to correct direction. Eg in TRANSPORT -90 is upwards, in BDSIM, 90 is upwards.
             anginrad = self.Transport.machineprops.angle * (_np.pi / 180)
             self.Transport.machineprops.transforms += 1
-            if self.Transport.convprops.keepName:
-                elementid = linedict['name']
+            elementid = self._GetTransportElementName(linedict['name'])
             if not elementid:  # check on empty string
                 elementid = 't' + _np.str(self.Transport.machineprops.transforms)
 
@@ -259,9 +254,7 @@ class Elements:
 
         self.Transport.machineprops.quads += 1
 
-        elementid = ''
-        if self.Transport.convprops.keepName:
-            elementid = linedict['name']
+        elementid = self._GetTransportElementName(linedict['name'])
         if not elementid:  # check on empty string
             if field_gradient > 0:
                 elementid = 'QF' + _np.str(self.Transport.machineprops.quads)
@@ -314,9 +307,7 @@ class Elements:
         apery_in_metres = apery * _General.ScaleToMeters(self.Transport, 'y')
 
         self.Transport.machineprops.collimators += 1
-        elementid = ''
-        if self.Transport.convprops.keepName:
-            elementid = linedict['name']
+        elementid = self._GetTransportElementName(linedict['name'])
         if not elementid:  # check on empty string
             elementid = 'COL'+_np.str(self.Transport.machineprops.collimators)
 
@@ -410,9 +401,7 @@ class Elements:
         field_gradient = (2*field_in_Tesla / pipe_in_metres**2) / self.Transport.beamprops.brho  # K2 in correct units
 
         self.Transport.machineprops.sextus += 1
-        elementid = ''
-        if self.Transport.convprops.keepName:
-            elementid = linedict['name']
+        elementid = self._GetTransportElementName(linedict['name'])
         if not elementid:  # check on empty string
             elementid = 'SEXT'+_np.str(self.Transport.machineprops.sextus)
 
@@ -435,9 +424,7 @@ class Elements:
         lenInM = length * _General.ScaleToMeters(self.Transport, 'element_length')
 
         self.Transport.machineprops.solenoids += 1
-        elementid = ''
-        if self.Transport.convprops.keepName:
-            elementid = linedict['name']
+        elementid = self._GetTransportElementName(linedict['name'])
         if not elementid:  # check on empty string
             elementid = 'SOLE'+_np.str(self.Transport.machineprops.solenoids)
 
@@ -646,6 +633,28 @@ class Elements:
             errorline2 = '\thas not been switched to collimators, therefore nothing will be done for this element.'
             self.Writer.DebugPrintout(errorline)
             self.Writer.DebugPrintout(errorline2)
+
+    def _GetTransportElementName(self, elementName):
+        """
+        Checks if name already used by an element in the machine.
+        Appends a _N to the name where N is the lowest integer not already
+        used in a elementName_N name in the machine.
+        """
+        if not self.Transport.convprops.keepName:
+            return ''
+
+        currElements = self.Transport.machine.elementsd.keys()
+        updatedName = elementName
+        if elementName in currElements:
+            nameNumber = 1
+            while True:
+                updatedName = elementName + "_" + _np.str(nameNumber)
+                if updatedName not in currElements:
+                    break
+                else:
+                    nameNumber += 1
+
+        return updatedName
 
     def _UpdateElementsFromFits(self):
         # Functions that update the elements in the element registry.
