@@ -33,8 +33,6 @@ def _Load(filepath):
     extension = filepath.split('.')[-1]
     if not _os.path.isfile(filepath):
         raise IOError("File does not exist")
-    if ("elosshist" in filepath) or (".hist" in filepath):
-        return _LoadAsciiHistogram(filepath)
     elif extension == 'root':
         try:
             return _LoadRoot(filepath)
@@ -43,25 +41,6 @@ def _Load(filepath):
             raise IOError('Root loader not available.')
     else:
         raise IOError("Unknown file type - not BDSIM data")
-
-
-def _LoadAsciiHistogram(filepath):
-    data = BDSData()
-    f = open(filepath, 'r')
-    for i, line in enumerate(f):
-        # first line is header (0 counting)
-        if i == 1:
-            names, units = _ParseHeaderLine(line)
-            for name, unit in zip(names, units):
-                data._AddProperty(name, unit)
-        elif "nderflow" in line:
-            data.underflow = float(line.strip().split()[1])
-        elif "verflow" in line:
-            data.overflow = float(line.strip().split()[1])
-        elif i >= 4:
-            data.append(tuple(map(float, line.split())))
-    f.close()
-    return data
 
 
 def _LoadRoot(filepath):
