@@ -115,23 +115,25 @@ class Elements:
         e2 = linedict['e2'] * ((_np.pi / 180.0)*self.Transport.machineprops.bending)  # Exit pole face rotation.
 
         if e1 != 0:
-            self.Writer.DebugPrintout('\tPreceding element (' + _np.str(linenum-1) + ') provides an entrance poleface rotation of ' + _np.str(_np.round(e1, 4)) + ' rad.')
+            self.Writer.DebugPrintout('\tPreceding element on line (' + _np.str(linenum-1) + ') of the inout file provides an entrance poleface rotation of ' + _np.str(_np.round(e1, 4)) + ' rad.')
         if e2 != 0:
-            self.Writer.DebugPrintout('\tFollowing element (' + _np.str(linenum+1) + ') provides an exit poleface rotation of ' + _np.str(_np.round(e2, 4)) + ' rad.')
+            self.Writer.DebugPrintout('\tFollowing element on line (' + _np.str(linenum+1) + ') of the input file provides an exit poleface rotation of ' + _np.str(_np.round(e2, 4)) + ' rad.')
 
         # Fringe Field Integrals
-        fintval = 0
-        fintxval = 0
+        fintVal = 0
+        fintxVal = 0
+        fintSecVal = 0
+        fintxSecVal = 0
         if e1 != 0:
-            fintval = self.Transport.machineprops.fringeIntegral
+            fintVal = self.Transport.machineprops.fringeIntegral
+            fintSecVal = self.Transport.machineprops.secondfringeInt
         if e2 != 0:
-            fintxval = self.Transport.machineprops.fringeIntegral
-        if (fintval != 0) or (fintxval != 0):
+            fintxVal = self.Transport.machineprops.fringeIntegral
+            fintxSecVal = self.Transport.machineprops.secondfringeInt
+
+        if (fintVal != 0) or (fintxVal != 0):
             self.Writer.DebugPrintout('\tA previous entry set the fringe field integral K1=' + _np.str(self.Transport.machineprops.fringeIntegral) + '.')
-        if (fintval != 0) and (e1 != 0):
-            self.Writer.DebugPrintout('\tSetting fint=' + _np.str(fintval) + '.')
-        if (fintxval != 0) and (e2 != 0):
-            self.Writer.DebugPrintout('\tSetting fintx=' + _np.str(fintxval) + '.')
+            self.Writer.DebugPrintout('\tA previous entry set the second fringe field integral K2=' + _np.str(self.Transport.machineprops.secondfringeInt) + '.')
 
         hgap = self.Transport.machineprops.dipoleVertAper * self.Transport.scale[self.Transport.units['bend_vert_gap'][0]]
 
@@ -160,13 +162,35 @@ class Elements:
         if not elementid:  # check on empty string
             elementid = 'BM' + _np.str(self.Transport.machineprops.dipoles)
 
-        # pybdsim and pymadx are the same. Check for non zero pole face rotation.
+        # pybdsim and pymadx set differently depending on second fringe field integral. Check for non zero pole face rotation.
         if (e1 != 0) and (e2 != 0):
-            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4), fint=fintval, fintx=fintxval, hgap=hgap)
+            if self.Transport.convprops.madxoutput:
+                self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM,
+                                                 angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4),
+                                                 fint=fintVal, fintx=fintxVal, hgap=hgap)
+            else:
+                self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM,
+                                                 angle=_np.round(angle, 4), e1=_np.round(e1, 4), e2=_np.round(e2, 4),
+                                                 fint=fintVal, fintx=fintxVal, fintK2=fintSecVal, fintxK2=fintxSecVal,
+                                                 hgap=hgap)
         elif (e1 != 0) and (e2 == 0):
-            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintval, fintx=0, hgap=hgap)
+            if self.Transport.convprops.madxoutput:
+                self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM,
+                                                 angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintVal, fintx=0,
+                                                 hgap=hgap)
+            else:
+                self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM,
+                                                 angle=_np.round(angle, 4), e1=_np.round(e1, 4), fint=fintVal, fintx=0,
+                                                 fintK2=fintSecVal, fintxK2=0, hgap=hgap)
         elif (e1 == 0) and (e2 != 0):
-            self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4), e2=_np.round(e2, 4), fint=0, fintx=fintxval, hgap=hgap)
+            if self.Transport.convprops.madxoutput:
+                self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM,
+                                                 angle=_np.round(angle, 4), e2=_np.round(e2, 4), fint=0, fintx=fintxVal,
+                                                 hgap=hgap)
+            else:
+                self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM,
+                                                 angle=_np.round(angle, 4), e2=_np.round(e2, 4), fint=0, fintx=fintxVal,
+                                                 fintK2=0, fintxK2=fintxSecVal, hgap=hgap)
         else:
             self.Transport.machine.AddDipole(name=elementid, category='sbend', length=lenInM, angle=_np.round(angle, 4))
 
@@ -180,18 +204,27 @@ class Elements:
         else:
             polefacestr = ''
 
-        if (fintval != 0) and (fintxval != 0):
-            fringestr = ' , fint= ' + _np.str(fintval) + ', fintx= ' + _np.str(fintxval)
-        elif (fintval != 0) and (fintxval == 0):
-            fringestr = ' , fint= ' + _np.str(fintval)
-        elif (fintval == 0) and (fintxval != 0):
-            fringestr = ' , fintx= ' + _np.str(fintxval)
+        if (fintVal != 0) and (fintxVal != 0):
+            fringestr = ' , fint= ' + _np.str(fintVal) + ', fintx= ' + _np.str(fintxVal)
+        elif (fintVal != 0) and (fintxVal == 0):
+            fringestr = ' , fint= ' + _np.str(fintVal)
+        elif (fintVal == 0) and (fintxVal != 0):
+            fringestr = ' , fintx= ' + _np.str(fintxVal)
         else:
             fringestr = ''
 
+        if (fintSecVal != 0) and (fintxSecVal != 0):
+            fringestr2 = ' , fintK2= ' + _np.str(fintSecVal) + ', fintxK2= ' + _np.str(fintxSecVal)
+        elif (fintVal != 0) and (fintxSecVal == 0):
+            fringestr2 = ' , fintK2= ' + _np.str(fintSecVal)
+        elif (fintVal == 0) and (fintxSecVal != 0):
+            fringestr2 = ' , fintxK2= ' + _np.str(fintxSecVal)
+        else:
+            fringestr2 = ''
+
         self.Writer.DebugPrintout('\tConverted to:')
         debugstring = 'Dipole ' + elementid + ', length= ' + _np.str(lenInM) + ' m, angle= ' + \
-                      _np.str(_np.round(angle, 4)) + ' rad' + polefacestr + fringestr
+                      _np.str(_np.round(angle, 4)) + ' rad' + polefacestr + fringestr + fringestr2
         self.Writer.DebugPrintout('\t' + debugstring)
 
     def ChangeBend(self, linedict):
@@ -517,10 +550,14 @@ class Elements:
             self.Writer.DebugPrintout('\tHalf aperture set to ' + _np.str(specialdata[1]) + '.')
             if self.Transport.machineprops.fringeIntegral == 0:
                 self.Transport.machineprops.fringeIntegral = 0.5  # default if a vertical aperture is specified.
-                self.Writer.DebugPrintout('FINT/X not set, setting FINT/X to default of 0.5.')
+                self.Writer.DebugPrintout('Fringe field integral not set, setting to default of 0.5.')
         elif specialdata[0] == 7.0:  # Fringe Field integral
             self.Transport.machineprops.fringeIntegral = specialdata[1]
             self.Writer.DebugPrintout('\tType 7: K1 Fringe field integral,')
+            self.Writer.DebugPrintout('\tIntegral set to ' + _np.str(specialdata[1]) + '.')
+        elif specialdata[0] == 8.0:  # Second Fringe Field integral
+            self.Transport.machineprops.secondfringeInt = specialdata[1]
+            self.Writer.DebugPrintout('\tType 7: K2 Fringe field integral,')
             self.Writer.DebugPrintout('\tIntegral set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 14.0:  # Definition of element type code 6.
             if self.Transport.convprops.typeCode6IsTransUpdate:
