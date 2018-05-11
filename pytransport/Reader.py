@@ -457,6 +457,9 @@ class _Optics:
         alfx = _np.sqrt(alfx2)
         alfy = _np.sqrt(alfy2)
 
+        alfx = -betx * r21 * sigxp/sigx
+        alfy = -bety * r43 * sigyp/sigy
+
         self.transdata['Sigma_x'].append(sigx / 1000)  # convert to m
         self.transdata['Sigma_xp'].append(sigxp / 1000)  # convert to rad
         self.transdata['Sigma_y'].append(sigy / 1000)  # convert to m
