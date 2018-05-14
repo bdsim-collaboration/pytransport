@@ -101,7 +101,7 @@ def GetLattice(inputFile):
         lattice.extend(flist[latticestart:latticeend])
     return lattice
 
-def GetFits(inputFile):
+def GetFitsSection(inputFile):
     """
     Function to get the fit routine data from the standard transport output.
     Returns two lists, the first with the direct output from the fitting data,
@@ -133,12 +133,13 @@ def GetFits(inputFile):
             errorstring += 'but the end of the fitting output (first line containing "*BEAM*") was not found. Please check the input file.'
             raise IOError(errorstring)
     fits.extend(flist[fitstart:fitend])
+    return fits
 
+def GetResultsFromFitting(inputFile):
     optics = _Optics() # Instantiate empty data optics container
-    output = optics._getOptics(flist, inputFile)
+    output = optics._getOptics(inputFile)
     fitres = [element[0] for element in output]
-
-    return fits, fitres
+    return fitres
 
 
 class _Optics:
@@ -199,8 +200,7 @@ class _Optics:
         a single line was successfully applied. Check needed as not all versions
         of TRANSPORT can run this type code.
         """
-        flist = _LoadFile(inputfile)
-        optics = self._getOptics(flist, inputfile)
+        optics = self._getOptics(inputfile)
         for element in optics:
             if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
                 return True
@@ -309,21 +309,21 @@ class _Optics:
 
         return data
 
-    def _processStandardOptics(self, elementlist, filename):
+    def _getStandardOptics(self, inputFile):
         """
-        Process the optics from a standard output file.
+        Get the optics from a standard output file. Returns a pytransport.Data.BDSData object.
         """
-        if self.CheckSingleLineOutputApplied(filename):
-            optics = self._processStandardOpticsSingleLine(elementlist)
+        if self.CheckSingleLineOutputApplied(inputFile):
+            optics = self._processStandardOpticsSingleLine(inputFile)
         else:
-            optics = self._processStandardOpticsMultiLines(elementlist)
+            optics = self._processStandardOpticsMultiLines(inputFile)
         return optics
 
-    def _processStandardOpticsMultiLines(self, elementlist):
+    def _processStandardOpticsMultiLines(self, inputFile):
         """
         Process the optics from a standard output file when written to multiple lines.
         """
-        # okElements=['BEAM','CORR','DRIFT','QUAD','SLIT','ADD TO BEAM','BEND','ROTAT','Z RO']
+        elementlist = self._getOptics(inputFile)
         notokElements = ['AXIS SHIFT', 'FIT']
         
         num_elements = 0
@@ -349,18 +349,18 @@ class _Optics:
                         momentum = _np.float(elementProperties[-2])
                         energy = _np.sqrt(proton_mass*proton_mass + momentum*momentum) - proton_mass
 
+                    # sigmax line may or may not have element coordinates too, so cannot assume index counting from 0
                     firstLine = _remove_blanks(elementSigmaMatrix[0].split(' '))
                     try:
                         sigx = _np.float(firstLine[-2])
                     except ValueError:
-                        pass
+                        sigx = _np.float(_remove_blanks(elementSigmaMatrix[0].split(' '))[3])
 
                     if '*COORDINATES*' in firstLine:
                         x = _np.float(firstLine[3])
                         y = _np.float(firstLine[4])
                         z = _np.float(firstLine[5])
 
-                    #sigx    = _np.float(_remove_blanks(elementSigmaMatrix[0].split(' '))[3])
                     sigxp   = _np.float(_remove_blanks(elementSigmaMatrix[1].split(' '))[1])
                     sigy    = _np.float(_remove_blanks(elementSigmaMatrix[2].split(' '))[1])
                     sigyp   = _np.float(_remove_blanks(elementSigmaMatrix[3].split(' '))[1])
@@ -426,36 +426,18 @@ class _Optics:
 
         if ex is 0:
             betx = 0
-            gammax = 0
         else:
             betx = (sigx ** 2.0) / ex
-            gammax = (sigxp ** 2.0) / ex
 
         if ey is 0:
             bety = 0
-            gammay = 0
         else:
             bety = (sigy ** 2.0) / ey
-            gammay = (sigyp ** 2.0) / ey
 
         if _np.isnan(betx):
             betx = 0
         if _np.isnan(bety):
             bety = 0
-        if _np.isnan(gammax):
-            gammax = 0
-        if _np.isnan(gammay):
-            gammay = 0
-
-        alfx2 = (gammax * betx) - 1.0
-        alfy2 = (gammay * bety) - 1.0
-        if (alfx2 < 0):
-            alfx2 = 0
-        if (alfy2 < 0):
-            alfy2 = 0
-
-        alfx = _np.sqrt(alfx2)
-        alfy = _np.sqrt(alfy2)
 
         alfx = -betx * r21 * sigxp/sigx
         alfy = -bety * r43 * sigyp/sigy
@@ -481,11 +463,12 @@ class _Optics:
         self.transdata['Name'].append(elename)
         self.transdata['Type'].append(elementType)
 
-    def _processStandardOpticsSingleLine(self, elementlist):
+    def _processStandardOpticsSingleLine(self, inputFile):
         """
         Process the optics from a standard output file when written to single lines as specified
         by a 13. 19. element in Transport.
         """
+        elementlist = self._getOptics(inputFile)
         # seperate R matrix table from sigma matrix elements
         rMatrixElements = elementlist[-1]
         rMatrix = []
@@ -582,12 +565,13 @@ class _Optics:
         
         return data
 
-    def _getOptics(self, flist, filename):
+    def _getOptics(self, filename):
         """
         Function to extract the output from a standard output file. The output will be an list of the lines
         for each element which contains the beam data. Each element should contain the R and TRANSPORT matrices
         which are necessary so the beam info can be calculated.
         """
+        flist = _LoadFile(filename)
         foundOpticsStart = False
         foundOpticsEnd = False
         foundRMatrixElementStart = False
@@ -702,15 +686,6 @@ class _Optics:
         """
         flist = _LoadFile(inputFile)
         transdata = self._processBeamOptics(flist)
-        return transdata
-
-    def _getStandardOptics(self, inputFile):
-        """
-        Get the optics from a standard output file. Returns a pytransport.Data.BDSData object.
-        """
-        flist = _LoadFile(inputFile)
-        optics = self._getOptics(flist, inputFile)
-        transdata = self._processStandardOptics(optics, inputFile)
         return transdata
 
 

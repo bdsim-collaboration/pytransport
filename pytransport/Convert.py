@@ -50,7 +50,7 @@ class _Convert:
         self.Writer.DebugPrintout("File Read.")
         if isOutput:
             lattice = _Reader.GetLattice(inputfile)
-            fits, fitres = _Reader.GetFits(inputfile)
+            fitres = _Reader.GetResultsFromFitting(inputfile)
             self.Transport = _General.OutputFitsToRegistry(self.Transport, fitres)
             self.Writer.DebugPrintout('Adding any fitting output to the fitting registry (self.FitRegistry)')
 
@@ -326,11 +326,6 @@ class _Convert:
             elif filetype == 'output':
                 n = 1
 
-            # Find momentum
-            # endofline = self._endofline(line[7+n])
-            # if endofline != -1:
-            #     linedict['momentum'] = line[7+n][:endofline]
-            # else:
             linedict['momentum'] = line[7 + n]
             linedict['Sigmax'] = line[1 + n]
             linedict['Sigmay'] = line[3 + n]

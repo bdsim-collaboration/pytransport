@@ -194,8 +194,7 @@ def CheckSingleLineOutputApplied(inputfile):
     of TRANSPORT can run this type code.
     """
     _optics = _Reader._Optics()
-    flist = _Reader._LoadFile(inputfile)
-    optics = _optics._getOptics(flist, inputfile)
+    optics = _optics._getOptics(inputfile)
 
     for element in optics:
         if element == 'IO: UNDEFINED TYPE CODE 13. 19. ;':
