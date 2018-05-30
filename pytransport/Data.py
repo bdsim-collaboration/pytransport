@@ -506,6 +506,8 @@ class _machineprops:
         self.beampiperadius   = 20
         self.fringeIntegral   = 0  # global value for all subsequent fringe fields until set otherwise
         self.secondfringeInt  = 0  # second fringe field integral
+        self.bendInCurvature  = 0  # global value for all subsequent dipole entrance poleface curvatures
+        self.bendOutCurvature = 0  # global value for all subsequent dipole exit poleface curvatures
         self.dipoleVertAper   = 0
         self.apertureType     = 'circular'
         self._totalAccVoltage = 0

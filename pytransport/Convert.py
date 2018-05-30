@@ -15,6 +15,7 @@ _Convert - a class used to convert different element types.
 """
 
 import numpy as _np
+import string as _str
 
 import _General
 from _General import _Writer
@@ -690,6 +691,14 @@ class _Convert:
 
         hgap = self.Transport.machineprops.dipoleVertAper * self.Transport.scale[self.Transport.units['bend_vert_gap'][0]]
 
+        # Poleface curvatures
+        h1 = self.Transport.machineprops.bendInCurvature
+        h2 = self.Transport.machineprops.bendOutCurvature
+        if self.Transport.machineprops.bendInCurvature != 0:
+            self.Writer.DebugPrintout('\tA previous entry set the dipole poleface entrance curvature H1=' + _np.str(self.Transport.machineprops.bendInCurvature) + '.')
+        if self.Transport.machineprops.bendOutCurvature != 0:
+            self.Writer.DebugPrintout('\tA previous entry set the dipole poleface entrance curvature H2=' + _np.str(self.Transport.machineprops.bendOutCurvature) + '.')
+
         # Calculate bending angle
         if self.Transport.machineprops.benddef:
             bfield = dipoledata[1]
@@ -1121,6 +1130,14 @@ class _Convert:
                 typeCode6def = 'Transform Update'
             self.Writer.DebugPrintout('\tType 14: Type code 6 definition,')
             self.Writer.DebugPrintout('\tDefinition set to ' + typeCode6def + '.')
+        elif specialdata[0] == 12.0:  # entrance poleface curvature
+            self.Transport.machineprops.bendInCurvature = specialdata[1]
+            self.Writer.DebugPrintout('\tType 12: Dipole entrance poleface curvature,')
+            self.Writer.DebugPrintout('\tCurvature set to ' + _np.str(specialdata[1]) + '.')
+        elif specialdata[0] == 13.0:  # exit poleface curvature
+            self.Transport.machineprops.bendOutCurvature = specialdata[1]
+            self.Writer.DebugPrintout('\tType 13: Dipole exit poleface curvature,')
+            self.Writer.DebugPrintout('\tCurvature set to ' + _np.str(specialdata[1]) + '.')
         elif specialdata[0] == 16.0:  # X0 offset
             self.Transport.beamprops.X0 = specialdata[1]
             self.Writer.DebugPrintout('\tType 16: X0 beam offset,')
