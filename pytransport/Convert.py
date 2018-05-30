@@ -4,7 +4,9 @@
 # william.shields.2010@live.rhul.ac.uk
 
 """
-Functions to help convert elements from Transport to gmad/madx.
+Wrapper function for automatically converting to bdsim and/or madx
+
+Class containing functions to help convert elements from Transport to gmad/madx.
 Class instantiated in pybdsim.Convert.Transport2Gmad and pymadx.Convert.Transport2Madx.
 
 Classes:
@@ -18,6 +20,127 @@ import _General
 from _General import _Writer
 from Data import ConversionData as _convData
 from pytransport import Reader as _Reader
+
+
+def Convert(inputfile,
+            particle='proton',
+            distrType='gauss',
+            output='bdsim',
+            outputDir='',
+            debug=False,
+            dontSplit=False,
+            keepName=False,
+            combineDrifts=False,
+            options=None,
+            machine=None):
+    """
+    **Convert** convert a Transport input or output file into an input file for bdsim, madx, or both
+
+    +-------------------------------+-------------------------------------------------------------------+
+    | **inputfile**                 | dtype = string                                                    |
+    |                               | path to the input file                                            |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **particle**                  | dtype = string. Optional, default = "proton"                      |
+    |                               | the particle species                                              |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **distrType**                 | dtype = string. Optional, Default = "gauss".                      |
+    |                               | the beam distribution type. Can be either gauss or gausstwiss.    |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **output**                    | dtype=string. Optional, default = "bdsim"                         |
+    |                               | the output type, can be "bdsim", "madx", or "both"                |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **outputDir**                 | dtype=string. Optional, default = ""                              |
+    |                               | the output directory where the files will be written              |
+    |                               | if no input supplied, defaults to output type. if outputDir is    |
+    |                               | supplied and output is "both", outputDir is appended with the     |
+    |                               | output type, e.g. outputDir_bdsim                                 |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **debug**                     | dtype = bool. Optional, default = False                           |
+    |                               | output a log file (inputfile_conversion.log) detailing the        |
+    |                               | conversion process, element by element                            |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **dontSplit**                 | dtype = bool. Optional, default = False                           |
+    |                               | the converter splits the machine into multiple parts when a beam  |
+    |                               | is redefined in a Transport lattice. dontSplit overrides this and |
+    |                               | forces the machine to be written to a single file                 |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **keepName**                  | dtype = bool. Optional, default = False                           |
+    |                               | keep the names of elements as defined in the Transport inputfile. |
+    |                               | Appends element name with _N where N is an integer if the element |
+    |                               | name has already been used                                        |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **combineDrifts**             | dtype = bool. Optional, default = False                           |
+    |                               | combine multiple consecutive drifts into a single drift           |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **machine**                   | dtype = pybdsim.Builder.Machine or pymadx.Builder.Machine         |
+    |                               | required, default = None                                          |
+    |                               | machine instance required for conversion.                         |
+    +-------------------------------+-------------------------------------------------------------------+
+    | **options**                   | dtype = pybdsim.Options.Options. Optional, default = None         |
+    |                               | options instance required to write options in bdsim conversion.   |
+    |                               | Ignored if converting to "madx" format.                           |
+    +-------------------------------+-------------------------------------------------------------------+
+
+    Example:
+
+    >>> Convert(inputfile, machine=pybdsim.Builder.Machine(), options=pybdsim.Builder.Options())
+    >>> Convert(inputfile, output="madx", machine=pymadx.Builder.Machine())
+
+    Writes converted machine to disk. Reader automatically detects if the supplied input file is a Transport input
+    file or Transport output file.
+
+    """
+    outputType = _str.lower(output)
+
+    if machine is None:
+        raise TypeError("machine instance must be supplied")
+    if ((outputType == 'bdsim') or (output == 'both')) and (options is None):
+        raise TypeError("pybdsim.Options.Options must be supplied for bdsim conversion")
+    if (outputType == 'madx') and (options is not None):
+        print("Ignoring supplied options for madx conversion")
+
+    # default for output='bdsim'
+    gmadDir = outputDir
+    madxDir = outputDir
+
+    if outputType == 'bdsim':
+        gmad = True
+        madx = False
+        if outputDir == '':
+            gmadDir = 'bdsim'
+            madxDir = ''
+    elif outputType == 'madx':
+        gmad = False
+        madx = True
+        if outputDir == '':
+            gmadDir = ''
+            madxDir = 'madx'
+    elif outputType == 'both':
+        gmad = True
+        madx = True
+        if outputDir == '':
+            gmadDir = 'bdsim'
+            madxDir = 'madx'
+        else:
+            gmadDir += '_bdsim'
+            madxDir += '_madx'
+    else:
+        raise IOError("Unknown output type '"+output+"'")
+
+    converter = _Convert(_convData(inputfile=inputfile,
+                                   particle=particle,
+                                   distrType=distrType,
+                                   gmad=gmad,
+                                   madx=madx,
+                                   gmadDir=gmadDir,
+                                   madxDir=madxDir,
+                                   debug=debug,
+                                   dontSplit=dontSplit,
+                                   keepName=keepName,
+                                   combineDrifts=combineDrifts,
+                                   options=options,
+                                   machine=machine))
+    converter.Convert()
 
 
 class _Convert:
