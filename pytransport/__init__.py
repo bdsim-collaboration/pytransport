@@ -10,7 +10,7 @@ Copyright Royal Holloway, University of London 2018.
 
 """
 
-__version__ = "1.1"
+__version__ = "1.2.1"
 
 import _General
 import Compare
