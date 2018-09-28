@@ -9,6 +9,7 @@ W. Shields
 Currently maintained and developed by:
 
 Will Shields          <william.shields.2010@live.rhul.ac.uk>
+
 Jochem Snuverink      <jochem.snuverink@psi.ch>
 
 ## Setup
@@ -23,8 +24,8 @@ $ make develop
 
 
 ```python
-$>python
-$>>> import pytransport
-$>>> a = pytransport.Reader.GetOptics("FOR002.DAT")
-$>>> plot(a.S(), a.Sigma_X())
+$ python
+>>> import pytransport
+>>> a = pytransport.Reader.GetOptics("FOR002.DAT")
+>>> plot(a.S(), a.Sigma_X())
 ```
