@@ -1,17 +1,17 @@
-#pyTransport#
+# pyTransport
 
 A python package containing both utilities for processing and analysing TRANSPORT output.
 
-## Authors ##
+## Authors
 
 W. Shields
 
 Currently maintained and developed by:
 
-Will Shields          <william.shields.2010@live.rhul.ac.uk>
-Jochem Snuverink      <jochem.snuverink@psi.ch>
+* Will Shields          <william.shields.2010@live.rhul.ac.uk>
+* Jochem Snuverink      <jochem.snuverink@psi.ch>
 
-## Setup ##
+## Setup
 
 From within the pybdsim root directory:
 
@@ -22,11 +22,9 @@ or for development:
 $ make develop
 
 
-```
-#!python
-
-$>python
-$>>> import pytransport
-$>>> a = pytransport.Reader.GetOptics("FOR002.DAT")
-$>>> plot(a.S(), a.Sigma_X())
+```python
+$ python
+>>> import pytransport
+>>> a = pytransport.Reader.GetOptics("FOR002.DAT")
+>>> plot(a.S(), a.Sigma_X())
 ```
