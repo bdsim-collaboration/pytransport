@@ -6,7 +6,7 @@ Authors:
  * William Shields
  * Jochem Snuverink
 
-Copyright Royal Holloway, University of London 2018.
+Copyright Royal Holloway, University of London 2019.
 
 """
 
