@@ -475,7 +475,8 @@ def JoinSplitLines(linenum, lattice):
 def OutputFitsToRegistry(transport, outputdata):
     isLegal = {'*DRIFT*': 3.0,
                '*QUAD*': 5.0,
-               '*BEND*': 4.0}
+               '*BEND*': 4.0,
+               '*UPDATE*': 6.0}
 
     for line in outputdata:
         append = False

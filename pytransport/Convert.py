@@ -1043,7 +1043,7 @@ class _Convert:
                 self.Transport.machineprops.benddef = True
                 self.Writer.DebugPrintout('\t47. Switched Dipoles to field definition.')
             elif number == 19:
-                if _General.CheckSingleLineOutputApplied(self.Transport.convprops.filename):
+                if _General.CheckSingleLineOutputApplied(self.Transport.convprops.file):
                     self.Transport.convprops.singleLineOptics = True
                 self.Writer.DebugPrintout('\t19. Optics output switched to single line per element.')
             else:
@@ -1276,7 +1276,9 @@ class _Convert:
             oldlength = self.Transport.ElementRegistry.elements[eleIndex]['length']
             lengthDiff = self.Transport.ElementRegistry.elements[eleIndex]['length'] - element['length']
             self.Transport.ElementRegistry.elements[eleIndex]['length'] = element['length']  # Update length
-            self.Transport.ElementRegistry.length[eleIndex:] += lengthDiff  # Update running length of subsequent elements.
+            # Update running length of subsequent elements.
+            for index, value in enumerate(self.Transport.ElementRegistry.length[eleIndex:]):
+                self.Transport.ElementRegistry.length[eleIndex:][index] = value + lengthDiff
             self.Transport.ElementRegistry._totalLength += lengthDiff  # Update total length
             lendict = {'old': _np.round(oldlength, 5),
                        'new': _np.round(element['length'], 5)}
@@ -1349,28 +1351,32 @@ class _Convert:
             for fitnum, fit in enumerate(fitindex):
                 for elenum, ele in enumerate(eleindex):
                     fitelement = self.Transport.FitRegistry.elements[fitindex[fitnum]]
-                    if fitelement['elementnum'] == 3:
-                        eledict = _updateDrift(eleindex[elenum], fitindex[fitnum], fitelement)
-                    elif fitelement['elementnum'] == 4:
-                        eledict = _updateDipole(eleindex[elenum], fitindex[fitnum], fitelement)
-                    elif fitelement['elementnum'] == 5:
-                        eledict = _updateQuad(eleindex[elenum], fitindex[fitnum], fitelement)
+                    regElementnum = self.Transport.ElementRegistry.elements[eleindex[elenum]]['elementnum']
+                    if regElementnum != fitelement['elementnum']:
+                        pass
+                    else:
+                        if fitelement['elementnum'] == 3:
+                            eledict = _updateDrift(eleindex[elenum], fitindex[fitnum], fitelement)
+                        elif fitelement['elementnum'] == 4:
+                            eledict = _updateDipole(eleindex[elenum], fitindex[fitnum], fitelement)
+                        elif fitelement['elementnum'] == 5:
+                            eledict = _updateQuad(eleindex[elenum], fitindex[fitnum], fitelement)
 
-                    if eledict['updated']:
-                        self.Writer.DebugPrintout(
-                            "Element " + _np.str(eleindex[elenum]) + " was updated from fitting:")
-                        self.Writer.DebugPrintout("\tOptics Output line:")
-                        self.Writer.DebugPrintout(
-                            "\t\t'" + self.Transport.FitRegistry.lines[fitindex[fitnum]] + "'")
-                        if eledict.has_key('length'):
-                            lenline = "\t" + eledict['element'] + " length updated to "
-                            lenline += _np.str(eledict['length']['new'])
-                            lenline += " (from " + _np.str(eledict['length']['old']) + ")."
-                            self.Writer.DebugPrintout(lenline)
-                        for param in eledict['params']:
-                            parline = "\t" + eledict['element'] + " " + param[0]
-                            parline += " updated to " + _np.str(param[2]) + " (from " + _np.str(param[1]) + ")."
-                            self.Writer.DebugPrintout(parline)
-                            # self.Writer.DebugPrintout("\n")
+                        if eledict['updated']:
+                            self.Writer.DebugPrintout(
+                                "Element " + _np.str(eleindex[elenum]) + " was updated from fitting:")
+                            self.Writer.DebugPrintout("\tOptics Output line:")
+                            self.Writer.DebugPrintout(
+                                "\t\t'" + self.Transport.FitRegistry.lines[fitindex[fitnum]] + "'")
+                            if eledict.has_key('length'):
+                                lenline = "\t" + eledict['element'] + " length updated to "
+                                lenline += _np.str(eledict['length']['new'])
+                                lenline += " (from " + _np.str(eledict['length']['old']) + ")."
+                                self.Writer.DebugPrintout(lenline)
+                            for param in eledict['params']:
+                                parline = "\t" + eledict['element'] + " " + param[0]
+                                parline += " updated to " + _np.str(param[2]) + " (from " + _np.str(param[1]) + ")."
+                                self.Writer.DebugPrintout(parline)
+                                # self.Writer.DebugPrintout("\n")
 
-                        break
+                            break
