@@ -642,22 +642,29 @@ class _Convert:
 
     def Drift(self, linedict):
         driftlen = linedict['length']
-        if driftlen <= 0:
-            self.Writer.DebugPrintout('\tZero or negative length element, ignoring.')
+        if driftlen < 0:
+            self.Writer.DebugPrintout('\tNegative length element, ignoring.')
             return
+        elif driftlen == 0:
+            self.Writer.DebugPrintout('\tZero length element, writing as marker.')
+            elementid = self._GetTransportElementName(linedict['name'])
+            if not elementid:  # check on empty string
+                elementid = 'MA' + _np.str(self.Transport.machineprops.drifts)
+            self.Transport.machine.AddMarker(name=elementid)
+            return
+        else:
+            lenInM = driftlen * _General.ScaleToMeters(self.Transport, 'element_length')  # length in metres
 
-        lenInM = driftlen * _General.ScaleToMeters(self.Transport, 'element_length')  # length in metres
+            self.Transport.machineprops.drifts += 1
+            elementid = self._GetTransportElementName(linedict['name'])
+            if not elementid:  # check on empty string
+                elementid = 'DR'+_np.str(self.Transport.machineprops.drifts)
 
-        self.Transport.machineprops.drifts += 1
-        elementid = self._GetTransportElementName(linedict['name'])
-        if not elementid:  # check on empty string
-            elementid = 'DR'+_np.str(self.Transport.machineprops.drifts)
+            # pybdsim and pymadx are the same.
+            self.Transport.machine.AddDrift(name=elementid, length=lenInM)
 
-        # pybdsim and pymadx are the same.
-        self.Transport.machine.AddDrift(name=elementid, length=lenInM)
-
-        self.Writer.DebugPrintout('\tConverted to:')
-        self.Writer.DebugPrintout('\t' + 'Drift ' + elementid + ', length ' + _np.str(lenInM) + ' m')
+            self.Writer.DebugPrintout('\tConverted to:')
+            self.Writer.DebugPrintout('\t' + 'Drift ' + elementid + ', length ' + _np.str(lenInM) + ' m')
 
     def Dipole(self, linedict):
         linenum = linedict['linenum']
