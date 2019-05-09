@@ -363,14 +363,9 @@ class ConversionData:
         Function to set the Options for a BDSIM machine.
         """
         self.options.SetPhysicsList(physicslist='em')
-        self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
+        if self.machineprops.beampiperadius != 0:
+            self.options.SetBeamPipeRadius(beampiperadius=self.machineprops.beampiperadius,
                                        unitsstring=self.units['pipe_rad'])
-        self.options.SetOuterDiameter(outerdiameter=0.5, unitsstring='m')
-        self.options.SetTunnelRadius(tunnelradius=1, unitsstring='m')
-        self.options.SetBeamPipeThickness(bpt=5, unitsstring='mm')
-        self.options.SetSamplerDiameter(radius=1, unitsstring='m')
-        self.options.SetStopSecondaries(stop=True)
-        self.options.SetIncludeFringeFields(on=True)
 
         self.machine.AddOptions(self.options)
 
@@ -503,7 +498,7 @@ class _machineprops:
         self.transforms       = 0
         self.solenoids        = 0
         self.collimators      = 0
-        self.beampiperadius   = 20
+        self.beampiperadius   = 0
         self.fringeIntegral   = 0  # global value for all subsequent fringe fields until set otherwise
         self.secondfringeInt  = 0  # second fringe field integral
         self.bendInCurvature  = 0  # global value for all subsequent dipole entrance poleface curvatures
