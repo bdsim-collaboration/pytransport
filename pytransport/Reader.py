@@ -19,13 +19,16 @@ import numpy as _np
 from Data import BDSData as _BDA
 
 
-_allowedIndicatorLines = ['0  100', '0    0']
+_allowedIndicatorLines = ['0  100','0  111', '0    0']
 
 def GetOptics(inputFile, inputType=None):
     """
     Extract the optics from a Transport output file.
     """
     optics = _Optics()  # Instantiate empty data optics container
+
+    #loader = _Loader(inputFile)
+    #loader.ExtractFileSections()
 
     if isinstance(inputType, _np.str):
         if inputType == 'beam':
@@ -42,12 +45,10 @@ def GetOptics(inputFile, inputType=None):
         line = line.rstrip('\r\n')
         splitline = _remove_blanks(line.split(' '))
         if splitline and splitline[0] == '*BEAM*':  # Is beam output
-            # print "'*BEAM*' found in line " + _np.str(i+1)
             f.close()
             transdata = optics._getBeamOptics(inputFile)
             break
         elif line in _allowedIndicatorLines:
-            # print "'0    0' found in line " + _np.str(i+1)
             f.close()
             transdata = optics._getStandardOptics(inputFile)
             break
@@ -65,11 +66,11 @@ def GetOptics(inputFile, inputType=None):
 
     return transdata
 
-def GetLattice(inputFile):
+def GetLattice(flist):
     """
     Function to extract the lattice from a standard output file.
     """
-    flist = _LoadFile(inputFile)
+    flist = _LoadFile(flist)
     latticestart = 0
     latticeend = 0
     foundlatticestart = False
@@ -88,7 +89,7 @@ def GetLattice(inputFile):
                 foundlatticeend = True
     if not foundlatticestart:
         if not foundlatticeend:
-            raise IOError('No lattice found in ' + inputFile + '.')
+            raise IOError('No lattice found in input file.')
         else:
             errorstring = 'The end of a lattice (line = "0SENTINEL") was found at line ' + _np.str(latticeend + 1) + ',\n'
             errorstring += 'but the start of a lattice (line = "0    0") was not found. Please check the input file.'
@@ -101,7 +102,7 @@ def GetLattice(inputFile):
         lattice.extend(flist[latticestart:latticeend])
     return lattice
 
-def GetFitsSection(inputFile):
+def GetFitsSection(flist):
     """
     Function to get the fit routine data from the standard transport output.
     Returns two lists, the first with the direct output from the fitting data,
@@ -109,7 +110,7 @@ def GetFitsSection(inputFile):
     element parameters with their fitted values.
     """
 
-    flist = _LoadFile(inputFile)
+    flist = _LoadFile(flist)
     fitstart = 0
     fitend = 0
     foundfitstart = False
@@ -140,6 +141,45 @@ def GetResultsFromFitting(inputFile):
     output = optics._getOptics(inputFile)
     fitres = [element[0] for element in output]
     return fitres
+
+class _Loader:
+    """
+    Class for loading and identifying sections within a TRANSPORT
+    output file.
+    """
+    def __init__(self, inputfile):
+        self.optics = []
+        self.lattice = []
+        self.fits = []
+        self.preamble = []
+        self.flist = _LoadFile(inputfile)
+
+    def ExtractFileSections(self):
+        sectionStartLines = [linenum for linenum,line in enumerate(self.flist) if line in _allowedIndicatorLines]
+        sections = []
+        for sectionNum,secStartLine in enumerate(sectionStartLines):
+            if sectionNum == 0:
+                prevStart = 0
+            else:
+                prevStart = sectionStartLines[sectionNum-1]
+            section = self.flist[prevStart:secStartLine]
+            sections.append(section)
+        for section in sections[1:]:
+            a = GetLattice(section)
+            b = GetFitsSection(section)
+            dummy=1
+
+    def GetOptics(self):
+        return self.optics
+
+    def GetLattice(self):
+        return self.lattice
+
+    def GetFits(self):
+        return self.fits
+
+    def GetPreamble(self):
+        return self.preamble
 
 
 class _Optics:
@@ -316,6 +356,7 @@ class _Optics:
         if self.CheckSingleLineOutputApplied(inputFile):
             optics = self._processStandardOpticsSingleLine(inputFile)
         else:
+            #optics = self._processStandardOpticsSingleLine(inputFile)
             optics = self._processStandardOpticsMultiLines(inputFile)
         return optics
 
@@ -749,6 +790,26 @@ def _LoadFile(inputfile):
     infile.close()
     return flist
 
+def _LoadFileNew(inputfile):
+    """
+    Converts the input file into a list. The data has to be in a format other than
+    handling line by line (using next()).
+
+    The function for processing the file reads section by section rather than line
+    by line. This may be an inefficient method but the input file should not be very
+    large so it should not require a large amount of memory.
+    """
+    if inputfile == '':
+        raise IOError('No file name supplied.')
+    flist = []
+    infile = open(inputfile)
+    # Loop over lines and remove any carriage returns (both Mac and Unix)
+    for line in infile:
+        cleanline = line.rstrip('\r\n')
+        if len(line) > 0:
+            flist.append(cleanline)
+    infile.close()
+    return flist
 
 def _updateElementLine(line):
     if (line[0] == '*Z') and (line[1] == 'ROT*'):
