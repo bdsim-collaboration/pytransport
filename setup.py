@@ -9,7 +9,7 @@ setup(
                       "numpy",
                       "scipy"],
     # Some version of Python 3
-    python_requires="==3.*",
+    python_requires=">=2.7.*",
 
     author='JAI@RHUL',
     author_email='william.shields.2010@live.rhul.ac.uk',
