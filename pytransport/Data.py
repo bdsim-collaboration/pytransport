@@ -178,7 +178,7 @@ class BDSData(list):
             a.extend(filtereddata)
             return a
         else:
-            print "The parameter: ", parametername, " does not exist in this instance"
+            print("The parameter: ", parametername, " does not exist in this instance")
 
     def Filter(self, booleanarray):
         """

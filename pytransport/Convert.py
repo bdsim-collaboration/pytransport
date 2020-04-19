@@ -17,9 +17,9 @@ _Convert - a class used to convert different element types.
 import numpy as _np
 import string as _str
 
-import _General
-from _General import _Writer
-from Data import ConversionData as _convData
+from . import _General
+from ._General import _Writer
+from .Data import ConversionData as _convData
 from pytransport import Reader as _Reader
 
 

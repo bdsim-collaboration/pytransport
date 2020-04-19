@@ -16,7 +16,7 @@ ConversionData - a class for holding data during conversion.
 """
 
 import numpy as _np
-from Data import BDSData as _BDA
+from .Data import BDSData as _BDA
 
 
 _allowedIndicatorLines = ['0  100', '0    0']
@@ -296,7 +296,7 @@ class _Optics:
                 except ValueError:
                     errstr = "Could not process section beginning at line " + _np.str(elenum) + " : "
                     print(errstr)
-                    print " "
+                    print(" ")
                     print(element)
             elif element == "EOF -- rewind file":
                 break
