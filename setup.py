@@ -8,7 +8,6 @@ setup(
     install_requires=["matplotlib",
                       "numpy",
                       "scipy"],
-    # Some version of Python 3
     python_requires=">=2.7.*",
 
     author='JAI@RHUL',
