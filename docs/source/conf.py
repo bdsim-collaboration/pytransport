@@ -50,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pytransport'
-copyright = u'Royal Holloway, University of London 2019'
+copyright = u'Royal Holloway, University of London 2020'
 author = u'W Shields, A Abramov, S Boogert, L Nevay, J Snuverink, S Walker'
 
 # The version info for the project you're documenting, acts as replacement for
