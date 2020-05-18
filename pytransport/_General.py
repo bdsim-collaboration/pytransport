@@ -17,9 +17,9 @@ import os as _os
 import string as _string
 import glob as _glob
 
-import Reader as _Reader
-from Data import _beamprops
-from Data import ConversionData
+from . import Reader as _Reader
+from .Data import _beamprops
+from .Data import ConversionData
 
 
 class _Writer:

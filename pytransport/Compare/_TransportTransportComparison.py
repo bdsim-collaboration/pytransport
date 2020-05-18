@@ -39,7 +39,7 @@ def _parse_tfs_input(tfs_in, name):
     """Return tfs_in as a Tfs instance, which should either be a path
     to a TFS file or a Tfs instance, and in either case, generate a
     name if None is provided, and return that as well."""
-    if isinstance(tfs_in, basestring):
+    if isinstance(tfs_in, str):
         if not _path.isfile(tfs_in):
             raise IOError("file \"{}\" not found!".format(tfs_in))
         name = (_path.splitext(_path.basename(tfs_in))[0]
@@ -121,4 +121,4 @@ def TRANSPORTVsTRANSPORT(first, second, first_name=None,
             d = pdf.infodict()
             d['Title'] = "{} VS {} Optical Comparison".format(first_name, second_name)
             d['CreationDate'] = _datetime.datetime.today()
-        print "Written ", output_filename
+        print("Written ", output_filename)

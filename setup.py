@@ -2,14 +2,14 @@ from setuptools import setup, find_packages
 
 setup(
     name='pytransport',
-    version='1.3.0',
+    version='1.3.1',
     packages=find_packages(exclude=["docs", "tests", "obsolete"]),
     # Not sure how strict these need to be...
     install_requires=["matplotlib",
                       "numpy",
                       "scipy"],
-    # Some version of python2.7
-    python_requires="==2.7.*",
+    # Some version of Python 3
+    python_requires=">=2.7.*",
 
     author='JAI@RHUL',
     author_email='william.shields.2010@live.rhul.ac.uk',

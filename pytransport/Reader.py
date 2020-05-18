@@ -16,7 +16,7 @@ ConversionData - a class for holding data during conversion.
 """
 
 import numpy as _np
-from Data import BDSData as _BDA
+from .Data import BDSData as _BDA
 
 
 _allowedIndicatorLines = ['0  100','0  111', '0    0']
@@ -336,13 +336,13 @@ class _Optics:
                 except ValueError:
                     errstr = "Could not process section beginning at line " + _np.str(elenum) + " : "
                     print(errstr)
-                    print " "
+                    print(" ")
                     print(element)
             elif element == "EOF -- rewind file":
                 break
 
         data = _BDA()  # Now convert the dict into BDSData instance for final output.
-        for keyName in transdata.keys():
+        for keyName in list(transdata.keys()):
             data._AddProperty(keyName)
         for i in range(num_elements):
             data.append(_GetElementData(i, transdata))
@@ -433,7 +433,7 @@ class _Optics:
                     num_elements += 1
 
         data = _BDA()      # Now convert the dict into BDSData instance for final output.
-        for keyName, unit in self.transunits.iteritems():
+        for keyName, unit in self.transunits.items():
             data._AddProperty(keyName, unit)
         for i in range(num_elements):
             data.append(_GetElementData(i, self.transdata))
@@ -599,7 +599,7 @@ class _Optics:
                     num_elements += 1
 
         data = _BDA()      # Now convert the dict into BDSData instance for final output.
-        for keyName, unit in self.transunits.iteritems():
+        for keyName, unit in self.transunits.items():
             data._AddProperty(keyName, unit)
         for i in range(num_elements):
             data.append(_GetElementData(i, self.transdata))
@@ -826,7 +826,7 @@ def _updateElementLine(line):
 
 def _GetElementData(index, dataDict):
     # Function to get the data for each element, rather than each key.
-    elementlist = [dataDict[keyName][index] for keyName in dataDict.keys()]
+    elementlist = [dataDict[keyName][index] for keyName in list(dataDict.keys())]
     return elementlist
 
 def _GetTransformLineElements(line):

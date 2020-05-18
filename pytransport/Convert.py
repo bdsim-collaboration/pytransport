@@ -17,9 +17,9 @@ _Convert - a class used to convert different element types.
 import numpy as _np
 import string as _str
 
-import _General
-from _General import _Writer
-from Data import ConversionData as _convData
+from . import _General
+from ._General import _Writer
+from .Data import ConversionData as _convData
 from pytransport import Reader as _Reader
 
 
@@ -313,7 +313,7 @@ class _Convert:
                         convertline += ('\t' + _np.str(ele))
                 else:
                     convertline += (key + ': ' + _np.str(linedict[key]))
-                if keynum == len(linedict.keys()):
+                if keynum == len(list(linedict.keys())):
                     convertline += '.'
             self.Writer.DebugPrintout(convertline)
 
@@ -1257,7 +1257,7 @@ class _Convert:
         if not self.Transport.convprops.keepName:
             return ''
 
-        currElements = self.Transport.machine.elementsd.keys()
+        currElements = list(self.Transport.machine.elementsd.keys())
         updatedName = elementName
         if elementName in currElements:
             nameNumber = 1
@@ -1375,7 +1375,7 @@ class _Convert:
                             self.Writer.DebugPrintout("\tOptics Output line:")
                             self.Writer.DebugPrintout(
                                 "\t\t'" + self.Transport.FitRegistry.lines[fitindex[fitnum]] + "'")
-                            if eledict.has_key('length'):
+                            if 'length' in eledict:
                                 lenline = "\t" + eledict['element'] + " length updated to "
                                 lenline += _np.str(eledict['length']['new'])
                                 lenline += " (from " + _np.str(eledict['length']['old']) + ")."

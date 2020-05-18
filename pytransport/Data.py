@@ -178,7 +178,7 @@ class BDSData(list):
             a.extend(filtereddata)
             return a
         else:
-            print "The parameter: ", parametername, " does not exist in this instance"
+            print("The parameter: ", parametername, " does not exist in this instance")
 
     def Filter(self, booleanarray):
         """
@@ -256,7 +256,7 @@ class BDSData(list):
         sPositions = defaultdict(list)
         for sIndex, sPos in enumerate(self.S()):
             sPositions[sPos].append(sIndex)
-        duplicates = [(key, locs) for key, locs in sPositions.items() if len(locs) > 1]
+        duplicates = [(key, locs) for key, locs in list(sPositions.items()) if len(locs) > 1]
 
         if len(duplicates):
             self.pop(duplicates[0][1][0])

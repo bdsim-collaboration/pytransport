@@ -10,13 +10,13 @@ Copyright Royal Holloway, University of London 2019.
 
 """
 
-__version__ = "1.2.1"
+__version__ = "1.3.1"
 
-import _General
-import Compare
-import Convert
-import Data
-import Reader
+from . import _General
+from . import Compare
+from . import Convert
+from . import Data
+from . import Reader
 
 __all__ = ['Compare',
            'Convert',
