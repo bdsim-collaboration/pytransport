@@ -1257,7 +1257,7 @@ class _Convert:
         if not self.Transport.convprops.keepName:
             return ''
 
-        currElements = list(self.Transport.machine.elementsd.keys())
+        currElements = list(self.Transport.machine.elements.keys())
         updatedName = elementName
         if elementName in currElements:
             nameNumber = 1
