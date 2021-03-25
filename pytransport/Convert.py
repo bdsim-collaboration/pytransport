@@ -213,6 +213,9 @@ class _Convert:
                 if endoflinepos > 0:
                     templine = inputline[:endoflinepos]
                 line = _np.array(templine.split(' '), dtype=_np.str)
+                # skip malformed lines
+                if len(line[0]) == 0:
+                    continue
                 # do not change comment lines
                 if not line[0][0] == '(':
                     line = _General.RemoveIllegals(line)
