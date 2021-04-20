@@ -82,7 +82,7 @@ def GetLattice(inputFile):
                 if flist[linenum+1] == '0INDICATOR VALUE WRONG OR MISSING - ZERO ASSUMED':
                     latticestart += 1
                 foundlatticestart = True
-        if line == '0SENTINEL':
+        if line in ['0SENTINEL','SENTINEL']:
             if not foundlatticeend:
                 latticeend = linenum
                 foundlatticeend = True

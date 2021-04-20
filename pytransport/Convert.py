@@ -15,7 +15,6 @@ _Convert - a class used to convert different element types.
 """
 
 import numpy as _np
-import string as _str
 
 from . import _General
 from ._General import _Writer
@@ -84,14 +83,14 @@ def Convert(inputfile,
 
     Example:
 
-    >>> Convert(inputfile, machine=pybdsim.Builder.Machine(), options=pybdsim.Builder.Options())
+    >>> Convert(inputfile, machine=pybdsim.Builder.Machine(), options=pybdsim.Options.Options())
     >>> Convert(inputfile, output="madx", machine=pymadx.Builder.Machine())
 
     Writes converted machine to disk. Reader automatically detects if the supplied input file is a Transport input
     file or Transport output file.
 
     """
-    outputType = _str.lower(output)
+    outputType = output.lower()
 
     if machine is None:
         raise TypeError("machine instance must be supplied")
@@ -214,6 +213,9 @@ class _Convert:
                 if endoflinepos > 0:
                     templine = inputline[:endoflinepos]
                 line = _np.array(templine.split(' '), dtype=_np.str)
+                # skip malformed lines
+                if len(line[0]) == 0:
+                    continue
                 # do not change comment lines
                 if not line[0][0] == '(':
                     line = _General.RemoveIllegals(line)
@@ -1257,7 +1259,7 @@ class _Convert:
         if not self.Transport.convprops.keepName:
             return ''
 
-        currElements = list(self.Transport.machine.elementsd.keys())
+        currElements = list(self.Transport.machine.elements.keys())
         updatedName = elementName
         if elementName in currElements:
             nameNumber = 1

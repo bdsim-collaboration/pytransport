@@ -14,7 +14,6 @@ import numpy as _np
 from scipy import constants as _con
 import sys as _sys
 import os as _os
-import string as _string
 import glob as _glob
 
 from . import Reader as _Reader
@@ -24,14 +23,14 @@ from .Data import ConversionData
 
 class _Writer:
     """
-    Class for writing terminal output, logfile output, and the converted machine. 
-    Class is designed specifically for use with pytransport conversion. Class is 
+    Class for writing terminal output, logfile output, and the converted machine.
+    Class is designed specifically for use with pytransport conversion. Class is
     protected as it should be hidden.
 
     kwargs:
-    debugOutput: bool, default = False. 
+    debugOutput: bool, default = False.
     If true, strings supplied to class functions for debug output will be written.
-    writeToLog: bool, default = False. 
+    writeToLog: bool, default = False.
     If true, strings supplied to class functions will be written to a logfile.
     logfile: string, default = ''. Log file name.
     """
@@ -98,7 +97,7 @@ class _Writer:
 
     def Write(self, convData, filename):
         """
-        Write the converted TRANSPORT file to disk. A pytransport.Data.ConversionData 
+        Write the converted TRANSPORT file to disk. A pytransport.Data.ConversionData
         instance and filename (string)
         must be supplied.
         """
@@ -159,9 +158,9 @@ def CheckIsOutput(inputfile):
     """
     Function to check if a file is a standard TRANSPORT output file.
     Based upon existence of the lines::
-        
+
          "0  XXX"
-    
+
     being present, which represents the TRANSPORT indicator card line.
     X can be 0, 1, 2. Default is 0.
     """
@@ -346,33 +345,33 @@ def GetLabel(line):
     """
     label = None
     for elenum, ele in enumerate(line):
-        startslash = _string.find(ele, "/")
-        startquote = _string.find(ele, "'")
-        startequal = _string.find(ele, "=")
-        startdbquote = _string.find(ele, '"')
+        startslash = ele.find("/")
+        startquote = ele.find("'")
+        startequal = ele.find("=")
+        startdbquote = ele.find('"')
         if startslash != -1:
-            end = 1 + startslash + _string.find(ele[(startslash + 1):], "/")
+            end = 1 + startslash + ele[(startslash + 1):].find("/")
             if end <= startslash:
                 label = ele[startslash + 1:]
             else:
                 label = ele[startslash + 1:end]
             break
         elif startquote != -1:
-            end = 1 + startquote + _string.find(ele[(startslash + 1):], "'")
+            end = 1 + startquote + ele[(startslash + 1):].find("'")
             if end <= startquote:
                 label = ele[startquote + 1:]
             else:
                 label = ele[startquote + 1:end]
             break
         elif startequal != -1:
-            end = 1 + startequal + _string.find(ele[(startslash + 1):], "=")
+            end = 1 + startequal + ele[(startslash + 1):].find("=")
             if end <= startequal:
                 label = ele[startequal + 1:]
             else:
                 label = ele[startequal + 1:end]
             break
         elif startdbquote != -1:
-            end = 1 + startdbquote + _string.find(ele[(startdbquote + 1):], '"')
+            end = 1 + startdbquote + ele[(startdbquote + 1):].find('"')
             if end <= startdbquote:
                 label = ele[startdbquote + 1:]
             else:
