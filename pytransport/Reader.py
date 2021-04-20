@@ -424,12 +424,12 @@ class _Optics:
         ex = sigx * xpint
         ey = sigy * ypint
 
-        if ex is 0:
+        if ex == 0:
             betx = 0
         else:
             betx = (sigx ** 2.0) / ex
 
-        if ey is 0:
+        if ey == 0:
             bety = 0
         else:
             bety = (sigy ** 2.0) / ey
