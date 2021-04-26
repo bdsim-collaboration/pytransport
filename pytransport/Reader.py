@@ -117,7 +117,7 @@ def GetFitsSection(inputFile):
     fits = []
     for linenum, line in enumerate(flist):
         if not foundfitstart:
-            if line == '0SENTINEL':
+            if line == '0SENTINEL' or line == 'SENTINEL':
                 fitstart = linenum
                 foundfitstart = True
         if not foundfitend:
@@ -324,8 +324,8 @@ class _Optics:
         Process the optics from a standard output file when written to multiple lines.
         """
         elementlist = self._getOptics(inputFile)
-        notokElements = ['AXIS SHIFT', 'FIT']
-        
+        notokElements = ['AXIS SHIFT', 'ELEMENT MATRIX', 'FIT']
+
         num_elements = 0
         # initialise momentum/energy since not given for every element
         momentum = 0.0
@@ -344,6 +344,9 @@ class _Optics:
                 elementTransMatrix = element[8:]
 
                 if elementType not in notokElements:
+                    if len(elementProperties) < 1 :
+                        print("The following element has no properties and is ignored:", element)
+                        continue
                     elename = elementProperties[1].strip('"')
                     if elementType == "BEAM" or elementType == "ACC":
                         momentum = _np.float(elementProperties[-2])
@@ -567,7 +570,7 @@ class _Optics:
 
     def _getOptics(self, filename):
         """
-        Function to extract the output from a standard output file. The output will be an list of the lines
+        Function to extract the output from a standard output file. The output will be a list of the lines
         for each element which contains the beam data. Each element should contain the R and TRANSPORT matrices
         which are necessary so the beam info can be calculated.
         """
