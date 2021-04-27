@@ -12,6 +12,7 @@ load and manipulate Transport output data.
    authorship
    installation
    converting
+   optics
    moduledocs
 
 
