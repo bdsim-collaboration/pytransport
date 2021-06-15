@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pytransport',
-    version='1.4.0',
+    version='1.5.0',
     packages=find_packages(exclude=["docs", "tests", "obsolete"]),
     # Not sure how strict these need to be...
     install_requires=["matplotlib",
