@@ -240,8 +240,8 @@ def GetComment(line):
     for ele in line:
         concat += ele
         concat += ' '
-    commstart = _string.find(concat, '(')
-    commend = _string.find(concat, ')')
+    commstart = concat.find('(')
+    commend = concat.find(')')
     if commstart != -1 and commend != -1:
         comment = concat[commstart+1: commend]
         gmadcomment = '! '+comment
