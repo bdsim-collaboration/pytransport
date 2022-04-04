@@ -19,7 +19,7 @@ import numpy as _np
 from .Data import BDSData as _BDA
 
 
-_allowedIndicatorLines = ['0  100', '0    0']
+_allowedIndicatorLines = ['0  100', '0   10', '0    0',]
 
 def GetOptics(inputFile, inputType=None):
     """
