@@ -1,7 +1,7 @@
 # pytransport.Elements - tools for Transport element conversion
 # Version 1.0
 # W. Shields and J. Snuverink
-# william.shields.2010@live.rhul.ac.uk
+# william.shields@rhul.ac.uk
 
 """
 Wrapper function for automatically converting to bdsim and/or madx
