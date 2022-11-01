@@ -1,7 +1,7 @@
 # pytransport.Reader - Transport input and output file readers.
 # Version 1.0
 # W. Shields and J. Snuverink
-# william.shields.2010@live.rhul.ac.uk
+# william.shields@rhul.ac.uk
 
 """
 Reader
@@ -19,7 +19,7 @@ import numpy as _np
 from .Data import BDSData as _BDA
 
 
-_allowedIndicatorLines = ['0  100', '0    0']
+_allowedIndicatorLines = ['0  100', '0   10', '0    0',]
 
 def GetOptics(inputFile, inputType=None):
     """

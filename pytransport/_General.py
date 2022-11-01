@@ -1,7 +1,7 @@
 # pytransport._General - general python scripts / tools
 # Version 1.0
 # W. Shields and J. Snuverink
-# william.shields.2010@live.rhul.ac.uk
+# william.shields@rhul.ac.uk
 
 """
 General utilities for day to day housekeeping
@@ -240,8 +240,8 @@ def GetComment(line):
     for ele in line:
         concat += ele
         concat += ' '
-    commstart = _string.find(concat, '(')
-    commend = _string.find(concat, ')')
+    commstart = concat.find('(')
+    commend = concat.find(')')
     if commstart != -1 and commend != -1:
         comment = concat[commstart+1: commend]
         gmadcomment = '! '+comment
