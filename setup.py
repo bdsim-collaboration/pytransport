@@ -4,7 +4,6 @@ setup(
     name='pytransport',
     version='1.5.0',
     packages=find_packages(exclude=["docs", "tests", "obsolete"]),
-    # Not sure how strict these need to be...
     install_requires=["matplotlib",
                       "numpy",
                       "scipy"],
@@ -14,5 +13,6 @@ setup(
     author_email='william.shields.2010@live.rhul.ac.uk',
     description="Convert TRANSPORT models and load TRANSPORT output.",
     license='GPL3',
-    url='https://bitbucket.org/jairhul/pytransport/'
+    url='https://bitbucket.org/jairhul/pytransport/',
+    keywords=['bdsim', 'transport', 'accelerator', 'physics']
 )
