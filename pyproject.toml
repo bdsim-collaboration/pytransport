@@ -29,12 +29,12 @@ dependencies = [
   "matplotlib>=3.0",
   "numpy>=1.14",
   "scipy",
-  "root-numpy",
   "importlib-metadata"
 ]
 
 [project.optional-dependencies]
 dev = ["pytest", "sphinx", "sphinx-rtd-theme"]
+root-numpy = ["root-numpy"]
 
 [project.urls]
 homepage = "http://www.pp.rhul.ac.uk/bdsim/pytransport"

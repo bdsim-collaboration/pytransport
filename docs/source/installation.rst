@@ -8,6 +8,11 @@ be install through pip (with internet access): ::
 
   pip install pytransport
 
+There is also a feature of root-numpy: ::
+
+  pip install pytransport[root-numpy]
+
+which depends on root-numpy for some extra functionality.
 
 Requirements
 ------------
