@@ -1,4 +1,4 @@
-src/pyg4ometry/_version.py
+src/pytransport/_version.py
 *.pyc
 *~
 #emacs autosave
