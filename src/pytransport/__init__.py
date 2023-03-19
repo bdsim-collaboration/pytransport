@@ -6,11 +6,16 @@ Authors:
  * William Shields
  * Jochem Snuverink
 
-Copyright Royal Holloway, University of London 2019.
+Copyright Royal Holloway, University of London 2023.
 
 """
+try:
+    from ._version import version as __version__
+    from ._version import version_tuple
+except ImportError:
+    __version__ = "unknown version"
+    version_tuple = (0, 0, "unknown version")
 
-__version__ = "1.4.0"
 
 from . import _General
 from . import Compare

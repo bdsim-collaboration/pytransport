@@ -1,0 +1,49 @@
+[project]
+name = "pytransport"
+requires-python = ">=3.7"
+dynamic = ["version"]
+readme = "README.md"
+description = "Convert TRANSPORT models and load TRANSPORT output."
+license = {file = "LICENCE.txt"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Software Development"
+    ]
+authors = [
+  {name = "JAI@RHUL", email = "william.shields@rhul.ac.uk"}
+]
+maintainers = [
+  {name = "William Shields", email = "william.shields@rhul.ac.uk"}
+]
+dependencies = [
+  "matplotlib>=3.0",
+  "numpy>=1.14",
+  "scipy",
+  "root-numpy",
+  "importlib-metadata"
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "sphinx", "sphinx-rtd-theme"]
+
+[project.urls]
+homepage = "http://www.pp.rhul.ac.uk/bdsim/pytransport"
+documentation = "http://www.pp.rhul.ac.uk/bdsim/pytransport"
+repository = "https://bitbucket.org/jairhul/pytransport"
+
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "src/pytransport/_version.py"

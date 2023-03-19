@@ -1,8 +1,9 @@
+src/pyg4ometry/_version.py
 *.pyc
 *~
 #emacs autosave
 \#*\#
 build
-pytransport.egg-info
+*pytransport.egg-info
 .idea
 dist*
