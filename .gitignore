@@ -5,3 +5,4 @@
 build
 pytransport.egg-info
 .idea
+dist*
