@@ -1,8 +1,3 @@
-# pytransport._General - general python scripts / tools
-# Version 1.0
-# W. Shields and J. Snuverink
-# william.shields@rhul.ac.uk
-
 """
 General utilities for day to day housekeeping
 

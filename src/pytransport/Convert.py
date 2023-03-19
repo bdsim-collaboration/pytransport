@@ -1,8 +1,3 @@
-# pytransport.Elements - tools for Transport element conversion
-# Version 1.0
-# W. Shields and J. Snuverink
-# william.shields@rhul.ac.uk
-
 """
 Wrapper function for automatically converting to bdsim and/or madx
 
@@ -19,7 +14,7 @@ import numpy as _np
 from . import _General
 from ._General import _Writer
 from .Data import ConversionData as _convData
-from pytransport import Reader as _Reader
+from . import Reader as _Reader
 
 
 def Convert(inputfile,

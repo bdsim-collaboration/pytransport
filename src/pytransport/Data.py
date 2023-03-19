@@ -1,8 +1,3 @@
-# pytransport.Data - Data loaders and data containers.
-# Version 1.0
-# W. Shields and J. Snuverink
-# william.shields@rhul.ac.uk
-
 """
 Data
 

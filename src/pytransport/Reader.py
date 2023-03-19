@@ -1,8 +1,3 @@
-# pytransport.Reader - Transport input and output file readers.
-# Version 1.0
-# W. Shields and J. Snuverink
-# william.shields@rhul.ac.uk
-
 """
 Reader
 
