@@ -1,6 +1,6 @@
 [project]
 name = "pytransport"
-requires-python = ">=3.7"
+requires-python = ">=3.6"
 dynamic = ["version"]
 readme = "README.md"
 description = "Convert TRANSPORT models and load TRANSPORT output."
