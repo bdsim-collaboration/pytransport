@@ -1,4 +1,4 @@
-name: Test pymad8
+name: Test pytransport
 
 on:
   push:
