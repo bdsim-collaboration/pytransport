@@ -1,0 +1,584 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Module Contents &mdash; pytransport 0.1.dev1+g57af495 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=a0d1abb1"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Version History" href="version_history.html" />
+    <link rel="prev" title="Optics" href="optics.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pytransport
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="licence.html">Licence &amp; Disclaimer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authorship.html">Authorship</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="converting.html">Conversion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optics.html">Optics</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Module Contents</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-pytransport.Convert">pytransport.Convert module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport.Convert.Convert"><code class="docutils literal notranslate"><span class="pre">Convert()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-pytransport.Data">pytransport.Data module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport.Data.BDSData"><code class="docutils literal notranslate"><span class="pre">BDSData</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.BDSData.ConcatenateMachine"><code class="docutils literal notranslate"><span class="pre">BDSData.ConcatenateMachine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.BDSData.Filter"><code class="docutils literal notranslate"><span class="pre">BDSData.Filter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.BDSData.GetColumn"><code class="docutils literal notranslate"><span class="pre">BDSData.GetColumn()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.BDSData.GetItemTuple"><code class="docutils literal notranslate"><span class="pre">BDSData.GetItemTuple()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.BDSData.IndexFromNearestS"><code class="docutils literal notranslate"><span class="pre">BDSData.IndexFromNearestS()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.BDSData.MatchValue"><code class="docutils literal notranslate"><span class="pre">BDSData.MatchValue()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.BDSData.MergeDuplicatesAtSameS"><code class="docutils literal notranslate"><span class="pre">BDSData.MergeDuplicatesAtSameS()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.BDSData.NameFromNearestS"><code class="docutils literal notranslate"><span class="pre">BDSData.NameFromNearestS()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport.Data.ConversionData"><code class="docutils literal notranslate"><span class="pre">ConversionData</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.ConversionData.AddBeam"><code class="docutils literal notranslate"><span class="pre">ConversionData.AddBeam()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.ConversionData.AddOptions"><code class="docutils literal notranslate"><span class="pre">ConversionData.AddOptions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pytransport.Data.ConversionData.ResetMachine"><code class="docutils literal notranslate"><span class="pre">ConversionData.ResetMachine()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-pytransport.Reader">pytransport.Reader module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport.Reader.GetFitsSection"><code class="docutils literal notranslate"><span class="pre">GetFitsSection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport.Reader.GetLattice"><code class="docutils literal notranslate"><span class="pre">GetLattice()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport.Reader.GetOptics"><code class="docutils literal notranslate"><span class="pre">GetOptics()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport.Reader.GetResultsFromFitting"><code class="docutils literal notranslate"><span class="pre">GetResultsFromFitting()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-pytransport._General">pytransport._General module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.CheckDirExists"><code class="docutils literal notranslate"><span class="pre">CheckDirExists()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.CheckIsAddition"><code class="docutils literal notranslate"><span class="pre">CheckIsAddition()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.CheckIsOutput"><code class="docutils literal notranslate"><span class="pre">CheckIsOutput()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.CheckIsSentinel"><code class="docutils literal notranslate"><span class="pre">CheckIsSentinel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.CheckSingleLineOutputApplied"><code class="docutils literal notranslate"><span class="pre">CheckSingleLineOutputApplied()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.ConvertBunchLength"><code class="docutils literal notranslate"><span class="pre">ConvertBunchLength()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.FindEndOfLine"><code class="docutils literal notranslate"><span class="pre">FindEndOfLine()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.GetComment"><code class="docutils literal notranslate"><span class="pre">GetComment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.GetElementData"><code class="docutils literal notranslate"><span class="pre">GetElementData()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.GetFaceRotationAngles"><code class="docutils literal notranslate"><span class="pre">GetFaceRotationAngles()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.GetIndicator"><code class="docutils literal notranslate"><span class="pre">GetIndicator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.GetLabel"><code class="docutils literal notranslate"><span class="pre">GetLabel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.GetPreamble"><code class="docutils literal notranslate"><span class="pre">GetPreamble()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.GetTypeNum"><code class="docutils literal notranslate"><span class="pre">GetTypeNum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.JoinSplitLines"><code class="docutils literal notranslate"><span class="pre">JoinSplitLines()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.OutputFitsToRegistry"><code class="docutils literal notranslate"><span class="pre">OutputFitsToRegistry()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.ProcessFits"><code class="docutils literal notranslate"><span class="pre">ProcessFits()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.RemoveFileExt"><code class="docutils literal notranslate"><span class="pre">RemoveFileExt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.RemoveIllegals"><code class="docutils literal notranslate"><span class="pre">RemoveIllegals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.RemoveLabel"><code class="docutils literal notranslate"><span class="pre">RemoveLabel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.RemoveSpaces"><code class="docutils literal notranslate"><span class="pre">RemoveSpaces()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.ScaleToMeters"><code class="docutils literal notranslate"><span class="pre">ScaleToMeters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.UpdateEnergyFromMomentum"><code class="docutils literal notranslate"><span class="pre">UpdateEnergyFromMomentum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pytransport._General.UpdateMomentumFromEnergy"><code class="docutils literal notranslate"><span class="pre">UpdateMomentumFromEnergy()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="version_history.html">Version History</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pytransport</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Module Contents</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/moduledocs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-contents">
+<h1>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h1>
+<p>This documentation is automatically generated by scanning all the source code. Parts
+may be incomplete.</p>
+<p id="module-pytransport">pytransport - Royal Holloway utility to manipulate TRANSPORT data and models.</p>
+<p>Authors:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>William Shields</p></li>
+<li><p>Jochem Snuverink</p></li>
+</ul>
+</div></blockquote>
+<p>Copyright Royal Holloway, University of London 2023.</p>
+<section id="module-pytransport.Convert">
+<span id="pytransport-convert-module"></span><h2>pytransport.Convert module<a class="headerlink" href="#module-pytransport.Convert" title="Link to this heading"></a></h2>
+<p>Wrapper function for automatically converting to bdsim and/or madx</p>
+<p>Class containing functions to help convert elements from Transport to gmad/madx.
+Class instantiated in pybdsim.Convert.Transport2Gmad and pymadx.Convert.Transport2Madx.</p>
+<p>Classes:
+_Convert - a class used to convert different element types.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport.Convert.Convert">
+<span class="sig-prename descclassname"><span class="pre">pytransport.Convert.</span></span><span class="sig-name descname"><span class="pre">Convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">particle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'proton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distrType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gauss'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bdsim'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputDir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dontSplit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">combineDrifts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Convert.Convert" title="Link to this definition"></a></dt>
+<dd><p><strong>Convert</strong> convert a Transport input or output file into an input file for bdsim, madx, or both</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>inputfile</strong></p></td>
+<td><p>dtype = string
+path to the input file</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>particle</strong></p></td>
+<td><p>dtype = string. Optional, default = “proton”
+the particle species</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>distrType</strong></p></td>
+<td><p>dtype = string. Optional, Default = “gauss”.
+the beam distribution type. Can be either gauss or gausstwiss.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>output</strong></p></td>
+<td><p>dtype=string. Optional, default = “bdsim”
+the output type, can be “bdsim”, “madx”, or “both”</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>outputDir</strong></p></td>
+<td><p>dtype=string. Optional, default = “”
+the output directory where the files will be written
+if no input supplied, defaults to output type. if outputDir is
+supplied and output is “both”, outputDir is appended with the
+output type, e.g. outputDir_bdsim</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>debug</strong></p></td>
+<td><p>dtype = bool. Optional, default = False
+output a log file (inputfile_conversion.log) detailing the
+conversion process, element by element</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>dontSplit</strong></p></td>
+<td><p>dtype = bool. Optional, default = False
+the converter splits the machine into multiple parts when a beam
+is redefined in a Transport lattice. dontSplit overrides this and
+forces the machine to be written to a single file</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>keepName</strong></p></td>
+<td><p>dtype = bool. Optional, default = False
+keep the names of elements as defined in the Transport inputfile.
+Appends element name with _N where N is an integer if the element
+name has already been used</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>combineDrifts</strong></p></td>
+<td><p>dtype = bool. Optional, default = False
+combine multiple consecutive drifts into a single drift</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>machine</strong></p></td>
+<td><p>dtype = pybdsim.Builder.Machine or pymadx.Builder.Machine
+required, default = None
+machine instance required for conversion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>options</strong></p></td>
+<td><p>dtype = pybdsim.Options.Options. Optional, default = None
+options instance required to write options in bdsim conversion.
+Ignored if converting to “madx” format.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Convert</span><span class="p">(</span><span class="n">inputfile</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="n">pybdsim</span><span class="o">.</span><span class="n">Builder</span><span class="o">.</span><span class="n">Machine</span><span class="p">(),</span> <span class="n">options</span><span class="o">=</span><span class="n">pybdsim</span><span class="o">.</span><span class="n">Options</span><span class="o">.</span><span class="n">Options</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Convert</span><span class="p">(</span><span class="n">inputfile</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">&quot;madx&quot;</span><span class="p">,</span> <span class="n">machine</span><span class="o">=</span><span class="n">pymadx</span><span class="o">.</span><span class="n">Builder</span><span class="o">.</span><span class="n">Machine</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Writes converted machine to disk. Reader automatically detects if the supplied input file is a Transport input
+file or Transport output file.</p>
+</dd></dl>
+
+</section>
+<section id="module-pytransport.Data">
+<span id="pytransport-data-module"></span><h2>pytransport.Data module<a class="headerlink" href="#module-pytransport.Data" title="Link to this heading"></a></h2>
+<p>Data</p>
+<p>Data containers used in converting from Transport to gmad or madx.</p>
+<p>Classes:
+BDSData - a list of data read from Transport files.
+ConversionData - a class for holding data during conversion.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pytransport.Data.</span></span><span class="sig-name descname"><span class="pre">BDSData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+<p>General class representing simple 2 column data.</p>
+<p>Inherits python list.  It’s a list of tuples with extra columns of ‘name’ and ‘units’.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData.ConcatenateMachine">
+<span class="sig-name descname"><span class="pre">ConcatenateMachine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData.ConcatenateMachine" title="Link to this definition"></a></dt>
+<dd><p>This is used to concatenate machines.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData.Filter">
+<span class="sig-name descname"><span class="pre">Filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">booleanarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData.Filter" title="Link to this definition"></a></dt>
+<dd><p>Filter the data with a booleanarray.  Where true, will return
+that event in the data.</p>
+<p>Return type is BDSData</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData.GetColumn">
+<span class="sig-name descname"><span class="pre">GetColumn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">columnstring</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData.GetColumn" title="Link to this definition"></a></dt>
+<dd><p>Return a numpy array of the values in columnstring in order
+as they appear in the beamline</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData.GetItemTuple">
+<span class="sig-name descname"><span class="pre">GetItemTuple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData.GetItemTuple" title="Link to this definition"></a></dt>
+<dd><p>Get a specific entry in the data as a tuple of values rather than a dictionary.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData.IndexFromNearestS">
+<span class="sig-name descname"><span class="pre">IndexFromNearestS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">S</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData.IndexFromNearestS" title="Link to this definition"></a></dt>
+<dd><p>IndexFromNearestS(S)</p>
+<p>return the index of the beamline element clostest to S</p>
+<p>Only works if “SStart” column exists in data</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData.MatchValue">
+<span class="sig-name descname"><span class="pre">MatchValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parametername</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matchvalue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData.MatchValue" title="Link to this definition"></a></dt>
+<dd><p>This is used to filter the instance of the class based on matching
+a parameter withing a certain tolerance.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">pytransport</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">Load</span><span class="p">(</span><span class="s2">&quot;myfile.txt&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">MatchValue</span><span class="p">(</span><span class="s2">&quot;S&quot;</span><span class="p">,</span><span class="mf">0.3</span><span class="p">,</span><span class="mf">0.0004</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>this will match the “S” variable in instance “a” to the value of 0.3
+within +- 0.0004.</p>
+<p>You can therefore used to match any parameter.</p>
+<p>Return type is BDSAsciiData</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData.MergeDuplicatesAtSameS">
+<span class="sig-name descname"><span class="pre">MergeDuplicatesAtSameS</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData.MergeDuplicatesAtSameS" title="Link to this definition"></a></dt>
+<dd><p>Merge duplicate entries at the same s position. This is to prevent having multiple
+entries at the same s in situations such as poleface rotations. Will merge zero-length items
+into finite length items.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.BDSData.NameFromNearestS">
+<span class="sig-name descname"><span class="pre">NameFromNearestS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">S</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.BDSData.NameFromNearestS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pytransport.Data.ConversionData">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pytransport.Data.</span></span><span class="sig-name descname"><span class="pre">ConversionData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">machine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">particle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'proton'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distrType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gauss'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gmad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gmadDir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gmad'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">madx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">madxDir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'madx'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dontSplit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keepName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">combineDrifts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outlog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.ConversionData" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class used as data container object in Transport2Gmad / Transport2Madx conversion.
+Required input:
+- inputfile: string, inputfile name
+- machine: either pybdsim.Builder.Machine or pymadx.Builder.Machine instance.</p>
+<p>Note: if used as a holder for conversion to gmad, options must be supplied a pybdsim.Options.Options instance.</p>
+<p>This class will hold ALL conversion related data, some stored in member variables which are separate containers
+for: conversion related properties (user input arguments), beam properties, and machine properties.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.ConversionData.AddBeam">
+<span class="sig-name descname"><span class="pre">AddBeam</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.ConversionData.AddBeam" title="Link to this definition"></a></dt>
+<dd><p>Function to prepare the beam and add to the machine.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.ConversionData.AddOptions">
+<span class="sig-name descname"><span class="pre">AddOptions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.ConversionData.AddOptions" title="Link to this definition"></a></dt>
+<dd><p>Function to set the Options for a BDSIM machine.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pytransport.Data.ConversionData.ResetMachine">
+<span class="sig-name descname"><span class="pre">ResetMachine</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Data.ConversionData.ResetMachine" title="Link to this definition"></a></dt>
+<dd><p>Delete the machine and set to be the empty machine copied at class instantiation.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pytransport.Reader">
+<span id="pytransport-reader-module"></span><h2>pytransport.Reader module<a class="headerlink" href="#module-pytransport.Reader" title="Link to this heading"></a></h2>
+<p>Reader</p>
+<p>Readers for loading Transport input files and output files.
+Can extract the individual lattice, optics, and fitting sections.</p>
+<p>Classes:
+Reader - a list of data read from Transport files.
+ConversionData - a class for holding data during conversion.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport.Reader.GetFitsSection">
+<span class="sig-prename descclassname"><span class="pre">pytransport.Reader.</span></span><span class="sig-name descname"><span class="pre">GetFitsSection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputFile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Reader.GetFitsSection" title="Link to this definition"></a></dt>
+<dd><p>Function to get the fit routine data from the standard transport output.
+Returns two lists, the first with the direct output from the fitting data,
+the second with the first line of each element in the output data, which contains the
+element parameters with their fitted values.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport.Reader.GetLattice">
+<span class="sig-prename descclassname"><span class="pre">pytransport.Reader.</span></span><span class="sig-name descname"><span class="pre">GetLattice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputFile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Reader.GetLattice" title="Link to this definition"></a></dt>
+<dd><p>Function to extract the lattice from a standard output file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport.Reader.GetOptics">
+<span class="sig-prename descclassname"><span class="pre">pytransport.Reader.</span></span><span class="sig-name descname"><span class="pre">GetOptics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputFile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Reader.GetOptics" title="Link to this definition"></a></dt>
+<dd><p>Extract the optics from a Transport output file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport.Reader.GetResultsFromFitting">
+<span class="sig-prename descclassname"><span class="pre">pytransport.Reader.</span></span><span class="sig-name descname"><span class="pre">GetResultsFromFitting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputFile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport.Reader.GetResultsFromFitting" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-pytransport._General">
+<span id="pytransport-general-module"></span><h2>pytransport._General module<a class="headerlink" href="#module-pytransport._General" title="Link to this heading"></a></h2>
+<p>General utilities for day to day housekeeping</p>
+<p>Classes:
+_Writer - a class used for writing any output during conversion.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.CheckDirExists">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">CheckDirExists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">directory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.CheckDirExists" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.CheckIsAddition">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">CheckIsAddition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filetype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'input'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.CheckIsAddition" title="Link to this definition"></a></dt>
+<dd><p>Function to check if a BEAM line of TRANSPORT code is a beam definition or r.m.s addition.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.CheckIsOutput">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">CheckIsOutput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.CheckIsOutput" title="Link to this definition"></a></dt>
+<dd><p>Function to check if a file is a standard TRANSPORT output file.
+Based upon existence of the lines:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;0  XXX&quot;</span>
+</pre></div>
+</div>
+<p>being present, which represents the TRANSPORT indicator card line.
+X can be 0, 1, 2. Default is 0.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.CheckIsSentinel">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">CheckIsSentinel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.CheckIsSentinel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.CheckSingleLineOutputApplied">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">CheckSingleLineOutputApplied</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.CheckSingleLineOutputApplied" title="Link to this definition"></a></dt>
+<dd><p>Function to check if the control element that print element output in
+a single line was successfully applied. Check needed as not all versions
+of TRANSPORT can run this type code.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.ConvertBunchLength">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">ConvertBunchLength</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transport</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bunch_length</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.ConvertBunchLength" title="Link to this definition"></a></dt>
+<dd><p>Function to convert bunch length unit in TRANSPORT into seconds.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.FindEndOfLine">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">FindEndOfLine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.FindEndOfLine" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.GetComment">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">GetComment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.GetComment" title="Link to this definition"></a></dt>
+<dd><p>Function to extract a comment from a line.
+Will only find one comment per line.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.GetElementData">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">GetElementData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.GetElementData" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.GetFaceRotationAngles">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">GetFaceRotationAngles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linenum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.GetFaceRotationAngles" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.GetIndicator">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">GetIndicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.GetIndicator" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Function to read the indicator number. Must be 0, 1, or 2, where:</dt><dd><p>0 is a new lattice
+1 is for fitting with the first lattice (from a 0 indicator file)
+2 if for a second fitting which suppresses the first fitting.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.GetLabel">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">GetLabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.GetLabel" title="Link to this definition"></a></dt>
+<dd><p>Function to get element label from code line.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.GetPreamble">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">GetPreamble</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.GetPreamble" title="Link to this definition"></a></dt>
+<dd><p>Function to read any preamble at the start of the TRANSPORT file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.GetTypeNum">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">GetTypeNum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.GetTypeNum" title="Link to this definition"></a></dt>
+<dd><p>Function to extract the element type number (type code).
+Written because element types can contain alphabetical
+characters when fits are used, e.g: 5.0A. Only the number
+is required, the use of fitting does not need to be known.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.JoinSplitLines">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">JoinSplitLines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">linenum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lattice</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.JoinSplitLines" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.OutputFitsToRegistry">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">OutputFitsToRegistry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transport</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputdata</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.OutputFitsToRegistry" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.ProcessFits">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">ProcessFits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.ProcessFits" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.RemoveFileExt">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">RemoveFileExt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputfile</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.RemoveFileExt" title="Link to this definition"></a></dt>
+<dd><p>Remove the file extension from the input file name. Only works on known extensions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.RemoveIllegals">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">RemoveIllegals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.RemoveIllegals" title="Link to this definition"></a></dt>
+<dd><p>Function to remove ‘’ and stray characters from lines.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.RemoveLabel">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">RemoveLabel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.RemoveLabel" title="Link to this definition"></a></dt>
+<dd><p>Function to remove the label from a line.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.RemoveSpaces">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">RemoveSpaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.RemoveSpaces" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.ScaleToMeters">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">ScaleToMeters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transport</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.ScaleToMeters" title="Link to this definition"></a></dt>
+<dd><p>Function to scale quantity (string) to meters, returns conversion factor.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.UpdateEnergyFromMomentum">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">UpdateEnergyFromMomentum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transport</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">momentum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.UpdateEnergyFromMomentum" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Function to calculate (from momentum):</dt><dd><p>Total Energy
+Kinetic Energy
+Momentum
+Lorentz factor (gamma)
+Velocity (beta)
+Magnetic rigidity (brho)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pytransport._General.UpdateMomentumFromEnergy">
+<span class="sig-prename descclassname"><span class="pre">pytransport._General.</span></span><span class="sig-name descname"><span class="pre">UpdateMomentumFromEnergy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transport</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_energy</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pytransport._General.UpdateMomentumFromEnergy" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Function to calculate (from kinetic energy):</dt><dd><p>Total Energy
+Kinetic Energy
+Momentum
+Lorentz factor (gamma)
+Velocity (beta)
+Magnetic rigidity (brho)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="optics.html" class="btn btn-neutral float-left" title="Optics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="version_history.html" class="btn btn-neutral float-right" title="Version History" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Royal Holloway, University of London 2024.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
